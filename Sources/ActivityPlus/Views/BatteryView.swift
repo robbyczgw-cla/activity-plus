@@ -16,7 +16,13 @@ struct BatteryView: View {
                             UsageBar(fraction: b.percent / 100, tint: b.percent < 20 ? .red : .green)
                             StatLine(label: "Time remaining", value: b.timeRemaining.map(Format.duration) ?? (b.isPluggedIn ? "Plugged in" : "Calculating…"))
                             StatLine(label: "Mac power draw", value: b.systemPower.map(Format.watts) ?? "–")
-                            StatLine(label: b.batteryPower >= 0 ? "Charging at" : "Battery output", value: Format.watts(abs(b.batteryPower)))
+                            if b.isCharging {
+                                StatLine(label: "Charging at", value: Format.watts(abs(b.batteryPower)))
+                            } else if b.isPluggedIn {
+                                StatLine(label: "Battery", value: "Resting, the adapter powers the Mac")
+                            } else {
+                                StatLine(label: "Battery output", value: Format.watts(abs(b.batteryPower)))
+                            }
                         }
                         Card {
                             CardHeader(title: "Health", systemImage: "heart", tint: .pink)

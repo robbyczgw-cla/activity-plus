@@ -31,8 +31,10 @@ struct Sparkline: View {
     var maxValue: Double?
 
     var body: some View {
+        let floor = domain.lowerBound
         Chart(Array(values.enumerated()), id: \.offset) { point in
-            AreaMark(x: .value("t", point.offset), y: .value("v", point.element))
+            // Fill down to the bottom of the visible scale, not to zero, so zoomed-in series keep their shape.
+            AreaMark(x: .value("t", point.offset), yStart: .value("floor", floor), yEnd: .value("v", point.element))
                 .foregroundStyle(tint.opacity(0.18).gradient)
                 .interpolationMethod(.monotone)
             LineMark(x: .value("t", point.offset), y: .value("v", point.element))
