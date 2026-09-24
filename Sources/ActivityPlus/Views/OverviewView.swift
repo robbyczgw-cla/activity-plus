@@ -72,6 +72,18 @@ struct OverviewView: View {
                             StatLine(label: "Health", value: battery.health.map { Format.percent($0) } ?? "–")
                         }
                     }
+                    if let temperature = s.sensors.cpuTemperature {
+                        tile(.sensors) {
+                            CardHeader(title: "Temperatures", systemImage: "thermometer.medium", tint: SensorsView.color(for: temperature),
+                                       trailing: s.thermal.rawValue)
+                            BigNumber(text: String(format: "%.0f °C", temperature))
+                            Sparkline(values: h.cpuTemperature.values, tint: .red).frame(height: 38)
+                            if let gpu = s.sensors.gpuTemperature { StatLine(label: "GPU", value: String(format: "%.0f °C", gpu)) }
+                            ForEach(s.sensors.fans.prefix(2), id: \.name) { fan in
+                                StatLine(label: fan.name, value: "\(Int(fan.rpm)) rpm")
+                            }
+                        }
+                    }
                 }
 
                 Card {

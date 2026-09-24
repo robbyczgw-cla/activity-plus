@@ -64,6 +64,11 @@ public final class HistoryStore: @unchecked Sendable {
         public var sent: Double = 0
         public var energyWh: Double = 0
         public var averageCPU: Double = 0
+        public init() {}
+        init(diskWritten: Double, diskRead: Double, received: Double, sent: Double, energyWh: Double, averageCPU: Double) {
+            (self.diskWritten, self.diskRead, self.received, self.sent, self.energyWh, self.averageCPU) =
+                (diskWritten, diskRead, received, sent, energyWh, averageCPU)
+        }
     }
 
     private var db: OpaquePointer?
@@ -157,8 +162,9 @@ public final class HistoryStore: @unchecked Sendable {
     public func topApps(_ range: Range, until end: Date = Date()) -> [AppTotal] {
         queue.sync {
             let from = Int(end.timeIntervalSince1970 - range.seconds)
-            // Averages are over the whole range (an app that ran 1 hour of 24 counts 1/24).
-            let windows = max(1, range.seconds / 300)
+            // Averages are over every recorded 5-minute window (an app that ran 1 of 24 hours counts 1/24).
+            let recorded = query("SELECT COUNT(DISTINCT ts) FROM apps WHERE ts >= \(from)") { sqlite3_column_int64($0, 0) }.first ?? 1
+            let windows = max(1, recorded)
             let sql = """
                 SELECT app_id, MAX(name), MAX(bundle), SUM(cpu) / \(windows), SUM(mem) / \(windows), MAX(mem_peak),
                        SUM(disk), SUM(net), SUM(energy), SUM(gpu) / \(windows)

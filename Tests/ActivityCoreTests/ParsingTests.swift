@@ -1,0 +1,71 @@
+import Foundation
+import Testing
+@testable import ActivityCore
+
+@Suite("Parsers")
+struct ParsingTests {
+    @Test func cpuTimeFormats() {
+        #expect(ProcessSampler.parseCPUTime("0:00.50") == 0.5)
+        #expect(ProcessSampler.parseCPUTime("1528:57.76") == 1528 * 60 + 57.76)
+        #expect(ProcessSampler.parseCPUTime("1:02:03.00") == 3723)
+        #expect(ProcessSampler.parseCPUTime("2-01:00:00.00") == 2 * 86_400 + 3600)
+    }
+
+    @Test func psLinesWithSpacesInPath() {
+        let output = """
+          417     1    88 1528:57.76 134576 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer
+          900   417   501   0:01.20   2048 /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+        """
+        let rows = ProcessSampler.parsePS(output)
+        #expect(rows.count == 2)
+        #expect(rows[0].pid == 417 && rows[0].uid == 88 && rows[0].residentBytes == 134_576 * 1024)
+        #expect(rows[1].command == "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+        #expect(rows[1].ppid == 417)
+    }
+
+    @Test func nettopNamesWithDots() {
+        let output = ",bytes_in,bytes_out,\nlaunchd.1,0,0,\ncom.apple.Safari.Web.4242,5120,880,\n"
+        let parsed = ProcessNetworkSampler.parse(output)
+        #expect(parsed[4242]?.0 == 5120)
+        #expect(parsed[4242]?.1 == 880)
+        #expect(parsed[1]?.0 == 0)
+    }
+
+    @Test func lsofListeners() {
+        let output = "p4321\nf23\nn*:4321\nf24\nn127.0.0.1:4322\np88\nf5\nn[::1]:5432\n"
+        let parsed = ProjectScanner.parseLsof(output)
+        #expect(Set(parsed[4321]!.map(\.port)) == [4321, 4322])
+        #expect(parsed[4321]!.contains { $0.address == "all interfaces" })
+        #expect(parsed[88]!.first?.port == 5432)
+    }
+
+    @Test func gpuClientCreator() {
+        #expect(GPUSampler.pid(fromCreator: "pid 417, WindowServer") == 417)
+        #expect(GPUSampler.pid(fromCreator: "kernel") == nil)
+    }
+
+    @Test func formatting() {
+        #expect(Format.memory(1_073_741_824) == "1.00 GB")
+        #expect(Format.storage(994_660_000_000) == "995 GB")
+        #expect(Format.rate(7_800_000) == "7.80 MB/s")
+        #expect(Format.split("54.76 GB") == ("54.76", "GB"))
+        #expect(Format.duration(3 * 86_400 + 4 * 3600) == "3d 4h")
+    }
+}
+
+@Suite("Grouping")
+struct GroupingTests {
+    @Test func helpersResolveToOutermostApp() {
+        let grouper = AppGrouper()
+        let helper = "/Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Helpers/Google Chrome Helper (Renderer).app/Contents/MacOS/Google Chrome Helper (Renderer)"
+        #expect(grouper.bundle(forExecutable: helper)?.path == "/Applications/Google Chrome.app")
+        #expect(grouper.bundle(forExecutable: "/usr/bin/zsh") == nil)
+    }
+
+    @Test func systemAndToolClassification() {
+        let daemon = ProcessSample(pid: 10, ppid: 1, uid: 0, name: "launchd", path: "/sbin/launchd", startTime: .now)
+        let node = ProcessSample(pid: 11, ppid: 1, uid: 501, name: "node", path: "/opt/homebrew/bin/node", startTime: .now)
+        #expect(AppGrouper.isSystemProcess(daemon))
+        #expect(!AppGrouper.isSystemProcess(node))
+    }
+}

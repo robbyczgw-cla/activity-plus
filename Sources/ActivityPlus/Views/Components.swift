@@ -42,8 +42,17 @@ struct Sparkline: View {
         }
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)
-        .chartYScale(domain: 0...max(maxValue ?? (values.max() ?? 1), 0.000_1))
+        .chartYScale(domain: domain)
         .chartXScale(domain: 0...max(values.count - 1, 1))
+    }
+
+    /// Fixed scales (percentages) start at 0; free scales hug the data so flat series stay readable.
+    private var domain: ClosedRange<Double> {
+        if let maxValue { return 0...max(maxValue, 0.000_1) }
+        let high = values.max() ?? 1
+        let low = values.min() ?? 0
+        let pad = max((high - low) * 0.2, high * 0.05, 0.000_1)
+        return max(0, low - pad)...(high + pad)
     }
 }
 
@@ -171,7 +180,9 @@ struct LiveChart: View {
             AxisMarks(values: .automatic(desiredCount: 5)) { value in
                 AxisGridLine()
                 AxisValueLabel {
-                    if let v = value.as(Double.self) { Text(v == 0 ? "now" : "\(Int(-v / 60))m") }
+                    if let v = value.as(Double.self) {
+                        Text(v == 0 ? "now" : (abs(v) < 120 ? "\(Int(-v))s" : "\(Int(-v / 60))m"))
+                    }
                 }
             }
         }

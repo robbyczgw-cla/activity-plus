@@ -64,7 +64,7 @@ enum IconCache {
         } else if app.kind == .system {
             icon = NSImage(systemSymbolName: "apple.logo", accessibilityDescription: nil) ?? NSImage()
         } else {
-            icon = NSWorkspace.shared.icon(for: .unixExecutable)
+            icon = NSImage(systemSymbolName: "terminal.fill", accessibilityDescription: nil) ?? NSImage()
         }
         icons[key] = icon
         return icon

@@ -32,6 +32,7 @@ struct LiveHistory: Sendable {
     var netOut = Series()
     var battery = Series()
     var power = Series()
+    var cpuTemperature = Series()
     /// Per-app CPU and memory, keyed by AppGroup.id.
     var appCPU: [String: Series] = [:]
     var appMemory: [String: Series] = [:]
@@ -105,6 +106,8 @@ final class Monitor {
             history.battery.append(battery.percent)
             history.power.append(battery.systemPower ?? max(0, -battery.batteryPower))
         }
+
+        if let temperature = snapshot.sensors.cpuTemperature { history.cpuTemperature.append(temperature) }
 
         let live = Set(snapshot.apps.map(\.id))
         for app in snapshot.apps {

@@ -10,7 +10,7 @@ enum MenuBarStyle: String, CaseIterable, Identifiable {
 
 /// What the menu bar item can show as its figure or graph.
 enum MenuBarFigure: String, CaseIterable, Identifiable {
-    case cpu, memory, gpu, network, battery
+    case cpu, memory, gpu, network, temperature, battery
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -18,6 +18,7 @@ enum MenuBarFigure: String, CaseIterable, Identifiable {
         case .memory: "Memory"
         case .gpu: "GPU"
         case .network: "Network"
+        case .temperature: "Temperature"
         case .battery: "Battery"
         }
     }
@@ -29,6 +30,7 @@ enum MenuBarFigure: String, CaseIterable, Identifiable {
         case .memory: return Format.percent(Double(s.memory.used) / Double(max(1, s.memory.total)) * 100)
         case .gpu: return Format.percent(s.gpu?.utilization ?? 0)
         case .network: return Format.rate(s.network.inRate + s.network.outRate)
+        case .temperature: return s.sensors.cpuTemperature.map { String(format: "%.0f°", $0) } ?? "–"
         case .battery: return s.battery.map { Format.percent($0.percent) } ?? "–"
         }
     }
@@ -40,6 +42,7 @@ enum MenuBarFigure: String, CaseIterable, Identifiable {
         case .memory: return (h.memory.values, Double(monitor.snapshot.memory.total))
         case .gpu: return (h.gpu.values, 100)
         case .network: return (zip(h.netIn.values, h.netOut.values).map(+), nil)
+        case .temperature: return (h.cpuTemperature.values, 110)
         case .battery: return (h.battery.values, 100)
         }
     }

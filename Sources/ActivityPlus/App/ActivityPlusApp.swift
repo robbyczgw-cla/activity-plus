@@ -34,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         MainActor.assumeIsolated {
             AppServices.shared.attach(to: Monitor.shared)
             Monitor.shared.start()
+            SnapshotRunner.runIfRequested()
         }
     }
 

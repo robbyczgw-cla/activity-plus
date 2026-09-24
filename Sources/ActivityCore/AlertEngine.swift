@@ -84,7 +84,9 @@ public final class AlertEngine: @unchecked Sendable {
             let cpuWindow = complete.suffix(settings.cpuMinutes)
             if cpuWindow.count >= settings.cpuMinutes, isConsecutive(cpuWindow) {
                 let average = cpuWindow.reduce(0) { $0 + $1.averageCPU } / Double(cpuWindow.count)
-                if average >= settings.cpuPercent {
+                // Sustained, not a burst: most minutes must be above the threshold on their own.
+                let busyMinutes = cpuWindow.filter { $0.averageCPU >= settings.cpuPercent }.count
+                if average >= settings.cpuPercent, Double(busyMinutes) >= Double(cpuWindow.count) * 0.8 {
                     fire(&alerts, .cpu, id, name, now,
                          title: "\(name) is keeping the CPU busy",
                          detail: "\(Format.percent(average)) on average for \(settings.cpuMinutes) minutes.")

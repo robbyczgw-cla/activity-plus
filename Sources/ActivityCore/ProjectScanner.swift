@@ -253,7 +253,7 @@ public final class ProjectScanner: @unchecked Sendable {
         // "node /Users/…/node_modules/.bin/vite --port 5173" → "vite --port 5173"
         let skipInterpreter = ["node", "python", "python3", "ruby", "bun", "deno", "php"].contains(interesting[0].lowercased())
             || interesting[0].lowercased().hasPrefix("python")
-        let parts = skipInterpreter && interesting.count > 1 ? Array(interesting.dropFirst()) : interesting
+        let parts = skipInterpreter && interesting.count > 1 && !interesting[1].hasPrefix("-") ? Array(interesting.dropFirst()) : interesting
         let joined = parts.prefix(6).joined(separator: " ")
         return joined.count > 60 ? String(joined.prefix(57)) + "…" : joined
     }

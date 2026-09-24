@@ -313,7 +313,7 @@ final class SensorSampler {
             guard let actual = readSMC(String(format: "F%dAc", index)), let rpm = Self.fanRPM(actual) else { continue }
             let minRPM = readSMC(String(format: "F%dMn", index)).flatMap(Self.fanRPM)
             let maxRPM = readSMC(String(format: "F%dMx", index)).flatMap(Self.fanRPM)
-            let name = readSMC(String(format: "F%dID", index)).flatMap(Self.fanName) ?? "Fan \(index)"
+            let name = readSMC(String(format: "F%dID", index)).flatMap(Self.fanName) ?? "Fan \(index + 1)"
             fans.append(SensorStats.Fan(name: name, rpm: rpm, minRPM: minRPM, maxRPM: maxRPM))
         }
         return fans
