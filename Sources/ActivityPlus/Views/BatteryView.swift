@@ -3,6 +3,7 @@ import SwiftUI
 
 struct BatteryView: View {
     @Environment(Monitor.self) private var monitor
+    @Environment(AppServices.self) private var services
 
     var body: some View {
         ScrollView {
@@ -35,13 +36,43 @@ struct BatteryView: View {
                         Text("Apps using the most energy").font(.headline)
                         AppListView(metric: .energy, limit: 15)
                     }
-                } else {
+                }
+                if !services.accessories.isEmpty {
+                    Card {
+                        CardHeader(title: "Accessories", systemImage: "airpods", tint: .blue)
+                        ForEach(services.accessories) { device in
+                            HStack {
+                                Image(systemName: Self.accessorySymbol(device.kind)).frame(width: 22)
+                                Text(device.name)
+                                Spacer()
+                                ForEach(device.levels, id: \.self) { level in
+                                    Text((level.label.map { $0 + " " } ?? "") + "\(level.percent) %")
+                                        .monospacedDigit()
+                                        .foregroundStyle(level.percent <= 15 ? .red : .primary)
+                                        .padding(.leading, 10)
+                                }
+                            }
+                        }
+                    }
+                }
+                if monitor.snapshot.battery == nil && services.accessories.isEmpty {
                     ContentUnavailableView("No battery", systemImage: "powerplug", description: Text("This Mac runs on mains power."))
                 }
             }
             .padding(20)
         }
         .navigationTitle("Battery")
+    }
+
+    static func accessorySymbol(_ kind: String) -> String {
+        switch kind.lowercased() {
+        case let k where k.contains("head"): "airpods"
+        case let k where k.contains("keyboard"): "keyboard"
+        case let k where k.contains("trackpad"): "rectangle.and.hand.point.up.left"
+        case let k where k.contains("mouse"): "computermouse"
+        case let k where k.contains("game"): "gamecontroller"
+        default: "dot.radiowaves.left.and.right"
+        }
     }
 
     static func symbol(for b: BatteryStats) -> String {

@@ -81,6 +81,7 @@ struct AlertsView: View {
         case .disk, .diskFull: "internaldrive"
         case .network: "network"
         case .thermal: "thermometer.high"
+        case .accessory: "battery.25percent"
         }
     }
 

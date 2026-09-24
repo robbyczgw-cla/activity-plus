@@ -17,7 +17,7 @@ public struct AlertSettings: Codable, Sendable, Hashable {
 
 public struct AppAlert: Codable, Sendable, Identifiable, Hashable {
     public enum Kind: String, Codable, Sendable {
-        case cpu, memoryGrowth, disk, network, memoryPressure, diskFull, thermal
+        case cpu, memoryGrowth, disk, network, memoryPressure, diskFull, thermal, accessory
     }
     public var id = UUID()
     public let date: Date
@@ -26,6 +26,10 @@ public struct AppAlert: Codable, Sendable, Identifiable, Hashable {
     public let appName: String
     public let title: String
     public let detail: String
+
+    public init(date: Date, kind: Kind, appID: String?, appName: String, title: String, detail: String) {
+        (self.date, self.kind, self.appID, self.appName, self.title, self.detail) = (date, kind, appID, appName, title, detail)
+    }
 }
 
 /// Watches snapshots and reports apps that misbehave for a sustained period.

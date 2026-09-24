@@ -58,6 +58,7 @@ final class AppServices {
         }
 
         if Date().timeIntervalSince(lastScan) >= 5 { scanProjects(snapshot) }
+        if Date().timeIntervalSince(lastSlowRefresh) >= 60 { refreshSlowData() }
     }
 
     func scanProjects(_ snapshot: SystemSnapshot? = nil) {
@@ -75,6 +76,47 @@ final class AppServices {
                     self.scanning = false
                 }
             }
+        }
+    }
+
+    // MARK: Accessories, totals, navigation
+
+    private(set) var accessories: [DeviceBattery] = []
+    private(set) var today = HistoryStore.Totals()
+    private(set) var week = HistoryStore.Totals()
+    /// A page the main window should show next (set by the menu bar panel).
+    var requestedPage: String?
+    @ObservationIgnored private var lastSlowRefresh = Date.distantPast
+    @ObservationIgnored private var lowBatteryWarned: [String: Date] = [:]
+
+    /// Work that only needs doing about once a minute.
+    private func refreshSlowData() {
+        lastSlowRefresh = Date()
+        let store = history
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        Task.detached(priority: .utility) {
+            let devices = DeviceBatterySampler.sample()
+            let today = store.totals(since: startOfDay)
+            let week = store.totals(since: Date().addingTimeInterval(-7 * 86_400))
+            await MainActor.run {
+                self.accessories = devices
+                self.today = today
+                self.week = week
+                self.warnAboutLowAccessories(devices)
+            }
+        }
+    }
+
+    private func warnAboutLowAccessories(_ devices: [DeviceBattery]) {
+        guard alertSettings.enabled, alertSettings.systemAlerts else { return }
+        for device in devices where device.lowest <= 15 {
+            if let last = lowBatteryWarned[device.name], Date().timeIntervalSince(last) < 6 * 3600 { continue }
+            lowBatteryWarned[device.name] = Date()
+            let alert = AppAlert(date: Date(), kind: .accessory, appID: nil, appName: device.name,
+                                 title: "\(device.name) is almost empty", detail: "\(device.lowest) % battery left.")
+            alerts.insert(alert, at: 0)
+            saveAlertLog()
+            notify(alert)
         }
     }
 

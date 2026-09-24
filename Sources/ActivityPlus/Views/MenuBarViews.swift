@@ -115,6 +115,7 @@ private struct StackedGlyph: View {
 /// The compact view shown when clicking the menu bar item.
 struct MenuBarPanel: View {
     @Environment(Monitor.self) private var monitor
+    @Environment(AppServices.self) private var services
     @Environment(\.openWindow) private var openWindow
     @State private var tab: Tab = .overview
 
@@ -185,6 +186,8 @@ struct MenuBarPanel: View {
             Divider()
             HStack {
                 Button("Open Activity+") {
+                    // Opens on the tab you were looking at here.
+                    services.requestedPage = tab.metric.map { "metric:\($0.rawValue)" } ?? "overview"
                     openWindow(id: "main")
                     NSApp.activate()
                 }

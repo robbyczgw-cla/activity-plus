@@ -69,3 +69,24 @@ struct GroupingTests {
         #expect(!AppGrouper.isSystemProcess(node))
     }
 }
+
+@Suite("Accessories")
+struct AccessoryTests {
+    @Test func airPodsAndMouseFromSystemProfiler() {
+        let json = """
+        {"SPBluetoothDataType":[{"controller_properties":{},
+          "device_connected":[
+            {"Robert's AirPods Pro":{"device_batteryLevelCase":"52%","device_batteryLevelLeft":"80%","device_batteryLevelRight":"78%","device_minorType":"Headphones"}},
+            {"Magic Mouse":{"device_batteryLevelMain":"41%","device_minorType":"Mouse"}},
+            {"Speaker":{"device_minorType":"Speaker"}}
+          ],
+          "device_not_connected":[{"Old":{"device_batteryLevelMain":"10%"}}]}]}
+        """
+        let devices = DeviceBatterySampler.parseBluetooth(Data(json.utf8))
+        #expect(devices.count == 2)
+        let pods = devices.first { $0.kind == "Headphones" }
+        #expect(pods?.levels.count == 3)
+        #expect(pods?.lowest == 52)
+        #expect(devices.first { $0.name == "Magic Mouse" }?.levels.first?.percent == 41)
+    }
+}

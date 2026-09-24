@@ -3,6 +3,7 @@ import SwiftUI
 
 struct OverviewView: View {
     @Environment(Monitor.self) private var monitor
+    @Environment(AppServices.self) private var services
     @Binding var selection: SidebarItem?
 
     private let columns = [GridItem(.adaptive(minimum: 250, maximum: 420), spacing: 14)]
@@ -51,15 +52,17 @@ struct OverviewView: View {
                         Sparkline(values: zip(h.diskRead.values, h.diskWrite.values).map(+), tint: Metric.disk.tint).frame(height: 38)
                         StatLine(label: "Reading", value: Format.rate(s.disk.readRate))
                         StatLine(label: "Writing", value: Format.rate(s.disk.writeRate))
-                        StatLine(label: "Written since launch", value: Format.storage(s.disk.writtenSinceLaunch))
+                        StatLine(label: "Written today", value: Format.storage(UInt64(max(services.today.diskWritten, Double(s.disk.writtenSinceLaunch)))))
                     }
                     tile(.metric(.network)) {
                         CardHeader(title: "Network", systemImage: "network", tint: Metric.network.tint, trailing: "Downloading")
                         BigNumber(text: Format.rate(s.network.inRate))
                         Sparkline(values: h.netIn.values, tint: Metric.network.tint).frame(height: 38)
                         StatLine(label: "Uploading", value: Format.rate(s.network.outRate))
-                        StatLine(label: "Received since launch", value: Format.storage(s.network.receivedSinceLaunch))
-                        StatLine(label: "Sent since launch", value: Format.storage(s.network.sentSinceLaunch))
+                        StatLine(label: "Today", value: Format.storage(UInt64(max(services.today.received + services.today.sent,
+                                                                                         Double(s.network.receivedSinceLaunch + s.network.sentSinceLaunch)))))
+                        StatLine(label: "Last 7 days", value: Format.storage(UInt64(max(services.week.received + services.week.sent,
+                                                                                       Double(s.network.receivedSinceLaunch + s.network.sentSinceLaunch)))))
                     }
                     if let battery = s.battery {
                         tile(.battery) {
