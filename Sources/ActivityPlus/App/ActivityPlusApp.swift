@@ -35,6 +35,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             AppServices.shared.attach(to: Monitor.shared)
             Monitor.shared.start()
             SnapshotRunner.runIfRequested()
+            // Started at login (or asked not to): stay in the menu bar only.
+            let hidden = ProcessInfo.processInfo.environment["ACTIVITYPLUS_HIDDEN"] != nil
+                || (UserDefaults.standard.object(forKey: "openWindowAtLaunch") as? Bool == false)
+            if hidden {
+                DispatchQueue.main.async { NSApp.windows.first { $0.title == "Activity+" }?.close() }
+            }
         }
     }
 

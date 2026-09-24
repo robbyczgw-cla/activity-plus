@@ -8,6 +8,7 @@ struct SettingsView: View {
     @AppStorage("menuBarFigure") private var figure = MenuBarFigure.cpu.rawValue
     @AppStorage("menuBarStacked") private var stacked = "cpu,memory"
     @AppStorage("showDockIcon") private var showDockIcon = true
+    @AppStorage("openWindowAtLaunch") private var openWindowAtLaunch = true
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
@@ -40,6 +41,7 @@ struct SettingsView: View {
                     Text("5 seconds").tag(5.0)
                     Text("10 seconds").tag(10.0)
                 }
+                Toggle("Open the window at launch", isOn: $openWindowAtLaunch)
                 Toggle("Show in Dock", isOn: $showDockIcon)
                     .onChange(of: showDockIcon) { _, show in
                         NSApp.setActivationPolicy(show ? .regular : .accessory)

@@ -47,7 +47,11 @@ final class AppServices {
 
     private func handle(_ snapshot: SystemSnapshot) {
         history.record(snapshot)
-        scanner.observe(snapshot.apps.flatMap(\.processes), at: snapshot.date)
+        // The scanner's state is only touched on its own queue (scan() runs there too).
+        let scanner = scanner
+        let processes = snapshot.apps.flatMap(\.processes)
+        let date = snapshot.date
+        scanQueue.async { scanner.observe(processes, at: date) }
 
         let fresh = engine.evaluate(snapshot)
         if !fresh.isEmpty {

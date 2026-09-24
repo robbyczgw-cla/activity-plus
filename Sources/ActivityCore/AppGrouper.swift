@@ -18,17 +18,30 @@ final class AppGrouper {
     }
 
     private var bundleCache: [String: Bundle] = [:]
+    /// Which group a process belongs to never changes, so resolve it once per (pid, start time).
+    private var resolved: [pid_t: (start: Date, key: String, name: String, kind: AppGroup.Kind, bundle: Bundle?)] = [:]
 
     func group(_ processes: [ProcessSample]) -> [AppGroup] {
         let byPID = Dictionary(processes.map { ($0.pid, $0) }, uniquingKeysWith: { a, _ in a })
         var members: [String: [ProcessSample]] = [:]
         var descriptors: [String: (name: String, kind: AppGroup.Kind, bundle: Bundle?)] = [:]
 
+        var stillAlive: [pid_t: (start: Date, key: String, name: String, kind: AppGroup.Kind, bundle: Bundle?)] = [:]
         for process in processes {
-            let (key, name, kind, bundle) = resolve(process, byPID: byPID)
+            let entry: (start: Date, key: String, name: String, kind: AppGroup.Kind, bundle: Bundle?)
+            // Processes without details may gain them (and a better parent) on the next `ps` refresh; re-resolve those.
+            if let cached = resolved[process.pid], cached.start == process.startTime, process.hasDetails {
+                entry = cached
+            } else {
+                let (key, name, kind, bundle) = resolve(process, byPID: byPID)
+                entry = (process.startTime, key, name, kind, bundle)
+            }
+            stillAlive[process.pid] = entry
+            let (key, name, kind, bundle) = (entry.key, entry.name, entry.kind, entry.bundle)
             members[key, default: []].append(process)
             if descriptors[key] == nil { descriptors[key] = (name, kind, bundle) }
         }
+        resolved = stillAlive
 
         return members.map { key, procs in
             let descriptor = descriptors[key]!

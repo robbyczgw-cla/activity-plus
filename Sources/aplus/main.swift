@@ -8,6 +8,10 @@ import Foundation
 
 let arguments = Set(CommandLine.arguments.dropFirst())
 let sampler = SystemSampler()
+if arguments.contains("--bench") {
+    for (name, ms) in sampler.benchmark() { print(name.padding(toLength: 20, withPad: " ", startingAt: 0), String(format: "%7.1f ms", ms)) }
+    exit(0)
+}
 _ = sampler.sample()                 // First sample only primes the counters.
 Thread.sleep(forTimeInterval: 2)
 let snapshot = sampler.sample()

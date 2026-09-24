@@ -199,6 +199,8 @@ struct MenuBarPanel: View {
         }
         .padding(14)
         .frame(width: 340)
+        .onAppear { monitor.panelVisible = true }
+        .onDisappear { monitor.panelVisible = false }
     }
 
     private func mini(_ title: String, _ value: String, _ metric: Metric?, tint: Color? = nil) -> some View {

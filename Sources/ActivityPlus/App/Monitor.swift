@@ -55,6 +55,14 @@ final class Monitor {
         }
     }
 
+    /// Set by the main window and the menu bar panel. With neither visible, sampling slows to 5 s:
+    /// history and alerts work in minute buckets and lose nothing.
+    var windowVisible = false { didSet { if windowVisible != oldValue { schedule() } } }
+    var panelVisible = false { didSet { if panelVisible != oldValue { schedule() } } }
+    private var effectiveInterval: TimeInterval {
+        windowVisible || panelVisible ? interval : max(interval, 5)
+    }
+
     /// Everything that wants each fresh snapshot (history store, alerts…) registers here.
     @ObservationIgnored var observers: [(SystemSnapshot) -> Void] = []
 
@@ -67,15 +75,19 @@ final class Monitor {
         interval = stored > 0 ? stored : 2
     }
 
+    private var started = false
+
     func start() {
-        guard timer == nil else { return }
+        guard !started else { return }
+        started = true
         schedule()
     }
 
     private func schedule() {
+        guard started else { return }
         timer?.cancel()
         let timer = DispatchSource.makeTimerSource(queue: queue)
-        timer.schedule(deadline: .now(), repeating: interval, leeway: .milliseconds(200))
+        timer.schedule(deadline: .now() + (self.timer == nil ? 0 : 0.2), repeating: effectiveInterval, leeway: .milliseconds(300))
         let sampler = sampler
         timer.setEventHandler { [weak self] in
             let snapshot = sampler.sample()

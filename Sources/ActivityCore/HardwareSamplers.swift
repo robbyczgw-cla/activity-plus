@@ -101,7 +101,7 @@ final class MemorySampler {
         if result == KERN_SUCCESS {
             let page = Sys.pageSize
             // Same definitions Activity Monitor uses.
-            stats.app = UInt64(vm.internal_page_count &- vm.purgeable_count) * page
+            stats.app = UInt64(vm.internal_page_count > vm.purgeable_count ? vm.internal_page_count - vm.purgeable_count : 0) * page
             stats.wired = UInt64(vm.wire_count) * page
             stats.compressed = UInt64(vm.compressor_page_count) * page
             stats.cachedFiles = UInt64(vm.external_page_count + vm.purgeable_count) * page
@@ -152,10 +152,16 @@ final class DiskSampler {
 
         let totals = Self.blockStorageTotals()
         if baseline == nil { baseline = totals }
+        // Totals drop when a disk is ejected; start counting from the new total instead of wrapping around.
+        if let prev = previous, totals.read < prev.read || totals.write < prev.write {
+            let sinceLaunch = (read: (previous?.read ?? 0) &- (baseline?.read ?? 0), write: (previous?.write ?? 0) &- (baseline?.write ?? 0))
+            baseline = (totals.read &- sinceLaunch.read, totals.write &- sinceLaunch.write)
+            previous = nil
+        }
         if let prev = previous, previousTime > 0 {
             let elapsed = Double(now - previousTime) / 1_000_000_000
-            stats.readRate = Double(totals.read &- prev.read) / elapsed
-            stats.writeRate = Double(totals.write &- prev.write) / elapsed
+            stats.readRate = Double(totals.read - prev.read) / elapsed
+            stats.writeRate = Double(totals.write - prev.write) / elapsed
         }
         stats.readSinceLaunch = totals.read &- (baseline?.read ?? totals.read)
         stats.writtenSinceLaunch = totals.write &- (baseline?.write ?? totals.write)
@@ -207,10 +213,16 @@ final class NetworkSampler {
         let now = DispatchTime.now().uptimeNanoseconds
         let totals = Self.interfaceTotals()
         if baseline == nil { baseline = totals }
+        // An interface going away lowers the totals; restart the delta rather than wrapping around.
+        if let prev = previous, totals.0 < prev.0 || totals.1 < prev.1 {
+            let sent = (prev.0 &- (baseline?.0 ?? 0), prev.1 &- (baseline?.1 ?? 0))
+            baseline = (totals.0 &- sent.0, totals.1 &- sent.1)
+            previous = nil
+        }
         if let prev = previous, previousTime > 0 {
             let elapsed = Double(now - previousTime) / 1_000_000_000
-            stats.inRate = Double(totals.0 &- prev.0) / elapsed
-            stats.outRate = Double(totals.1 &- prev.1) / elapsed
+            stats.inRate = Double(totals.0 - prev.0) / elapsed
+            stats.outRate = Double(totals.1 - prev.1) / elapsed
         }
         stats.receivedSinceLaunch = totals.0 &- (baseline?.0 ?? totals.0)
         stats.sentSinceLaunch = totals.1 &- (baseline?.1 ?? totals.1)
@@ -411,7 +423,10 @@ final class BatterySampler {
         stats.cycleCount = number("CycleCount")?.intValue ?? 0
 
         // Amperage is a signed 16-bit value that IOKit sometimes hands over as a huge unsigned number.
-        let amperage = Double(Int64(truncatingIfNeeded: number("Amperage")?.int64Value ?? 0))
+        // Negative values arrive either as 64-bit two's complement (int64Value handles that) or as a raw
+        // 16-bit pattern such as 65 500, which is really −36 mA.
+        let rawAmperage = number("Amperage")?.int64Value ?? 0
+        let amperage = Double((32_768..<65_536).contains(rawAmperage) ? Int64(Int16(truncatingIfNeeded: rawAmperage)) : rawAmperage)
         let voltage = number("Voltage")?.doubleValue ?? 0
         stats.batteryPower = amperage * voltage / 1_000_000
 

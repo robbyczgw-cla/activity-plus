@@ -15,13 +15,13 @@ enum ProcessActions {
             let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
             if !running.isEmpty {
                 for app in running { if force { app.forceTerminate() } else { app.terminate() } }
-                if force { app.processes.forEach { _ = signal($0.pid, force: true) } }
+                if force { app.processes.forEach { _ = signal($0, force: true) } }
                 return .done
             }
         }
         // Children first, so parents do not respawn them.
         let ordered = app.processes.sorted { $0.pid > $1.pid }
-        let failures = ordered.filter { !signal($0.pid, force: force) }
+        let failures = ordered.filter { !signal($0, force: force) }
         if failures.count == ordered.count, !ordered.isEmpty {
             return .denied("macOS did not allow Activity+ to stop \(app.name). It belongs to another user or to the system.")
         }
@@ -34,13 +34,17 @@ enum ProcessActions {
             if force { app.forceTerminate() } else { app.terminate() }
             return .done
         }
-        return signal(process.pid, force: force)
+        return signal(process, force: force)
             ? .done
             : .denied("macOS did not allow Activity+ to stop \(process.name) (pid \(process.pid)).")
     }
 
-    private static func signal(_ pid: pid_t, force: Bool) -> Bool {
-        guard pid > 1, pid != getpid() else { return false }
+    /// Signals the process only if it is still the one the user saw: pids get reused, and the
+    /// confirmation dialog may have been open for a while.
+    private static func signal(_ process: ProcessSample, force: Bool) -> Bool {
+        let pid = process.pid
+        guard pid > 1, pid != getpid(), ProcessIdentity.isSame(pid: pid, startTime: process.startTime, hasDetails: process.hasDetails)
+        else { return false }
         return kill(pid, force ? SIGKILL : SIGTERM) == 0
     }
 

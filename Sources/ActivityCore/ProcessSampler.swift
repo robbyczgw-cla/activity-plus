@@ -20,74 +20,81 @@ final class ProcessSampler {
         var restricted: Int
     }
 
+    // `ps` results for processes we cannot query ourselves (root, _windowserver…), refreshed every few seconds.
+    private var listed: [pid_t: Listed] = [:]
+    private var listedCPU: [pid_t: Double] = [:]
+    private var listedAt: UInt64 = 0
+    /// How often `ps` runs. It only matters for other users' processes; our own come from the kernel every tick.
+    var listInterval: TimeInterval = 5
+
     func sample() -> Result {
         let now = DispatchTime.now().uptimeNanoseconds
         let elapsed = previousTime == 0 ? 0 : Double(now - previousTime) / 1_000_000_000
         previousTime = now
+
+        if listedAt == 0 || Double(now - listedAt) / 1_000_000_000 >= listInterval {
+            refreshListed(now: now)
+        }
 
         var processes: [ProcessSample] = []
         var restricted = 0
         var current: [pid_t: Counters] = [:]
         var seenPaths: [pid_t: (start: Date, path: String?)] = [:]
 
-        // `ps` is setuid root, so it sees every process (including root and _windowserver ones
-        // the kernel hides from us) with cumulative CPU time and RSS. Precise per-task counters
-        // from proc_pid_rusage replace those figures wherever we are allowed to read them.
-        let listed = Self.listProcesses()
-        for entry in listed {
-            let pid = entry.pid
+        for pid in Self.allPIDs() {
             let bsd = Self.bsdInfo(pid)
+            let entry = listed[pid]
+            // Neither the kernel nor the last `ps` knows it: it started a moment ago under another user.
+            guard bsd != nil || entry != nil else { continue }
             let start = bsd.map {
                 Date(timeIntervalSince1970: TimeInterval($0.pbi_start_tvsec) + TimeInterval($0.pbi_start_tvusec) / 1_000_000)
-            } ?? Self.pseudoStart(for: entry)
+            } ?? Self.pseudoStart(for: entry!)
 
             let path: String?
             if let cached = pathCache[pid], cached.start == start {
                 path = cached.path
             } else {
-                path = Self.path(of: pid) ?? (entry.command.hasPrefix("/") ? entry.command : nil)
+                path = Self.path(of: pid) ?? entry.flatMap { $0.command.hasPrefix("/") ? $0.command : nil }
             }
             seenPaths[pid] = (start, path)
 
             var sample = ProcessSample(
                 pid: pid,
-                ppid: bsd.map { Int32($0.pbi_ppid) } ?? entry.ppid,
-                uid: bsd?.pbi_uid ?? entry.uid,
-                name: Self.name(bsd: bsd, path: path, command: entry.command),
+                ppid: bsd.map { Int32($0.pbi_ppid) } ?? entry?.ppid ?? 0,
+                uid: bsd?.pbi_uid ?? entry?.uid ?? 0,
+                name: Self.name(bsd: bsd, path: path, command: entry?.command ?? ""),
                 path: path,
                 startTime: start
             )
 
-            let counters: Counters
             if let usage = Self.rusage(pid) {
-                counters = Counters(
+                let counters = Counters(
                     startTime: start,
                     cpuNanos: Double(usage.ri_user_time + usage.ri_system_time) * Sys.nanosPerTick,
                     diskRead: usage.ri_diskio_bytesread,
                     diskWritten: usage.ri_diskio_byteswritten,
                     energyNJ: usage.ri_energy_nj
                 )
+                current[pid] = counters
                 sample.memory = usage.ri_phys_footprint
-            } else {
-                counters = Counters(startTime: start, cpuNanos: entry.cpuSeconds * 1_000_000_000,
-                                    diskRead: 0, diskWritten: 0, energyNJ: 0)
-                sample.memory = entry.residentBytes
-                sample.hasDetails = false
-                restricted += 1
-            }
-            current[pid] = counters
-            sample.cpuTime = counters.cpuNanos / 1_000_000_000
+                sample.cpuTime = counters.cpuNanos / 1_000_000_000
 
-            // Only compare against the same process: pids get reused.
-            if elapsed > 0, let prev = previous[pid], prev.startTime == start {
-                sample.cpuPercent = max(0, (counters.cpuNanos - prev.cpuNanos) / (elapsed * 1_000_000_000) * 100)
-                if sample.hasDetails {
+                // Only compare against the same process: pids get reused.
+                if elapsed > 0, let prev = previous[pid], prev.startTime == start {
+                    sample.cpuPercent = max(0, (counters.cpuNanos - prev.cpuNanos) / (elapsed * 1_000_000_000) * 100)
                     sample.diskReadRate = Double(counters.diskRead &- prev.diskRead) / elapsed
                     sample.diskWriteRate = Double(counters.diskWritten &- prev.diskWritten) / elapsed
                     if counters.energyNJ >= prev.energyNJ {
                         sample.powerWatts = Double(counters.energyNJ - prev.energyNJ) / 1_000_000_000 / elapsed
                     }
                 }
+            } else {
+                // CPU rate over the last `ps` interval; resident memory instead of footprint.
+                sample.memory = entry?.residentBytes ?? 0
+                sample.cpuPercent = listedCPU[pid] ?? 0
+                sample.cpuTime = entry?.cpuSeconds ?? 0
+                sample.hasDetails = false
+                restricted += 1
             }
             processes.append(sample)
         }
@@ -95,6 +102,22 @@ final class ProcessSampler {
         previous = current
         pathCache = seenPaths
         return Result(processes: processes, restricted: restricted)
+    }
+
+    private func refreshListed(now: UInt64) {
+        let fresh = Self.listProcesses()
+        let seconds = listedAt == 0 ? 0 : Double(now - listedAt) / 1_000_000_000
+        var cpu: [pid_t: Double] = [:]
+        var byPID: [pid_t: Listed] = [:]
+        for entry in fresh {
+            byPID[entry.pid] = entry
+            if seconds > 0, let old = listed[entry.pid], old.command == entry.command, entry.cpuSeconds >= old.cpuSeconds {
+                cpu[entry.pid] = (entry.cpuSeconds - old.cpuSeconds) / seconds * 100
+            }
+        }
+        listed = byPID
+        listedCPU = cpu
+        listedAt = now
     }
 
     // MARK: - ps

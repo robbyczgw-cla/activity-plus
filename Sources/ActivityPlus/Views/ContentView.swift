@@ -88,7 +88,11 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 820, minHeight: 560)
-        .onAppear { selection = Self.decode(stored) }
+        .onAppear {
+            selection = Self.decode(stored)
+            monitor.windowVisible = true
+        }
+        .onDisappear { monitor.windowVisible = false }
         .onChange(of: selection) { _, new in stored = Self.encode(new ?? .overview) }
         .onChange(of: services.requestedPage, initial: true) { _, page in
             guard let page else { return }

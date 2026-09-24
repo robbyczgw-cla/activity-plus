@@ -17,8 +17,11 @@ public final class SystemSampler: @unchecked Sendable {
     private let sensorSampler = SensorSampler()
     private var lastSample: Date?
 
-    /// Per-app network uses `nettop`; turn off to save ~25 ms per sample.
+    /// Per-app network uses `nettop` (~90 ms wall time); it runs every `networkEvery` samples.
     public var perProcessNetwork = true
+    private var tick = 0
+    private var lastNetwork: [pid_t: (inRate: Double, outRate: Double)] = [:]
+    private var lastSensors = SensorStats()
 
     public init() {}
 
@@ -33,7 +36,10 @@ public final class SystemSampler: @unchecked Sendable {
         snapshot.disk = diskSampler.sample()
         snapshot.network = networkSampler.sample()
         snapshot.battery = batterySampler.sample()
-        snapshot.sensors = sensorSampler.sample()
+        tick += 1
+        // Temperatures move slowly and reading ~60 HID sensors costs ~60 ms: every 5th sample is plenty.
+        if tick % 5 == 1 { lastSensors = sensorSampler.sample() }
+        snapshot.sensors = lastSensors
         if snapshot.battery?.temperature == nil, let temperature = snapshot.sensors.batteryTemperature {
             snapshot.battery?.temperature = temperature
         }
@@ -42,7 +48,8 @@ public final class SystemSampler: @unchecked Sendable {
         snapshot.gpu = gpu.stats
 
         var result = processSampler.sample()
-        let network = perProcessNetwork ? processNetworkSampler.sample() : [:]
+        if perProcessNetwork, tick % 2 == 1 { lastNetwork = processNetworkSampler.sample() }
+        let network = perProcessNetwork ? lastNetwork : [:]
         for index in result.processes.indices {
             let pid = result.processes[index].pid
             if let rate = network[pid] {
@@ -66,6 +73,31 @@ public final class SystemSampler: @unchecked Sendable {
         @unknown default: .nominal
         }
         return snapshot
+    }
+
+    /// Milliseconds per sampler, averaged over `rounds` (for `aplus --bench`).
+    public func benchmark(rounds: Int = 5) -> [(String, Double)] {
+        func time(_ body: () -> Void) -> Double {
+            let start = DispatchTime.now().uptimeNanoseconds
+            body()
+            return Double(DispatchTime.now().uptimeNanoseconds - start) / 1_000_000
+        }
+        var totals: [String: Double] = [:]
+        var processes: [ProcessSample] = []
+        for _ in 0..<rounds {
+            totals["cpu", default: 0] += time { _ = cpuSampler.sample() }
+            totals["memory", default: 0] += time { _ = memorySampler.sample() }
+            totals["disk", default: 0] += time { _ = diskSampler.sample() }
+            totals["network", default: 0] += time { _ = networkSampler.sample() }
+            totals["battery", default: 0] += time { _ = batterySampler.sample() }
+            totals["sensors", default: 0] += time { _ = sensorSampler.sample() }
+            totals["gpu", default: 0] += time { _ = gpuSampler.sample() }
+            totals["ps list", default: 0] += time { _ = ProcessSampler.listProcesses() }
+            totals["processes (total)", default: 0] += time { processes = processSampler.sample().processes }
+            totals["nettop", default: 0] += time { _ = processNetworkSampler.sample() }
+            totals["grouping", default: 0] += time { _ = grouper.group(processes) }
+        }
+        return totals.map { ($0.key, $0.value / Double(rounds)) }.sorted { $0.1 > $1.1 }
     }
 
     public static var chipName: String { Sys.chipName }

@@ -17,6 +17,8 @@ public struct DevServer: Sendable, Identifiable, Hashable {
     public var lastActive: Date?
     /// Pids that belong to this server (the listener and its children).
     public var pids: [Int32]
+    /// Start time of each pid, so `stop` never signals a reused pid.
+    public var startTimes: [Int32: Date] = [:]
     public var id: Int32 { pid }
 
     public enum Activity: Sendable, Hashable {
@@ -117,7 +119,8 @@ public final class ProjectScanner: @unchecked Sendable {
                 cpuPercent: family.reduce(0) { $0 + $1.cpuPercent },
                 cpuTime: family.reduce(0) { $0 + $1.cpuTime },
                 lastActive: active,
-                pids: family.map(\.pid)
+                pids: family.map(\.pid),
+                startTimes: Dictionary(family.map { ($0.pid, $0.startTime) }, uniquingKeysWith: { a, _ in a })
             )
             serversByRoot[root, default: []].append(server)
         }
@@ -138,6 +141,7 @@ public final class ProjectScanner: @unchecked Sendable {
     public static func stop(_ server: DevServer) -> Bool {
         var stopped = false
         for pid in server.pids.sorted(by: >) where pid > 1 && pid != getpid() {
+            if let start = server.startTimes[pid], !ProcessIdentity.isSame(pid: pid, startTime: start) { continue }
             if kill(pid, SIGTERM) == 0 { stopped = true }
         }
         return stopped
