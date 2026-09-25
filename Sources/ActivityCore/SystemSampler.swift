@@ -21,8 +21,25 @@ public final class SystemSampler: @unchecked Sendable {
     private var networkDetails: (interfaces: [NetworkInterfaceInfo], wifi: WiFiInfo?, gateway: String?, at: Date)?
     private var lastSample: Date?
 
-    /// Per-app network uses `nettop` (~90 ms wall time); it runs every `networkEvery` samples.
-    public var perProcessNetwork = true
+    /// What to measure. Expensive parts can be switched off, and `background` (no window or panel
+    /// visible) skips everything that is only ever looked at, never recorded.
+    public struct Options: Sendable, Equatable {
+        public var perProcessNetwork = true      // nettop, ~90 ms wall time + a child process
+        public var perProcessGPU = true          // walks every Metal client in the IORegistry
+        public var sensors = true                // ~60 HID sensors + SMC
+        public var sensorsInBackground = false   // a menu bar item shows a temperature or fan
+        public var chip = true                   // IOReport clocks and power
+        public var drives = true                 // every drive incl. NVMe health
+        public var networkDetails = true         // interfaces, Wi-Fi, router
+        public var background = false
+        public init() {}
+    }
+    public var options = Options()
+    /// Kept for callers of the old flag.
+    public var perProcessNetwork: Bool {
+        get { options.perProcessNetwork }
+        set { options.perProcessNetwork = newValue }
+    }
     private var tick = 0
     private var lastNetwork: [pid_t: (inRate: Double, outRate: Double)] = [:]
     private var lastSensors = SensorStats()
@@ -54,19 +71,22 @@ public final class SystemSampler: @unchecked Sendable {
         snapshot.network = networkSampler.sample()
         snapshot.battery = batterySampler.sample()
         tick += 1
+        let visible = !options.background
         // Temperatures move slowly and reading ~60 HID sensors costs ~60 ms: every 5th sample is plenty.
-        if tick % 5 == 1 { lastSensors = sensorSampler.sample() }
-        snapshot.sensors = lastSensors
+        let wantSensors = options.sensors && (visible || options.sensorsInBackground)
+        if wantSensors, tick % 5 == 1 { lastSensors = sensorSampler.sample() }
+        snapshot.sensors = wantSensors ? lastSensors : SensorStats()
         if wantsSensorList, tick % 3 == 1 { lastSensorList = sensorSampler.allSensors() }
         snapshot.sensorList = wantsSensorList ? lastSensorList : []
         if snapshot.battery?.temperature == nil, let temperature = snapshot.sensors.batteryTemperature {
             snapshot.battery?.temperature = temperature
         }
 
-        snapshot.chip = chipSampler.sample()
-        if tick % 2 == 1 { lastDrives = drivesSampler.sample() }
-        snapshot.drives = lastDrives
-        if networkDetails == nil || now.timeIntervalSince(networkDetails!.at) > 10 {
+        // Clocks, drives and network details are only ever looked at, never recorded: skip them in the background.
+        if options.chip && visible { snapshot.chip = chipSampler.sample() }
+        if options.drives && visible && tick % 5 == 1 { lastDrives = drivesSampler.sample() }
+        snapshot.drives = options.drives ? lastDrives : []
+        if options.networkDetails && visible && (networkDetails == nil || now.timeIntervalSince(networkDetails!.at) > 10) {
             // Only interfaces that are up and have an address (skips awdl, idle tunnels and the like).
             let interfaces = NetworkInfo.interfaces().filter { $0.isUp && $0.id != "lo0" && !($0.ipv4.isEmpty && $0.ipv6.isEmpty) }
             networkDetails = (interfaces, NetworkInfo.wifi(), NetworkInfo.primaryGateway(), now)
@@ -75,12 +95,14 @@ public final class SystemSampler: @unchecked Sendable {
         snapshot.wifi = networkDetails?.wifi
         snapshot.gateway = networkDetails?.gateway
 
-        let gpu = gpuSampler.sample()
+        let gpu = gpuSampler.sample(perProcess: options.perProcessGPU)
         snapshot.gpu = gpu.stats
 
+        // `ps` only matters for other users' processes; in the background every 15 s is enough.
+        processSampler.listInterval = visible ? 5 : 15
         var result = processSampler.sample()
-        if perProcessNetwork, tick % 2 == 1 { lastNetwork = processNetworkSampler.sample() }
-        let network = perProcessNetwork ? lastNetwork : [:]
+        if options.perProcessNetwork, tick % (visible ? 2 : 3) == 1 { lastNetwork = processNetworkSampler.sample() }
+        let network = options.perProcessNetwork ? lastNetwork : [:]
         for index in result.processes.indices {
             let pid = result.processes[index].pid
             if let rate = network[pid] {

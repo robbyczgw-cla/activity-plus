@@ -87,23 +87,8 @@ struct ContentView: View {
             }
             .navigationSplitViewColumnWidth(min: 190, ideal: 210)
         } detail: {
-            switch selection ?? .overview {
-            case .overview: OverviewView(selection: $selection).navigationTitle("Overview")
-            case .metric(let metric): MetricDetailView(metric: metric).id(metric)
-            case .battery: BatteryView()
-            case .sensors: SensorsView()
-            case .projects: ProjectsView()
-            case .history: HistoryView()
-            case .alerts: AlertsView()
-            case .sound: SoundView()
-            case .diagnosis: DiagnosisView(selection: $selection)
-            case .startup: StartupItemsView()
-            case .storage: StorageView()
-            case .weekly: WeeklyReportView()
-            case .automations: AutomationsView()
-            case .sleep: SleepView()
-            case .connections: ConnectionsView()
-            }
+            // A hidden or fully covered window renders nothing: charts would otherwise redraw every sample.
+            if monitor.windowVisible { detail } else { Color.clear }
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -125,10 +110,8 @@ struct ContentView: View {
         .frame(minWidth: 820, minHeight: 560)
         .background(WindowActionsCapture())
         .tint(AccentChoice.color(accent))
-        .onAppear {
-            selection = Self.decode(stored)
-            monitor.windowVisible = true
-        }
+        .background(WindowVisibilityTracker { visible in monitor.windowVisible = visible })
+        .onAppear { selection = Self.decode(stored) }
         .onDisappear { monitor.windowVisible = false }
         .onChange(of: selection) { _, new in stored = Self.encode(new ?? .overview) }
         .onChange(of: services.requestedPage, initial: true) { _, page in
@@ -138,6 +121,26 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: SnapshotRunner.selectNotification)) { note in
             if let page = note.object as? String { selection = Self.decode(page) }
+        }
+    }
+
+    @ViewBuilder private var detail: some View {
+        switch selection ?? .overview {
+        case .overview: OverviewView(selection: $selection).navigationTitle("Overview")
+        case .metric(let metric): MetricDetailView(metric: metric).id(metric)
+        case .battery: BatteryView()
+        case .sensors: SensorsView()
+        case .projects: ProjectsView()
+        case .history: HistoryView()
+        case .alerts: AlertsView()
+        case .sound: SoundView()
+        case .diagnosis: DiagnosisView(selection: $selection)
+        case .startup: StartupItemsView()
+        case .storage: StorageView()
+        case .weekly: WeeklyReportView()
+        case .automations: AutomationsView()
+        case .sleep: SleepView()
+        case .connections: ConnectionsView()
         }
     }
 
@@ -168,4 +171,45 @@ struct ContentView: View {
 
     static func encode(_ item: SidebarItem) -> String { item.key }
     static func decode(_ string: String) -> SidebarItem { SidebarItem.from(string) }
+}
+
+/// Reports whether the window is actually on screen (not ordered out, minimized or fully covered).
+struct WindowVisibilityTracker: NSViewRepresentable {
+    let onChange: (Bool) -> Void
+
+    func makeNSView(context: Context) -> TrackingView {
+        let view = TrackingView()
+        view.onChange = onChange
+        return view
+    }
+
+    func updateNSView(_ view: TrackingView, context: Context) { view.onChange = onChange }
+
+    final class TrackingView: NSView {
+        var onChange: ((Bool) -> Void)?
+        private var observers: [NSObjectProtocol] = []
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            observers.forEach(NotificationCenter.default.removeObserver)
+            observers = []
+            guard let window else { onChange?(false); return }
+            let names: [Notification.Name] = [NSWindow.didChangeOcclusionStateNotification, NSWindow.willCloseNotification,
+                                              NSWindow.didMiniaturizeNotification, NSWindow.didDeminiaturizeNotification]
+            for name in names {
+                observers.append(NotificationCenter.default.addObserver(forName: name, object: window, queue: .main) { [weak self] note in
+                    self?.report(closing: note.name == NSWindow.willCloseNotification)
+                })
+            }
+            report(closing: false)
+        }
+
+        private func report(closing: Bool) {
+            guard let window else { return }
+            let visible = !closing && window.isVisible && window.occlusionState.contains(.visible) && !window.isMiniaturized
+            DispatchQueue.main.async { self.onChange?(visible) }
+        }
+
+        deinit { observers.forEach(NotificationCenter.default.removeObserver) }
+    }
 }

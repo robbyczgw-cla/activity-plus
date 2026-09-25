@@ -65,12 +65,16 @@ final class AppServices {
 
         engine.evaluate(snapshot).forEach(record)
 
-        if Date().timeIntervalSince(lastScan) >= 5 { scanProjects(snapshot) }
+        // lsof for dev servers: every 5 s while you look, every 60 s otherwise.
+        let scanEvery: TimeInterval = Monitor.shared.isVisible ? 5 : 60
+        if Performance.devServers, Date().timeIntervalSince(lastScan) >= scanEvery { scanProjects(snapshot) }
         runAutomations(snapshot)
-        hangs.poll()
+        pollCount += 1
+        // WindowServer's "not responding" flag: every other sample is plenty to catch real freezes.
+        if Performance.hangs, pollCount % 2 == 0 { hangs.poll() }
         if Date().timeIntervalSince(lastSlowRefresh) >= 60 {
             refreshSlowData()
-            refreshInsights()
+            if Performance.insights { refreshInsights() } else { anomalies = []; leaks = [:] }
             notifyWeeklyReportIfDue()
         }
     }
@@ -101,6 +105,7 @@ final class AppServices {
     /// A page the main window should show next (set by the menu bar panel).
     var requestedPage: String?
     @ObservationIgnored private var lastSlowRefresh = Date.distantPast
+    @ObservationIgnored private var pollCount = 0
     @ObservationIgnored private var lowBatteryWarned: [String: Date] = [:]
 
     /// Work that only needs doing about once a minute.

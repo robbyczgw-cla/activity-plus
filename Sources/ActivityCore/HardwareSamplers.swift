@@ -329,7 +329,8 @@ final class GPUSampler {
         var perProcess: [pid_t: Double]
     }
 
-    func sample() -> Result {
+    /// `perProcess: false` skips walking every Metal client (the expensive part).
+    func sample(perProcess: Bool = true) -> Result {
         var iterator: io_iterator_t = 0
         guard IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching("IOAccelerator"), &iterator) == KERN_SUCCESS
         else { return Result(stats: nil, perProcess: [:]) }
@@ -346,13 +347,18 @@ final class GPUSampler {
                 gpu.memoryInUse += (perf["In use system memory"] as? NSNumber)?.uint64Value ?? 0
                 stats = gpu
             }
-            Self.collectAppUsage(under: accelerator, into: &appTime)
+            if perProcess { Self.collectAppUsage(under: accelerator, into: &appTime) }
             IOObjectRelease(accelerator)
             accelerator = IOIteratorNext(iterator)
         }
 
         let now = DispatchTime.now().uptimeNanoseconds
         var perProcess: [pid_t: Double] = [:]
+        guard !appTime.isEmpty else {
+            previousAppTime = [:]
+            previousTime = 0
+            return Result(stats: stats, perProcess: [:])
+        }
         if previousTime > 0 {
             let elapsed = Double(now - previousTime)
             for (pid, time) in appTime {

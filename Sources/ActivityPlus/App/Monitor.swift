@@ -57,8 +57,9 @@ final class Monitor {
 
     /// Set by the main window and the menu bar panel. With neither visible, sampling slows to 5 s:
     /// history and alerts work in minute buckets and lose nothing.
-    var windowVisible = false { didSet { if windowVisible != oldValue { schedule() } } }
-    var panelVisible = false { didSet { if panelVisible != oldValue { schedule() } } }
+    var windowVisible = false { didSet { if windowVisible != oldValue { visibilityChanged() } } }
+    var panelVisible = false { didSet { if panelVisible != oldValue { visibilityChanged() } } }
+    var isVisible: Bool { windowVisible || panelVisible }
     /// The full sensor list is only read while the Temperatures page is open.
     var sensorListWanted = false {
         didSet {
@@ -67,7 +68,28 @@ final class Monitor {
         }
     }
     private var effectiveInterval: TimeInterval {
-        windowVisible || panelVisible ? interval : max(interval, 5)
+        isVisible ? interval : max(interval, Performance.backgroundInterval)
+    }
+
+    private func visibilityChanged() {
+        applyOptions()
+        schedule()
+    }
+
+    /// Pushes Settings → Performance and the current visibility to the sampler.
+    func applyOptions() {
+        var options = SystemSampler.Options()
+        options.perProcessNetwork = Performance.perAppNetwork
+        options.perProcessGPU = Performance.perAppGPU
+        options.sensors = Performance.sensors
+        options.chip = Performance.chip
+        options.drives = Performance.drives
+        options.networkDetails = Performance.networkDetails
+        options.background = !isVisible
+        let modules = Set(MenuBarItemStore.load().map(\.module))
+        options.sensorsInBackground = !modules.isDisjoint(with: [.temperature, .fans])
+        let sampler = sampler
+        queue.async { sampler.options = options }
     }
 
     /// Everything that wants each fresh snapshot (history store, alerts…) registers here.
@@ -93,7 +115,17 @@ final class Monitor {
     func start() {
         guard !started else { return }
         started = true
+        applyOptions()
         schedule()
+        NotificationCenter.default.addObserver(forName: Performance.changed, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.applyOptions()
+                self?.schedule()
+            }
+        }
+        NotificationCenter.default.addObserver(forName: MenuBarItemStore.changed, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.applyOptions() }
+        }
     }
 
     private func schedule() {

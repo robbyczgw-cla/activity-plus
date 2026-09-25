@@ -12,6 +12,7 @@ struct SettingsView: View {
             MenuBarSettings().tabItem { Label("Menu Bar", systemImage: "menubar.rectangle") }.tag("menuBar")
             WindowSettings().tabItem { Label("Window", systemImage: "macwindow") }.tag("window")
             UnitsSettings().tabItem { Label("Units", systemImage: "ruler") }.tag("units")
+            PerformanceSettings().tabItem { Label("Performance", systemImage: "gauge.with.dots.needle.33percent") }.tag("performance")
             UpdatesSettings().tabItem { Label("Updates", systemImage: "arrow.down.circle") }.tag("updates")
         }
         .frame(width: 640)
@@ -373,5 +374,67 @@ private struct HelperSection: View {
             if let error = helper.lastError { Text(error).font(.caption).foregroundStyle(.red) }
         }
         .onAppear { helper.refresh() }
+    }
+}
+
+// MARK: - Performance
+
+/// Switches for everything that costs noticeable CPU or energy. Costs measured on an M1 Max with ~900 processes.
+private struct PerformanceSettings: View {
+    @AppStorage("perf.perAppNetwork") private var perAppNetwork = true
+    @AppStorage("perf.perAppGPU") private var perAppGPU = true
+    @AppStorage("perf.sensors") private var sensors = true
+    @AppStorage("perf.chip") private var chip = true
+    @AppStorage("perf.drives") private var drives = true
+    @AppStorage("perf.networkDetails") private var networkDetails = true
+    @AppStorage("perf.devServers") private var devServers = true
+    @AppStorage("perf.hangs") private var hangs = true
+    @AppStorage("perf.insights") private var insights = true
+    @AppStorage("perf.backgroundInterval") private var backgroundInterval = 5.0
+
+    var body: some View {
+        Form {
+            Section {
+                Picker("With no window open, measure every", selection: $backgroundInterval) {
+                    Text("5 seconds").tag(5.0)
+                    Text("10 seconds").tag(10.0)
+                    Text("30 seconds").tag(30.0)
+                    Text("1 minute").tag(60.0)
+                }
+                Text("While only the menu bar is shown, clocks, drives, network details and (unless a menu bar item shows them) temperatures are not read at all.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Section("Measurements") {
+                row("Network use per app", "Runs nettop, a separate process. Without it, per-app network figures, alerts and history stay empty.", "high", $perAppNetwork)
+                row("GPU use per app", "Walks every graphics client in the system registry.", "medium", $perAppGPU)
+                row("Temperatures and fans", "Reads about 60 sensors every 10 seconds.", "medium", $sensors)
+                row("Clock speeds and chip power", "IOReport, only while a window or the panel is open.", "low", $chip)
+                row("Drives and SSD health", "Only while a window or the panel is open.", "low", $drives)
+                row("Network details", "Interfaces, Wi-Fi and router, every 10 seconds while you look.", "low", $networkDetails)
+            }
+            Section("Background features") {
+                row("Dev servers and ports", "Runs lsof every 5 seconds while you look, every minute otherwise.", "medium", $devServers)
+                row("Freeze detection", "Asks WindowServer about every open app every few seconds.", "medium", $hangs)
+                row("Unusual activity and leaks", "Compares apps with their history once a minute.", "low", $insights)
+            }
+        }
+        .formStyle(.grouped)
+        .onChange(of: [perAppNetwork, perAppGPU, sensors, chip, drives, networkDetails, devServers, hangs, insights]) { _, _ in Performance.notify() }
+        .onChange(of: backgroundInterval) { _, _ in Performance.notify() }
+    }
+
+    private func row(_ title: String, _ detail: String, _ cost: String, _ isOn: Binding<Bool>) -> some View {
+        Toggle(isOn: isOn) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(title)
+                    Text(cost + " cost")
+                        .font(.caption2.weight(.semibold))
+                        .padding(.horizontal, 5).padding(.vertical, 1)
+                        .background((cost == "high" ? Color.orange : cost == "medium" ? Color.yellow : Color.green).opacity(0.2), in: Capsule())
+                }
+                Text(detail).font(.caption).foregroundStyle(.secondary)
+            }
+        }
     }
 }
