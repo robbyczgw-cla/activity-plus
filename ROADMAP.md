@@ -12,6 +12,7 @@
 - `aplus mcp`: read-only MCP server for AI agents
 
 ## Next
+- [ ] Universal build (arm64 + x86_64) so Intel Macs can run it
 - [ ] **Privileged helper** (SMAppService daemon + XPC) for exact disk, energy and memory figures of root processes
 - [ ] Test per-app volume, freeze detection and accessory batteries in daily use
 - [ ] CPU power: find a documented source (IOReport's CPU energy channels read 0 on macOS 27)

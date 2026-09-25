@@ -1,18 +1,32 @@
+<p align="center"><img src="docs/media/banner.png" alt="Activity+ — Which app is slowing your Mac down?" width="900"></p>
+
+<p align="center">
+  <a href="https://activityplus.xyz"><b>Website</b></a> &nbsp;·&nbsp;
+  <a href="https://activityplus.xyz/#download"><b>Download</b></a> &nbsp;·&nbsp;
+  <a href="https://activityplus.xyz/assets/video/activityplus-trailer.mp4"><b>Film ansehen (1 Min.)</b></a> &nbsp;·&nbsp;
+  <a href="README.md">English</a>
+</p>
+
+<p align="center">
+  <img alt="macOS 15+" src="https://img.shields.io/badge/macOS-15%2B-15172B">
+  <img alt="Apple silicon" src="https://img.shields.io/badge/Apple%20silicon-arm64-3E6BFF">
+  <img alt="Notarisiert" src="https://img.shields.io/badge/notarisiert-Apple-26A862">
+  <img alt="MIT" src="https://img.shields.io/badge/Lizenz-MIT-8B5CF6">
+</p>
+
 # Activity+
 
 **Ein Systemmonitor für macOS, der sagt, welche App verantwortlich ist – und was man dagegen tun kann.**
 
-[English](README.md)
+Die Aktivitätsanzeige listet rund 900 Prozesse. Activity+ fasst sie zu den rund 80 Apps zusammen, die Sie kennen, speichert 30 Tage Verlauf, warnt, wenn sich eine App danebenbenimmt, erklärt, warum der Mac langsam ist, und sitzt in einer Menüleiste, die Sie selbst zusammenstellen. Alle Daten bleiben auf dem Mac.
 
-Die Aktivitätsanzeige listet rund 800 Prozesse. Activity+ fasst sie zu rund 80 Apps zusammen, speichert 30 Tage Verlauf, warnt, wenn sich eine App danebenbenimmt, erklärt, warum der Mac langsam ist, und sitzt in der Menüleiste – so, wie Sie es haben wollen. Alle Daten bleiben auf dem Mac.
-
-![Übersicht](docs/screenshots/overview.png)
+<p align="center"><img src="docs/media/fold.gif" alt="Prozesse falten sich zu den Apps, zu denen sie gehören" width="720"></p>
 
 ## Download
 
-Die aktuelle notarisierte Version gibt es unter [Releases](https://github.com/robbyczgw-cla/activity-plus/releases/latest). Entpacken, **Activity+.app** in den Programme-Ordner ziehen und öffnen. Updates kommen einmal am Tag automatisch; das lässt sich in den Einstellungen abschalten.
+Die aktuelle notarisierte Version gibt es auf **[activityplus.xyz](https://activityplus.xyz/#download)**. Entpacken, **Activity+.app** in den Programme-Ordner ziehen und öffnen. Updates kommen einmal am Tag automatisch; das lässt sich in den Einstellungen abschalten.
 
-Voraussetzung ist macOS 15 Sequoia oder neuer. Entwickelt und getestet auf Apple silicon (M1 Max); Intel-Macs sollten funktionieren, sind aber nicht getestet.
+Voraussetzung ist ein Mac mit Apple silicon und macOS 15 Sequoia oder neuer. Entwickelt und getestet auf einem M1 Max.
 
 ## Was es kann
 
@@ -22,7 +36,7 @@ Voraussetzung ist macOS 15 Sequoia oder neuer. Entwickelt und getestet auf Apple
 - **Prozess-Inspektor.** Doppelklick auf einen Prozess zeigt Befehlszeile, Arbeitsordner, wer ihn gestartet hat, wer ihn signiert hat (und ob er notarisiert ist), offene Dateien und Netzwerkverbindungen.
 - **Verbindungen.** Mit welchen Servern jede App gerade spricht. Hostnamen werden nur nachgeschlagen, wenn Sie das einschalten.
 
-![CPU](docs/screenshots/metric-cpu.png)
+![CPU](docs/screenshots/metric-memory.jpg)
 
 ### Hardware
 - CPU pro Kern (Effizienz- und Leistungskerne), **Takt pro Cluster**, Last, Temperaturzustand.
@@ -33,24 +47,28 @@ Voraussetzung ist macOS 15 Sequoia oder neuer. Entwickelt und getestet auf Apple
 - **Alle Sensoren**: mehrere hundert Temperaturen, Spannungen, Ströme und Leistungswerte, dazu die Lüfter.
 - Akku-Zustand, Ladezyklen und Leistungsaufnahme, dazu die Akkus von AirPods, Magic Mouse, Keyboard und Trackpad.
 
-![Festplatte](docs/screenshots/metric-disk.png)
+![Festplatte](docs/screenshots/metric-disk.jpg)
 
 ### Eine Menüleiste, wie Sie sie wollen
-Beliebig viele Menüleisten-Einträge. Jeder zeigt eine Sache (CPU, Speicher, GPU, Festplatte, Netzwerk, Temperatur, Lüfter, Akku, Leistung oder eine Uhr mit Zeitzonen) in einem von elf Stilen: Wert, Beschriftung und Wert, Liniendiagramm, Balkendiagramm, Balken pro Kern, Ring, Tacho, Punkt, Up/Down-Geschwindigkeit, Akku oder Symbol. Farben passen sich der Menüleiste an, gehen mit der Last von Grün nach Rot oder folgen einer selbst gewählten Farbe. Ein Eintrag kann sich ausblenden, bis sein Wert hoch ist. Klick öffnet ein kompaktes Panel auf dem passenden Reiter, Rechtsklick ein Menü.
+Beliebig viele Menüleisten-Einträge. Jeder zeigt eine Sache (CPU, Speicher, GPU, Festplatte, Netzwerk, Temperatur, Lüfter, Akku, Leistung oder eine Uhr mit Zeitzonen) in einem von elf Stilen: Wert, Beschriftung und Wert, Liniendiagramm, Balkendiagramm, Balken pro Kern, Ring, Tacho, Punkt, Up/Down-Geschwindigkeit, Akku oder Symbol. Farben passen sich der Menüleiste an, gehen mit der Last von Grün nach Rot oder folgen einer selbst gewählten Farbe. Ein Eintrag kann sich ausblenden, bis sein Wert hoch ist. Ein Rechtsklick auf einen Eintrag schaltet Module ein und aus, wählt eine Voreinstellung (minimal, ausgewogen, alles) oder setzt Symbole vor die Werte; ein Klick öffnet ein kompaktes Panel auf dem passenden Reiter.
+
+<p align="center"><img src="docs/media/menubar.gif" alt="Menüleisten-Einträge erscheinen nacheinander" width="720"></p>
 
 ![Menüleisten-Stile](docs/screenshots/widgets-dark.png)
 
 <p>
-<img src="docs/screenshots/menubar-overview.png" width="360" alt="Menüleisten-Panel">
+<img src="docs/screenshots/menubar-panel.png" width="360" alt="Menüleisten-Panel">
 <img src="docs/screenshots/settings-menuBar.png" width="480" alt="Menüleisten-Einstellungen">
 </p>
+
+Alles, was spürbar CPU kostet, hat einen eigenen Schalter unter **Einstellungen → Leistung**; nur mit der Menüleiste braucht Activity+ etwa 1,4 % eines Kerns.
 
 Auch der Rest lässt sich einstellen: welche Seiten die Seitenleiste zeigt, welche Übersichtskarten in welcher Reihenfolge erscheinen, die Akzentfarbe, °C oder °F, Bytes oder Bits für Netzwerk-Geschwindigkeiten, das Aktualisierungsintervall und die Reiter des Menüleisten-Panels.
 
 ### Warum ist mein Mac langsam?
 Ein Klick liefert eine Antwort in klaren Worten: zu wenig Speicher, eine App unter Volllast, Drosselung wegen Hitze, fast volle Festplatte, Spotlight-Indizierung, untätige Dev-Server, lange Laufzeit mit viel Swap, verschlissener Akku. Jeder Befund zeigt seine Belege und bietet die passende Abhilfe an.
 
-![Diagnose](docs/screenshots/diagnosis.png)
+![Diagnose](docs/screenshots/diagnosis.jpg)
 
 ### Verlauf, Warnungen und Auffälligkeiten
 - **30 Tage Verlauf** in einer kleinen SQLite-Datei: Diagramme von 12 Stunden bis 30 Tage, welche Apps am meisten verbraucht haben, heute und diese Woche geschriebene und geladene Daten.

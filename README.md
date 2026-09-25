@@ -1,18 +1,32 @@
+<p align="center"><img src="docs/media/banner.png" alt="Activity+ — Which app is slowing your Mac down?" width="900"></p>
+
+<p align="center">
+  <a href="https://activityplus.xyz"><b>Website</b></a> &nbsp;·&nbsp;
+  <a href="https://activityplus.xyz/#download"><b>Download</b></a> &nbsp;·&nbsp;
+  <a href="https://activityplus.xyz/assets/video/activityplus-trailer.mp4"><b>Watch the film (1 min)</b></a> &nbsp;·&nbsp;
+  <a href="README.de.md">Deutsch</a>
+</p>
+
+<p align="center">
+  <img alt="macOS 15+" src="https://img.shields.io/badge/macOS-15%2B-15172B">
+  <img alt="Apple silicon" src="https://img.shields.io/badge/Apple%20silicon-arm64-3E6BFF">
+  <img alt="Notarized" src="https://img.shields.io/badge/notarized-Apple-26A862">
+  <img alt="MIT" src="https://img.shields.io/badge/license-MIT-8B5CF6">
+</p>
+
 # Activity+
 
 **A system monitor for macOS that tells you which app is responsible, and what to do about it.**
 
-[Deutsch](README.de.md)
+Activity Monitor lists about 900 processes. Activity+ folds them into the 80 or so apps you actually know, keeps 30 days of history, warns you when an app misbehaves, explains why your Mac is slow, and lives in a menu bar you build yourself. Everything stays on your Mac.
 
-Activity Monitor lists about 800 processes. Activity+ folds them into about 80 apps, keeps 30 days of history, warns you when an app misbehaves, explains why your Mac is slow, and lives in your menu bar, looking exactly the way you want it to. Everything stays on your Mac.
-
-![Overview](docs/screenshots/overview.png)
+<p align="center"><img src="docs/media/fold.gif" alt="Processes folding into the apps they belong to" width="720"></p>
 
 ## Download
 
-Get the latest notarized build from [Releases](https://github.com/robbyczgw-cla/activity-plus/releases/latest). Unzip it, move **Activity+.app** to Applications and open it. Updates arrive automatically once a day; you can turn that off in Settings.
+Get the latest notarized build from **[activityplus.xyz](https://activityplus.xyz/#download)**. Unzip it, move **Activity+.app** to Applications and open it. Updates arrive automatically once a day; you can turn that off in Settings.
 
-Requires macOS 15 Sequoia or later. Developed and tested on Apple silicon (M1 Max); Intel Macs should work but are untested.
+Requires a Mac with Apple silicon and macOS 15 Sequoia or later. Developed and tested on an M1 Max.
 
 ## What it does
 
@@ -22,7 +36,7 @@ Requires macOS 15 Sequoia or later. Developed and tested on Apple silicon (M1 Ma
 - **Process inspector.** Double-click a process to see its command line, working folder, who started it, who signed it (and whether it is notarized), open files and network connections.
 - **Connections.** Which servers each app talks to right now. Host names are looked up only if you switch that on.
 
-![CPU](docs/screenshots/metric-cpu.png)
+![CPU](docs/screenshots/metric-memory.jpg)
 
 ### Hardware
 - CPU per core (efficiency and performance), **clock speed per cluster**, load average, thermal state.
@@ -33,24 +47,28 @@ Requires macOS 15 Sequoia or later. Developed and tested on Apple silicon (M1 Ma
 - **All sensors**: several hundred temperatures, voltages, currents and power readings, plus fans.
 - Battery health, charge cycles and power draw, plus AirPods, Magic Mouse, Keyboard and Trackpad batteries.
 
-![Disk](docs/screenshots/metric-disk.png)
+![Disk](docs/screenshots/metric-disk.jpg)
 
 ### A menu bar that looks the way you want
-Add as many menu bar items as you like. Each shows one thing (CPU, memory, GPU, disk, network, temperature, fans, battery, power or a clock with time zones) in one of eleven styles: value, label and value, line chart, bar chart, bar per core, ring, gauge, dot, up/down speed, battery or icon. Colors can match the menu bar, go from green to red with the load, or use a color you pick. An item can hide itself until its value is high. Click an item for a compact panel on the matching tab; right-click for a menu.
+Add as many menu bar items as you like. Each shows one thing (CPU, memory, GPU, disk, network, temperature, fans, battery, power or a clock with time zones) in one of eleven styles: value, label and value, line chart, bar chart, bar per core, ring, gauge, dot, up/down speed, battery or icon. Colors can match the menu bar, go from green to red with the load, or use a color you pick. An item can hide itself until its value is high. Right-click any item to switch modules on and off, pick a preset (minimal, balanced, everything) or put symbols next to the values; click it for a compact panel on the matching tab.
+
+<p align="center"><img src="docs/media/menubar.gif" alt="Menu bar items appearing one by one" width="720"></p>
 
 ![Menu bar styles](docs/screenshots/widgets-dark.png)
 
 <p>
-<img src="docs/screenshots/menubar-overview.png" width="360" alt="Menu bar panel">
+<img src="docs/screenshots/menubar-panel.png" width="360" alt="Menu bar panel">
 <img src="docs/screenshots/settings-menuBar.png" width="480" alt="Menu bar settings">
 </p>
+
+Everything that costs noticeable CPU has its own switch in **Settings → Performance**; with only the menu bar open, Activity+ uses about 1.4 % of one core.
 
 The rest is adjustable too: which pages the sidebar shows, which Overview cards appear and in which order, the accent color, °C or °F, bytes or bits for network speeds, the refresh interval, and which tabs the menu bar panel has.
 
 ### Why is my Mac slow?
 One click gives a plain-language verdict: not enough memory, an app running flat out, heat throttling, a nearly full disk, Spotlight indexing, idle dev servers, a long uptime with heavy swap, a worn battery. Each finding shows its evidence and offers the fix.
 
-![Diagnosis](docs/screenshots/diagnosis.png)
+![Diagnosis](docs/screenshots/diagnosis.jpg)
 
 ### History, alerts and insights
 - **30 days of history** in one small SQLite file: charts for 12 hours to 30 days, which apps used the most, data written and downloaded today and this week.
