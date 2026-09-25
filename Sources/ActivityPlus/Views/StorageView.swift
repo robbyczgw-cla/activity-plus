@@ -8,6 +8,7 @@ struct StorageView: View {
     @State private var expanded: Set<String> = []
     @State private var confirmTrash = false
     @State private var result: String?
+    @State private var uninstalling: AppDiskUsage?
 
     private var selectedLocations: [StorageLocation] {
         services.storage.flatMap(\.locations).filter { selected.contains($0.path) }
@@ -76,6 +77,17 @@ struct StorageView: View {
             .padding(20)
         }
         .navigationTitle("Storage")
+        .confirmationDialog("Uninstall \(uninstalling?.name ?? "")?", isPresented: Binding(get: { uninstalling != nil }, set: { if !$0 { uninstalling = nil } }), presenting: uninstalling) { app in
+            Button("Move to Trash", role: .destructive) { uninstall(app) }
+            Button("Cancel", role: .cancel) {}
+        } message: { app in
+            let removed = Self.uninstallLocations(app, among: services.storage)
+            let bytes = removed.reduce(UInt64(0)) { $0 + $1.bytes }
+            let kept = app.locations.count - removed.count
+            Text("\(app.name) and \(removed.count - 1) folders with its settings, caches and data (\(Format.storage(bytes))) move to the Trash."
+                 + (kept > 0 ? " \(kept) shared folder(s) stay, because other apps use them too." : "")
+                 + " If it is running, it is asked to quit first. You can put it back from the Trash until you empty it.")
+        }
         .confirmationDialog("Move \(selectedLocations.count) items to the Trash?", isPresented: $confirmTrash) {
             Button("Move to Trash", role: .destructive, action: trash)
             Button("Cancel", role: .cancel) {}
@@ -99,6 +111,11 @@ struct StorageView: View {
                     .font(.caption).foregroundStyle(app.cleanableBytes > 100_000_000 ? .green : .secondary)
             }
             Spacer()
+            if Self.canUninstall(app) {
+                Button("Uninstall…") { uninstalling = app }
+                    .buttonStyle(.borderless).font(.callout)
+                    .help("Moves \(app.name) and everything it keeps in your Library to the Trash")
+            }
             UsageBar(fraction: Double(app.totalBytes) / Double(max(top, 1)), tint: .orange).frame(width: 120)
             Text(Format.storage(app.totalBytes)).monospacedDigit().frame(width: 80, alignment: .trailing)
         }
@@ -147,6 +164,41 @@ struct StorageView: View {
         case .webData: "Web data"
         case .developer: "Developer cache"
         case .other: "Other"
+        }
+    }
+
+    /// Only third-party apps in the Applications folders; never macOS apps or Activity+ itself.
+    static func canUninstall(_ app: AppDiskUsage) -> Bool {
+        guard let bundle = app.bundlePath, !bundle.hasPrefix("/System/") else { return false }
+        if app.bundleID == Bundle.main.bundleIdentifier || app.bundleID?.hasPrefix("com.apple.") == true { return false }
+        return bundle.hasPrefix("/Applications/") || bundle.hasPrefix(NSHomeDirectory() + "/Applications/")
+    }
+
+    /// What an uninstall removes. Shared group containers (used by other apps of the same developer)
+    /// always stay; if another copy of the same app is installed, only this bundle goes.
+    static func uninstallLocations(_ app: AppDiskUsage, among all: [AppDiskUsage]) -> [StorageLocation] {
+        let bundleOnly = app.locations.filter { $0.kind == .bundle }
+        let otherCopy = all.contains { $0.id != app.id && $0.bundleID != nil && $0.bundleID == app.bundleID }
+        if otherCopy { return bundleOnly }
+        return app.locations.filter { $0.kind != .groupContainers }
+    }
+
+    private func uninstall(_ app: AppDiskUsage) {
+        if let bundleID = app.bundleID {
+            for running in NSRunningApplication.runningApplications(withBundleIdentifier: bundleID) { running.terminate() }
+        }
+        // Give it a moment to quit, then move the bundle and its folders.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            if let bundleID = app.bundleID, !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty {
+                result = "\(app.name) is still running. Quit it and try again."
+                return
+            }
+            let outcome = StorageScanner.moveToTrash(Self.uninstallLocations(app, among: services.storage))
+            let moved = Set(app.locations.map(\.path)).subtracting(outcome.failures.keys)
+            services.didTrash(moved)
+            result = outcome.failures.isEmpty
+                ? "Uninstalled \(app.name): \(Format.storage(outcome.freed)) moved to the Trash."
+                : "\(app.name): \(Format.storage(outcome.freed)) moved to the Trash, \(outcome.failures.count) item(s) could not be moved (they may belong to another user or need an administrator)."
         }
     }
 

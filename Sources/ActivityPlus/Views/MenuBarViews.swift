@@ -5,8 +5,13 @@ import SwiftUI
 struct MenuBarPanel: View {
     @Environment(Monitor.self) private var monitor
     @Environment(AppServices.self) private var services
+    @Environment(\.colorScheme) private var colorScheme
     @AppStorage("menuBarPanelTab") private var tab: Tab = .overview
     @AppStorage("hiddenPanelTabs") private var hiddenTabs = ""
+    @AppStorage("panelBusyCount") private var busyCount = 5
+    @AppStorage("panelTheme") private var themeRaw = PanelTheme.system.rawValue
+    @AppStorage("accentColor") private var accent = "system"
+    private var theme: PanelTheme { PanelTheme(rawValue: themeRaw) ?? .system }
     /// The tab to show when opened from a specific menu bar item.
     var initialTab: Tab?
     var close: (() -> Void)?
@@ -79,12 +84,12 @@ struct MenuBarPanel: View {
             default: if let metric = tab.metric { detail(for: metric) }
             }
 
-            if tab != .projects {
+            if tab != .projects && busyCount > 0 {
                 Divider()
                 Text(tab == .battery ? "Using the most energy" : "Busiest right now")
                     .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 let metric = tab.metric ?? .cpu
-                ForEach(s.apps.sorted { metric.value($0) > metric.value($1) }.prefix(5)) { app in
+                ForEach(s.apps.sorted { metric.value($0) > metric.value($1) }.prefix(busyCount)) { app in
                     BusyRow(app: app, metric: metric)
                 }
             }
@@ -109,6 +114,9 @@ struct MenuBarPanel: View {
         }
         .padding(14)
         .frame(width: 360)
+        .background(theme.background(accent: AccentChoice.color(accent)))
+        .environment(\.colorScheme, theme.colorScheme ?? colorScheme)
+        .tint(AccentChoice.color(accent))
         .onAppear {
             monitor.panelVisible = true
             if let initialTab, visibleTabs.contains(initialTab) { tab = initialTab }
@@ -120,25 +128,27 @@ struct MenuBarPanel: View {
     // MARK: Tabs
 
     private var overview: some View {
-        let s = monitor.snapshot
-        return Grid(horizontalSpacing: 10, verticalSpacing: 10) {
-            GridRow {
-                mini("CPU", Format.percent(s.cpu.total), .cpu)
-                mini("Memory", Format.memory(s.memory.used), .memory)
-                mini("Network", Format.networkRate(s.network.inRate), .network)
-            }
-            GridRow {
-                mini("Disk free", Format.storage(s.disk.free), .disk)
-                mini("GPU", Format.percent(s.gpu?.utilization ?? 0), .gpu)
-                if let b = s.battery {
-                    mini("Battery", Format.percent(b.percent), .battery, tint: .green)
-                } else if let t = s.sensors.cpuTemperature {
-                    mini("CPU temp", Format.temperature(t), nil, tint: .red)
-                } else {
-                    mini("Power", Format.watts(s.apps.reduce(0) { $0 + $1.powerWatts }), .battery, tint: .green)
-                }
+        let tiles = PanelTile.load()
+        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
+            ForEach(tiles) { tile in
+                tileView(tile)
             }
         }
+    }
+
+    private func tileView(_ tile: PanelTile) -> some View {
+        Button {
+            if let target = tile.tab, visibleTabs.contains(target) { tab = target }
+        } label: {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(tile.title).font(.caption).foregroundStyle(tile.tint).lineLimit(1)
+                BigNumber(text: tile.value(monitor, services), size: 17)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(8)
+            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder private var battery: some View {
@@ -189,25 +199,6 @@ struct MenuBarPanel: View {
     }
 
     // MARK: Pieces
-
-    private func mini(_ title: String, _ value: String, _ target: Tab?, tint: Color? = nil) -> some View {
-        Button {
-            if let target { tab = target }
-        } label: {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.caption).foregroundStyle(tint ?? target?.metric?.tint ?? .secondary)
-                BigNumber(text: value, size: 17)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(8)
-            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func mini(_ title: String, _ value: String, _ metric: Metric, tint: Color? = nil) -> some View {
-        mini(title, value, Tab.allCases.first { $0.metric == metric }, tint: tint)
-    }
 
     private func stop(_ server: DevServer, project: String) {
         let ports = server.ports.map(String.init).joined(separator: ", ")

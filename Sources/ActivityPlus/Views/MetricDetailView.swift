@@ -114,6 +114,7 @@ struct MetricDetailView: View {
                 }
             }
             DrivesCard(drives: s.drives)
+            SpeedTestCard()
         case .network:
             HStack(alignment: .top, spacing: 14) {
                 Card {

@@ -10,6 +10,7 @@ struct SettingsView: View {
         TabView(selection: $tab) {
             GeneralSettings().tabItem { Label("General", systemImage: "gearshape") }.tag("general")
             MenuBarSettings().tabItem { Label("Menu Bar", systemImage: "menubar.rectangle") }.tag("menuBar")
+            PanelSettings().tabItem { Label("Panel", systemImage: "rectangle.grid.3x2") }.tag("panel")
             WindowSettings().tabItem { Label("Window", systemImage: "macwindow") }.tag("window")
             UnitsSettings().tabItem { Label("Units", systemImage: "ruler") }.tag("units")
             PerformanceSettings().tabItem { Label("Performance", systemImage: "gauge.with.dots.needle.33percent") }.tag("performance")
@@ -178,22 +179,6 @@ private struct MenuBarSettings: View {
             .frame(minHeight: 260)
 
             Toggle("Turn the first item into a warning sign while the Mac is under strain", isOn: $warn)
-            HStack {
-                Text("Panel tabs:")
-                ForEach(MenuBarPanel.Tab.allCases) { tab in
-                    Toggle(isOn: Binding(
-                        get: { !hiddenTabs.split(separator: ",").map(String.init).contains(tab.rawValue) },
-                        set: { visible in
-                            var hidden = Set(hiddenTabs.split(separator: ",").map(String.init))
-                            if visible { hidden.remove(tab.rawValue) } else { hidden.insert(tab.rawValue) }
-                            hiddenTabs = hidden.sorted().joined(separator: ",")
-                        })) {
-                        Image(systemName: tab.systemImage)
-                    }
-                    .toggleStyle(.button)
-                    .help(tab.title)
-                }
-            }
         }
         .padding(16)
         .onAppear { selection = selection ?? items.first?.id }

@@ -11,6 +11,16 @@ let arguments = Set(CommandLine.arguments.dropFirst())
 // `aplus mcp`: Model Context Protocol server on stdin/stdout for Claude, Codex & co.
 if arguments.contains("mcp") { MCPServer.run() }
 let sampler = SystemSampler()
+if arguments.contains("--speedtest") {
+    // 1 GB sequential write + read on the startup disk, page cache bypassed.
+    do {
+        let result = try DiskBenchmark().run { _, _ in }
+        print(String(format: "write %.0f MB/s   read %.0f MB/s   (%@)", result.writeMBps, result.readMBps, Format.storage(result.bytes)))
+    } catch {
+        print(error.localizedDescription)
+    }
+    exit(0)
+}
 if arguments.contains("--hardware") {
     // Probe of the newer hardware readers (IOReport power/frequency, network details).
     let chip = IOReportSampler()

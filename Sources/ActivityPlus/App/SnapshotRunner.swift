@@ -48,7 +48,7 @@ enum SnapshotRunner {
             UserDefaults.standard.set(previousTab ?? MenuBarPanel.Tab.overview.rawValue, forKey: "menuBarPanelTab")
             for dark in [false, true] { snapshotWidgetGallery(dark: dark, to: "\(dir)/widgets-\(dark ? "dark" : "light").png") }
             let previousSettingsTab = UserDefaults.standard.string(forKey: "settingsTab")
-            for tab in ["general", "menuBar", "window", "units", "updates"] {
+            for tab in ["general", "menuBar", "panel", "window", "units", "performance", "updates"] {
                 UserDefaults.standard.set(tab, forKey: "settingsTab")
                 snapshotHosted(SettingsView(), size: NSSize(width: 640, height: 620), to: "\(dir)/settings-\(tab).png")
             }
