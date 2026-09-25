@@ -17,12 +17,6 @@ struct ActivityPlusApp: App {
             CommandGroup(after: .appInfo) { CheckForUpdatesButton() }
         }
 
-        MenuBarExtra {
-            MenuBarPanel().environment(monitor).environment(AppServices.shared)
-        } label: {
-            MenuBarLabel().environment(monitor)
-        }
-        .menuBarExtraStyle(.window)
 
         Settings {
             SettingsView().environment(monitor).environment(AppServices.shared)
@@ -35,15 +29,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let showDock = UserDefaults.standard.object(forKey: "showDockIcon") as? Bool ?? true
         NSApp.setActivationPolicy(showDock ? .regular : .accessory)
         MainActor.assumeIsolated {
+            UnitPreferences.apply()
             _ = Updates.shared
             AppServices.shared.attach(to: Monitor.shared)
             Monitor.shared.start()
+            StatusItemsController.shared.start()
             SnapshotRunner.runIfRequested()
             // Started at login (or asked not to): stay in the menu bar only.
             let hidden = ProcessInfo.processInfo.environment["ACTIVITYPLUS_HIDDEN"] != nil
                 || (UserDefaults.standard.object(forKey: "openWindowAtLaunch") as? Bool == false)
             if hidden {
-                DispatchQueue.main.async { NSApp.windows.first { $0.title == "Activity+" }?.close() }
+                // Ordered out, not closed: the window (and SwiftUI's open-window action) stays available.
+                DispatchQueue.main.async { NSApp.windows.first { $0.title == "Activity+" }?.orderOut(nil) }
             }
         }
     }

@@ -4,54 +4,85 @@ import SwiftUI
 enum SidebarItem: Hashable {
     case overview
     case metric(Metric)
-    case battery
-    case sensors
-    case projects
-    case history
-    case alerts
-    case sound
-    case diagnosis
-    case startup
-    case storage
+    case battery, sensors
+    case projects, history, alerts, sound, weekly, automations, sleep, connections
+    case diagnosis, startup, storage
+
+    struct Page {
+        let item: SidebarItem
+        let key: String
+        let title: String
+        let icon: String
+        let section: String
+    }
+
+    /// Every page in sidebar order. The sidebar, Settings → Window and saved selections all come from this list.
+    static let pages: [Page] = [
+        Page(item: .overview, key: "overview", title: "Overview", icon: "square.grid.2x2", section: ""),
+    ] + [Metric.cpu, .memory, .gpu, .disk, .network, .energy].map {
+        Page(item: .metric($0), key: "metric:\($0.rawValue)", title: $0.title, icon: $0.systemImage, section: "Resources")
+    } + [
+        Page(item: .battery, key: "battery", title: "Battery", icon: "battery.75percent", section: "Resources"),
+        Page(item: .sensors, key: "sensors", title: "Temperatures", icon: "thermometer.medium", section: "Resources"),
+        Page(item: .projects, key: "projects", title: "Projects", icon: "hammer", section: "Tools"),
+        Page(item: .connections, key: "connections", title: "Connections", icon: "point.3.connected.trianglepath.dotted", section: "Tools"),
+        Page(item: .history, key: "history", title: "History", icon: "clock.arrow.circlepath", section: "Tools"),
+        Page(item: .weekly, key: "weekly", title: "Weekly Report", icon: "calendar", section: "Tools"),
+        Page(item: .alerts, key: "alerts", title: "Alerts", icon: "bell", section: "Tools"),
+        Page(item: .automations, key: "automations", title: "Automations", icon: "wand.and.stars", section: "Tools"),
+        Page(item: .sound, key: "sound", title: "Sound", icon: "speaker.wave.2", section: "Tools"),
+        Page(item: .diagnosis, key: "diagnosis", title: "Why Is It Slow?", icon: "stethoscope", section: "Maintenance"),
+        Page(item: .sleep, key: "sleep", title: "Sleep & Battery Drain", icon: "moon.zzz", section: "Maintenance"),
+        Page(item: .startup, key: "startup", title: "Startup Items", icon: "power", section: "Maintenance"),
+        Page(item: .storage, key: "storage", title: "Storage", icon: "externaldrive", section: "Maintenance"),
+    ]
+
+    /// Pages that can be hidden (Overview always stays).
+    static var customizable: [(key: String, title: String)] {
+        pages.dropFirst().map { ($0.key, $0.title) }
+    }
+
+    var key: String { Self.pages.first { $0.item == self }?.key ?? "overview" }
+    static func from(_ key: String) -> SidebarItem { pages.first { $0.key == key }?.item ?? .overview }
 }
 
 struct ContentView: View {
     @Environment(Monitor.self) private var monitor
     @Environment(AppServices.self) private var services
     @SceneStorage("sidebarSelection") private var stored = "overview"
+    @AppStorage("hiddenPages") private var hiddenPages = ""
+    @AppStorage("accentColor") private var accent = "system"
+
+    private let sections = ["", "Resources", "Tools", "Maintenance"]
+
+    private func visiblePages(in section: String) -> [SidebarItem.Page] {
+        let hidden = Set(hiddenPages.split(separator: ",").map(String.init))
+        return SidebarItem.pages.filter { page in
+            guard page.section == section, !hidden.contains(page.key) else { return false }
+            // Battery only on Macs (or with accessories) that have one.
+            if page.item == .battery { return monitor.snapshot.battery != nil || !services.accessories.isEmpty }
+            return true
+        }
+    }
+
+    @ViewBuilder private func row(_ page: SidebarItem.Page) -> some View {
+        Label(page.title, systemImage: page.icon)
+            .badge(badge(for: page.item))
+            .tag(page.item)
+    }
     @State private var selection: SidebarItem? = .overview
 
     var body: some View {
         NavigationSplitView {
             List(selection: $selection) {
-                Label("Overview", systemImage: "square.grid.2x2").tag(SidebarItem.overview)
-                Section("Resources") {
-                    ForEach([Metric.cpu, .memory, .gpu, .disk, .network, .energy]) { metric in
-                        Label(metric.title, systemImage: metric.systemImage)
-                            .badge(badge(for: metric))
-                            .tag(SidebarItem.metric(metric))
+                ForEach(sections, id: \.self) { section in
+                    if section.isEmpty {
+                        ForEach(visiblePages(in: section), id: \.key) { row($0) }
+                    } else {
+                        Section(section) {
+                            ForEach(visiblePages(in: section), id: \.key) { row($0) }
+                        }
                     }
-                    if monitor.snapshot.battery != nil || !services.accessories.isEmpty {
-                        Label("Battery", systemImage: "battery.75percent").tag(SidebarItem.battery)
-                    }
-                    Label("Temperatures", systemImage: "thermometer.medium")
-                        .badge(monitor.snapshot.sensors.cpuTemperature.map { Text(String(format: "%.0f°", $0)) })
-                        .tag(SidebarItem.sensors)
-                }
-                Section("Tools") {
-                    Label("Projects", systemImage: "hammer")
-                        .badge(services.projects.projects.flatMap(\.servers).count)
-                        .tag(SidebarItem.projects)
-                    Label("History", systemImage: "clock.arrow.circlepath").tag(SidebarItem.history)
-                    Label("Alerts", systemImage: "bell")
-                        .badge(services.alerts.filter { $0.date > Date().addingTimeInterval(-86_400) }.count)
-                        .tag(SidebarItem.alerts)
-                    Label("Sound", systemImage: "speaker.wave.2").tag(SidebarItem.sound)
-                }
-                Section("Maintenance") {
-                    Label("Why Is It Slow?", systemImage: "stethoscope").tag(SidebarItem.diagnosis)
-                    Label("Startup Items", systemImage: "power").tag(SidebarItem.startup)
-                    Label("Storage", systemImage: "externaldrive").tag(SidebarItem.storage)
                 }
             }
             .navigationSplitViewColumnWidth(min: 190, ideal: 210)
@@ -68,6 +99,10 @@ struct ContentView: View {
             case .diagnosis: DiagnosisView(selection: $selection)
             case .startup: StartupItemsView()
             case .storage: StorageView()
+            case .weekly: WeeklyReportView()
+            case .automations: AutomationsView()
+            case .sleep: SleepView()
+            case .connections: ConnectionsView()
             }
         }
         .toolbar {
@@ -88,6 +123,8 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 820, minHeight: 560)
+        .background(WindowActionsCapture())
+        .tint(AccentChoice.color(accent))
         .onAppear {
             selection = Self.decode(stored)
             monitor.windowVisible = true
@@ -110,38 +147,25 @@ struct ContentView: View {
         }
     }
 
-    private func badge(for metric: Metric) -> Text? {
+    private func badge(for item: SidebarItem) -> Text? {
         let s = monitor.snapshot
-        switch metric {
-        case .cpu: return Text(Format.percent(s.cpu.total))
-        case .memory: return Text(Format.memory(s.memory.used))
-        case .gpu: return s.gpu.map { Text(Format.percent($0.utilization)) }
+        switch item {
+        case .metric(.cpu): return Text(Format.percent(s.cpu.total))
+        case .metric(.memory): return Text(Format.memory(s.memory.used))
+        case .metric(.gpu): return s.gpu.map { Text(Format.percent($0.utilization)) }
+        case .sensors: return s.sensors.cpuTemperature.map { Text(Format.temperature($0, unit: false)) }
+        case .projects:
+            let count = services.projects.projects.flatMap(\.servers).count
+            return count > 0 ? Text("\(count)") : nil
+        case .alerts:
+            let count = services.alerts.filter { $0.date > Date().addingTimeInterval(-86_400) }.count
+            return count > 0 ? Text("\(count)") : nil
+        case .automations:
+            return services.pendingAutomations.isEmpty ? nil : Text("\(services.pendingAutomations.count)")
         default: return nil
         }
     }
 
-    static func encode(_ item: SidebarItem) -> String {
-        switch item {
-        case .overview: "overview"
-        case .metric(let m): "metric:\(m.rawValue)"
-        case .battery: "battery"
-        case .sensors: "sensors"
-        case .projects: "projects"
-        case .history: "history"
-        case .alerts: "alerts"
-        case .sound: "sound"
-        case .diagnosis: "diagnosis"
-        case .startup: "startup"
-        case .storage: "storage"
-        }
-    }
-
-    static func decode(_ string: String) -> SidebarItem {
-        if string.hasPrefix("metric:"), let m = Metric(rawValue: String(string.dropFirst(7))) { return .metric(m) }
-        let simple: [String: SidebarItem] = ["battery": .battery, "sensors": .sensors, "projects": .projects,
-                                             "history": .history, "alerts": .alerts, "sound": .sound,
-                                             "diagnosis": .diagnosis, "startup": .startup, "storage": .storage]
-        if let item = simple[string] { return item }
-        return .overview
-    }
+    static func encode(_ item: SidebarItem) -> String { item.key }
+    static func decode(_ string: String) -> SidebarItem { SidebarItem.from(string) }
 }

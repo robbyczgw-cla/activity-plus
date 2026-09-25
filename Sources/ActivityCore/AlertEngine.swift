@@ -18,6 +18,7 @@ public struct AlertSettings: Codable, Sendable, Hashable {
 public struct AppAlert: Codable, Sendable, Identifiable, Hashable {
     public enum Kind: String, Codable, Sendable {
         case cpu, memoryGrowth, disk, network, memoryPressure, diskFull, thermal, accessory
+        case unusual, leak, hang, automation, weekly
     }
     public var id = UUID()
     public let date: Date

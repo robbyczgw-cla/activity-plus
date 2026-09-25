@@ -67,7 +67,8 @@ enum Metric: String, CaseIterable, Identifiable, Codable {
         case .cpu: Format.percent(value, decimals: value < 10 ? 1 : 0)
         case .memory: Format.memory(UInt64(max(0, value)))
         case .gpu: Format.percent(value, decimals: value < 10 ? 1 : 0)
-        case .disk, .network: Format.rate(value)
+        case .disk: Format.rate(value)
+        case .network: Format.networkRate(value)
         case .energy: Format.watts(value)
         }
     }

@@ -26,6 +26,8 @@ final class AppServices {
     @ObservationIgnored private var scanning = false
     @ObservationIgnored private var lastScan = Date.distantPast
     @ObservationIgnored private lazy var volume = AppVolumeController()
+    /// Apps that stopped responding (beachball), from WindowServer's own flag.
+    @ObservationIgnored let hangs = HangDetector()
 
     private init() {
         let stored = UserDefaults.standard.data(forKey: "alertSettings").flatMap { try? JSONDecoder().decode(AlertSettings.self, from: $0) }
@@ -33,16 +35,24 @@ final class AppServices {
         alertSettings = settings
         engine = AlertEngine(settings: settings)
         alerts = Self.loadAlertLog()
+        loadAutomations()
     }
 
     var volumeController: AppVolumeController { volume }
 
     func attach(to monitor: Monitor) {
+        hangs.onHangEnded = { [weak self] hang in
+            // Short stutters happen all the time; only report real freezes.
+            guard hang.duration >= 5 else { return }
+            self?.record(AppAlert(date: Date(), kind: .hang, appID: nil, appName: hang.name,
+                                  title: "\(hang.name) stopped responding",
+                                  detail: "It froze for \(Int(hang.duration)) seconds at \(hang.started.formatted(date: .omitted, time: .shortened))."))
+        }
         history.prune()
         monitor.observers.append { [weak self] snapshot in
             MainActor.assumeIsolated { self?.handle(snapshot) }
         }
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        NotificationHandler.shared.install()
     }
 
     private func handle(_ snapshot: SystemSnapshot) {
@@ -53,16 +63,16 @@ final class AppServices {
         let date = snapshot.date
         scanQueue.async { scanner.observe(processes, at: date) }
 
-        let fresh = engine.evaluate(snapshot)
-        if !fresh.isEmpty {
-            alerts.insert(contentsOf: fresh, at: 0)
-            if alerts.count > 200 { alerts.removeLast(alerts.count - 200) }
-            saveAlertLog()
-            fresh.forEach(notify)
-        }
+        engine.evaluate(snapshot).forEach(record)
 
         if Date().timeIntervalSince(lastScan) >= 5 { scanProjects(snapshot) }
-        if Date().timeIntervalSince(lastSlowRefresh) >= 60 { refreshSlowData() }
+        runAutomations(snapshot)
+        hangs.poll()
+        if Date().timeIntervalSince(lastSlowRefresh) >= 60 {
+            refreshSlowData()
+            refreshInsights()
+            notifyWeeklyReportIfDue()
+        }
     }
 
     func scanProjects(_ snapshot: SystemSnapshot? = nil) {
@@ -116,12 +126,166 @@ final class AppServices {
         for device in devices where device.lowest <= 15 {
             if let last = lowBatteryWarned[device.name], Date().timeIntervalSince(last) < 6 * 3600 { continue }
             lowBatteryWarned[device.name] = Date()
-            let alert = AppAlert(date: Date(), kind: .accessory, appID: nil, appName: device.name,
-                                 title: "\(device.name) is almost empty", detail: "\(device.lowest) % battery left.")
-            alerts.insert(alert, at: 0)
-            saveAlertLog()
-            notify(alert)
+            record(AppAlert(date: Date(), kind: .accessory, appID: nil, appName: device.name,
+                            title: "\(device.name) is almost empty", detail: "\(device.lowest) % battery left."))
         }
+    }
+
+    // MARK: Insights: unusual activity, leaks, weekly report
+
+    private(set) var anomalies: [Anomaly] = []
+    private(set) var leaks: [String: LeakForecast] = [:]
+    @ObservationIgnored private var baselines: [String: HistoryStore.Baseline] = [:]
+    @ObservationIgnored private var baselinesLoadedAt = Date.distantPast
+    @ObservationIgnored private var insightNotified: [String: Date] = [:]
+
+    private func refreshInsights() {
+        let store = history
+        if Date().timeIntervalSince(baselinesLoadedAt) > 1800 {
+            baselinesLoadedAt = Date()
+            // Normal = the last 7 days up to the start of today, so today's odd behavior does not become normal.
+            let today = Calendar.current.startOfDay(for: Date())
+            Task.detached(priority: .utility) {
+                let loaded = store.baselines(from: today.addingTimeInterval(-7 * 86_400), to: today)
+                await MainActor.run { self.baselines = loaded }
+            }
+        }
+        let monitor = Monitor.shared
+        var found = AnomalyDetector.detect(apps: monitor.snapshot.apps, baselines: baselines,
+                                           recentCPU: monitor.history.appCPU.mapValues(\.values))
+
+        // Leak forecast for the five biggest apps: 2 h of 5-minute averages plus the live value.
+        let candidates = monitor.snapshot.apps.filter { $0.kind != .system }.sorted { $0.memory > $1.memory }.prefix(5)
+        let since = Date().addingTimeInterval(-2 * 3600)
+        var forecasts: [String: LeakForecast] = [:]
+        for app in candidates {
+            var points = store.appSeries(app.id, since: since).map { (date: $0.date, memory: $0.memory) }
+            points.append((Date(), Double(app.memory)))
+            if let forecast = LeakDetector.forecast(points) {
+                forecasts[app.id] = forecast
+                let perHour = Format.memory(UInt64(forecast.growthPerHour))
+                let inTwoHours = Format.memory(UInt64(forecast.projected(hours: 2)))
+                found.append(Anomaly(appID: app.id, appName: app.name, kind: .leak,
+                                     title: "\(app.name) looks like it is leaking memory",
+                                     detail: "It grows by about \(perHour) per hour and will be at \(inTwoHours) in 2 hours. Restarting it frees the memory.",
+                                     factor: forecast.growthPerHour / 1e8))
+            }
+        }
+        leaks = forecasts
+        anomalies = found
+
+        guard alertSettings.enabled else { return }
+        for anomaly in found where !alertSettings.ignoredApps.contains(anomaly.appID) {
+            if let last = insightNotified[anomaly.id], Date().timeIntervalSince(last) < 3 * 3600 { continue }
+            insightNotified[anomaly.id] = Date()
+            record(AppAlert(date: Date(), kind: anomaly.kind == .leak ? .leak : .unusual, appID: anomaly.appID,
+                            appName: anomaly.appName, title: anomaly.title, detail: anomaly.detail))
+        }
+    }
+
+    func weeklyReport(current: Bool = false) async -> WeeklyReport {
+        let store = history
+        let bounds = WeeklyReport.weekBounds(current: current)
+        return await Task.detached(priority: .utility) {
+            WeeklyReport.build(from: store, start: bounds.start, end: bounds.end)
+        }.value
+    }
+
+    /// Monday from 9:00: one notification with last week's summary.
+    private func notifyWeeklyReportIfDue() {
+        let now = Date()
+        var calendar = Calendar(identifier: .iso8601)
+        calendar.timeZone = .current
+        guard calendar.component(.weekday, from: now) == 2, calendar.component(.hour, from: now) >= 9,
+              UserDefaults.standard.object(forKey: "weeklyReportEnabled") as? Bool ?? true else { return }
+        let week = calendar.component(.weekOfYear, from: now)
+        guard UserDefaults.standard.integer(forKey: "weeklyReportNotifiedWeek") != week else { return }
+        UserDefaults.standard.set(week, forKey: "weeklyReportNotifiedWeek")
+        Task {
+            let report = await weeklyReport()
+            guard !report.topEnergy.isEmpty else { return }
+            record(AppAlert(date: Date(), kind: .weekly, appID: nil, appName: "Weekly report",
+                            title: "Your Mac last week", detail: report.headline))
+        }
+    }
+
+    /// Adds an alert to the log and shows it as a notification.
+    func record(_ alert: AppAlert) {
+        alerts.insert(alert, at: 0)
+        if alerts.count > 200 { alerts.removeLast(alerts.count - 200) }
+        saveAlertLog()
+        notify(alert)
+    }
+
+    // MARK: Automations
+
+    var automationRules: [AutomationRule] = [] {
+        didSet {
+            if let data = try? JSONEncoder().encode(automationRules) { UserDefaults.standard.set(data, forKey: "automationRules") }
+        }
+    }
+    /// Matches waiting for the user's OK (also offered as notification buttons).
+    private(set) var pendingAutomations: [AutomationMatch] = []
+    private(set) var automationLog: [(date: Date, text: String)] = []
+    @ObservationIgnored private let automationEngine = AutomationEngine()
+
+    private func loadAutomations() {
+        if let data = UserDefaults.standard.data(forKey: "automationRules"),
+           let rules = try? JSONDecoder().decode([AutomationRule].self, from: data) {
+            automationRules = rules
+        }
+    }
+
+    private func runAutomations(_ snapshot: SystemSnapshot) {
+        guard !automationRules.isEmpty else { return }
+        let servers = projects.projects.flatMap(\.servers)
+        for match in automationEngine.evaluate(automationRules, snapshot: snapshot, servers: servers) {
+            if match.rule.mode == .automatic || match.rule.action == .notify {
+                perform(match)
+            } else {
+                pendingAutomations.removeAll { $0.id == match.id }
+                pendingAutomations.insert(match, at: 0)
+                NotificationHandler.shared.askAboutAutomation(match)
+            }
+        }
+    }
+
+    func approve(_ matchID: String) {
+        guard let match = pendingAutomations.first(where: { $0.id == matchID }) else { return }
+        pendingAutomations.removeAll { $0.id == matchID }
+        perform(match)
+    }
+
+    func dismiss(_ matchID: String) {
+        pendingAutomations.removeAll { $0.id == matchID }
+    }
+
+    private func perform(_ match: AutomationMatch) {
+        var done: String
+        switch (match.rule.action, match.target) {
+        case (.notify, _):
+            done = match.reason
+        case (.quitTriggeringApp, .app(let app)):
+            ProcessActions.quit(app, force: false)
+            done = "Asked \(app.name) to quit. \(match.reason)"
+        case (.quitApp(let appID, let name), _):
+            if let app = Monitor.shared.snapshot.apps.first(where: { $0.id == appID }) {
+                ProcessActions.quit(app, force: false)
+                done = "Asked \(name) to quit. \(match.reason)"
+            } else {
+                done = "\(name) was not running. \(match.reason)"
+            }
+        case (.stopDevServer, .server(let server)):
+            ProjectScanner.stop(server)
+            done = "Stopped \(server.command) and freed \(Format.memory(server.memory)). \(match.reason)"
+            scanProjects()
+        default:
+            done = match.reason
+        }
+        automationLog.insert((Date(), done), at: 0)
+        if automationLog.count > 100 { automationLog.removeLast() }
+        record(AppAlert(date: Date(), kind: .automation, appID: nil, appName: "Automation",
+                        title: match.rule.action == .notify ? match.rule.summary : "Automation ran", detail: done))
     }
 
     // MARK: Startup items & storage (extras)

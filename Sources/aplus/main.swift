@@ -11,6 +11,27 @@ let arguments = Set(CommandLine.arguments.dropFirst())
 // `aplus mcp`: Model Context Protocol server on stdin/stdout for Claude, Codex & co.
 if arguments.contains("mcp") { MCPServer.run() }
 let sampler = SystemSampler()
+if arguments.contains("--hardware") {
+    // Probe of the newer hardware readers (IOReport power/frequency, network details).
+    let chip = IOReportSampler()
+    if arguments.contains("--verbose") { chip.channelDump().forEach { print($0) }; exit(0) }
+    _ = chip.sample()
+    for _ in 0..<3 {
+        Thread.sleep(forTimeInterval: 1)
+        let p = chip.sample()
+        print("chip: cpu \(p.cpuWatts.map { String(format: "%.2f W", $0) } ?? "–")  gpu \(p.gpuWatts.map { String(format: "%.2f W", $0) } ?? "–")  ane \(p.aneWatts.map { String(format: "%.2f W", $0) } ?? "–")  E \(p.efficiencyMHz.map { String(format: "%.0f MHz", $0) } ?? "–")  P \(p.performanceMHz.map { String(format: "%.0f MHz", $0) } ?? "–")  GPU \(p.gpuMHz.map { String(format: "%.0f MHz", $0) } ?? "–")")
+    }
+    for i in NetworkInfo.interfaces() where i.isUp && !(i.ipv4.isEmpty && i.ipv6.isEmpty) {
+        print("net: \(i.id) \(i.displayName) \(i.kind.rawValue)\(i.isPrimary ? " primary" : "") \(i.ipv4.joined(separator: ","))")
+    }
+    print("wifi:", NetworkInfo.wifi().map { "ssid \($0.ssid ?? "(no permission)") rssi \($0.rssi.map(String.init) ?? "–") channel \($0.channel.map(String.init) ?? "–") rate \($0.transmitRateMbps.map { String(format: "%.0f Mbps", $0) } ?? "–")" } ?? "none")
+    let sensors = sampler.sensorList()
+    for reading in sensors where reading.kind == .power && reading.value > 0.05 {
+        print("power: \(reading.group) · \(reading.name) [\(reading.id)] \(String(format: "%.2f W", reading.value))")
+    }
+    print("gateway:", NetworkInfo.primaryGateway() ?? "–", " dns:", NetworkInfo.dnsServers().joined(separator: ", "))
+    exit(0)
+}
 if arguments.contains("--bench") {
     for (name, ms) in sampler.benchmark() { print(name.padding(toLength: 20, withPad: " ", startingAt: 0), String(format: "%7.1f ms", ms)) }
     exit(0)

@@ -163,6 +163,7 @@ private struct ProcessRow: View {
     let metric: Metric
     let scale: Double
     let onQuit: (Bool) -> Void
+    @State private var inspecting = false
 
     var body: some View {
         HStack(spacing: 10) {
@@ -183,7 +184,12 @@ private struct ProcessRow: View {
         .font(.callout)
         .padding(.vertical, 4)
         .padding(.horizontal, 10)
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) { inspecting = true }
+        .sheet(isPresented: $inspecting) { ProcessInspectorView(pid: process.pid, name: process.name) }
         .contextMenu {
+            Button("Inspect…") { inspecting = true }
+            Divider()
             Button("Quit Process…") { onQuit(false) }
             Button("Force Quit Process…") { onQuit(true) }
             if let path = process.path {

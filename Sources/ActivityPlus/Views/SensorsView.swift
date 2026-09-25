@@ -23,10 +23,11 @@ struct SensorsView: View {
                     Card {
                         CardHeader(title: "CPU temperature", systemImage: "chart.xyaxis.line", tint: .red)
                         LiveChart(lines: [.init(name: "CPU", values: monitor.history.cpuTemperature.values, color: .red)],
-                                  format: { String(format: "%.0f°", $0) }, maxValue: 110, interval: monitor.interval)
+                                  format: { Format.temperature($0, unit: false) }, maxValue: 110, interval: monitor.interval)
                             .frame(height: 160)
                     }
                 }
+                SensorListCard(readings: monitor.snapshot.sensorList)
                 Card {
                     CardHeader(title: "Fans", systemImage: "fan", tint: .blue)
                     if sensors.fans.isEmpty {
@@ -48,12 +49,14 @@ struct SensorsView: View {
             .padding(20)
         }
         .navigationTitle("Temperatures")
+        .onAppear { monitor.sensorListWanted = true }
+        .onDisappear { monitor.sensorListWanted = false }
     }
 
     private func temperatureCard(_ title: String, _ value: Double, _ symbol: String) -> some View {
         Card {
             CardHeader(title: title, systemImage: symbol, tint: Self.color(for: value))
-            BigNumber(text: String(format: "%.0f °C", value), size: 32)
+            BigNumber(text: Format.temperature(value), size: 32)
             UsageBar(fraction: value / 105, tint: Self.color(for: value))
         }
     }
@@ -63,6 +66,64 @@ struct SensorsView: View {
         case ..<60: .green
         case ..<80: .orange
         default: .red
+        }
+    }
+}
+
+/// Every sensor the Mac reports, grouped, with a kind filter and search.
+struct SensorListCard: View {
+    let readings: [SensorReading]
+    @State private var kind: SensorReading.Kind? = nil
+    @State private var search = ""
+    @AppStorage("sensorListShowRawKeys") private var showRaw = false
+
+    var body: some View {
+        Card {
+            HStack {
+                CardHeader(title: "All sensors", systemImage: "list.bullet.rectangle", tint: .secondary,
+                           trailing: readings.isEmpty ? "reading…" : "\(filtered.count) of \(readings.count)")
+            }
+            HStack {
+                Picker("", selection: $kind) {
+                    Text("All").tag(SensorReading.Kind?.none)
+                    ForEach(SensorReading.Kind.allCases, id: \.self) { Text($0.rawValue.capitalized).tag(Optional($0)) }
+                }
+                .pickerStyle(.segmented).labelsHidden().frame(maxWidth: 420)
+                TextField("Search", text: $search).textFieldStyle(.roundedBorder).frame(width: 160)
+                Toggle("Unnamed", isOn: $showRaw).toggleStyle(.checkbox).help("Also show SMC keys without a known name")
+            }
+            let groups = Dictionary(grouping: filtered, by: \.group).sorted { $0.key < $1.key }
+            ForEach(groups, id: \.key) { group, items in
+                Text(group).font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.top, 4)
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 230), spacing: 8)], spacing: 4) {
+                    ForEach(items.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }) { reading in
+                        HStack {
+                            Text(reading.name).lineLimit(1).help(reading.id)
+                            Spacer()
+                            Text(format(reading)).monospacedDigit().foregroundStyle(.secondary)
+                        }
+                        .font(.callout)
+                    }
+                }
+            }
+        }
+    }
+
+    private var filtered: [SensorReading] {
+        readings.filter { reading in
+            (kind == nil || reading.kind == kind)
+                && (showRaw || reading.name != reading.id)
+                && (search.isEmpty || reading.name.localizedCaseInsensitiveContains(search) || reading.id.localizedCaseInsensitiveContains(search))
+        }
+    }
+
+    private func format(_ reading: SensorReading) -> String {
+        switch reading.kind {
+        case .temperature: Format.temperature(reading.value, decimals: 1)
+        case .voltage: String(format: "%.3f V", reading.value)
+        case .current: String(format: "%.3f A", reading.value)
+        case .power: String(format: "%.2f W", reading.value)
+        case .fan: "\(Int(reading.value)) rpm"
         }
     }
 }

@@ -59,6 +59,13 @@ final class Monitor {
     /// history and alerts work in minute buckets and lose nothing.
     var windowVisible = false { didSet { if windowVisible != oldValue { schedule() } } }
     var panelVisible = false { didSet { if panelVisible != oldValue { schedule() } } }
+    /// The full sensor list is only read while the Temperatures page is open.
+    var sensorListWanted = false {
+        didSet {
+            let sampler = sampler, wanted = sensorListWanted
+            queue.async { sampler.wantsSensorList = wanted }
+        }
+    }
     private var effectiveInterval: TimeInterval {
         windowVisible || panelVisible ? interval : max(interval, 5)
     }

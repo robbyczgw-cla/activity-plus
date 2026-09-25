@@ -190,6 +190,16 @@ public struct SystemSnapshot: Sendable {
     public var gpu: GPUStats?
     public var battery: BatteryStats?
     public var sensors = SensorStats()
+    /// CPU/GPU frequencies and GPU/ANE power (Apple silicon, IOReport).
+    public var chip = ChipPower()
+    /// Filled only while the sensor list is shown (see SystemSampler.wantsSensorList).
+    public var sensorList: [SensorReading] = []
+    /// Every physical drive with throughput and health.
+    public var drives: [DriveInfo] = []
+    /// Network interfaces and Wi-Fi details (refreshed every ~10 s).
+    public var interfaces: [NetworkInterfaceInfo] = []
+    public var wifi: WiFiInfo?
+    public var gateway: String?
     public var apps: [AppGroup] = []
     public var processCount = 0
     /// Processes whose details the kernel would not give us (needs the privileged helper).

@@ -10,7 +10,7 @@ enum SnapshotRunner {
 
     static func runIfRequested() {
         guard let dir = ProcessInfo.processInfo.environment["ACTIVITYPLUS_SNAPSHOTS"] else { return }
-        let pages = (ProcessInfo.processInfo.environment["ACTIVITYPLUS_PAGES"] ?? "overview,metric:cpu,metric:memory,metric:gpu,metric:disk,metric:network,metric:energy,battery,sensors,projects,history,alerts,sound,diagnosis,startup,storage")
+        let pages = (ProcessInfo.processInfo.environment["ACTIVITYPLUS_PAGES"] ?? "overview,metric:cpu,metric:memory,metric:gpu,metric:disk,metric:network,metric:energy,battery,sensors,projects,history,alerts,sound,diagnosis,startup,storage,weekly,automations,sleep,connections")
             .split(separator: ",").map(String.init)
         let warmup = Double(ProcessInfo.processInfo.environment["ACTIVITYPLUS_WARMUP"] ?? "12") ?? 12
         Task { @MainActor in
@@ -21,7 +21,7 @@ enum SnapshotRunner {
             try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
             for page in pages {
                 NotificationCenter.default.post(name: selectNotification, object: page)
-                try? await Task.sleep(for: .seconds(2))
+                try? await Task.sleep(for: .seconds(Double(ProcessInfo.processInfo.environment["ACTIVITYPLUS_PAGE_WAIT"] ?? "2") ?? 2))
                 if let window = NSApp.windows.first(where: { $0.title == "Activity+" || $0.identifier?.rawValue.contains("main") == true }),
                    let view = window.contentView {
                     save(view, to: "\(dir)/\(page.replacingOccurrences(of: ":", with: "-")).png")
@@ -33,6 +33,13 @@ enum SnapshotRunner {
                 snapshotPanel(to: "\(dir)/menubar-\(tab.rawValue).png")
             }
             UserDefaults.standard.set(previousTab ?? MenuBarPanel.Tab.overview.rawValue, forKey: "menuBarPanelTab")
+            for dark in [false, true] { snapshotWidgetGallery(dark: dark, to: "\(dir)/widgets-\(dark ? "dark" : "light").png") }
+            let previousSettingsTab = UserDefaults.standard.string(forKey: "settingsTab")
+            for tab in ["general", "menuBar", "window", "units", "updates"] {
+                UserDefaults.standard.set(tab, forKey: "settingsTab")
+                snapshotHosted(SettingsView(), size: NSSize(width: 640, height: 620), to: "\(dir)/settings-\(tab).png")
+            }
+            UserDefaults.standard.set(previousSettingsTab ?? "general", forKey: "settingsTab")
             for dark in [false, true] {
                 if let png = ShareCard.pngData(Monitor.shared.snapshot, dark: dark) {
                     try? png.write(to: URL(fileURLWithPath: "\(dir)/sharecard-\(dark ? "dark" : "light").png"))
@@ -40,6 +47,39 @@ enum SnapshotRunner {
             }
             NSApp.terminate(nil)
         }
+    }
+
+    /// Every module in every style it supports, as the menu bar would draw it.
+    private static func snapshotWidgetGallery(dark: Bool, to path: String) {
+        let ink: Color = dark ? .white : .black
+        let gallery = VStack(alignment: .leading, spacing: 6) {
+            ForEach(MenuBarItemConfig.Module.allCases) { module in
+                HStack(spacing: 14) {
+                    Text(module.title).font(.caption).frame(width: 90, alignment: .leading).foregroundStyle(ink)
+                    ForEach(module.styles) { style in
+                        let config: MenuBarItemConfig = {
+                            var c = MenuBarItemConfig(module: module, style: style)
+                            c.showLabel = style != .text
+                            c.colorMode = [.ring, .gauge, .dot, .battery, .coreBars].contains(style) ? .byLevel : .monochrome
+                            return c
+                        }()
+                        MenuBarWidget(config: config, reading: ModuleReading.read(config, monitor: Monitor.shared, services: AppServices.shared), ink: ink)
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .background(dark ? Color(white: 0.15) : Color(white: 0.93))
+        snapshotHosted(gallery, size: nil, to: path)
+    }
+
+    private static func snapshotHosted<V: View>(_ view: V, size: NSSize?, to path: String) {
+        let host = NSHostingView(rootView: view.environment(Monitor.shared).environment(AppServices.shared))
+        host.frame = NSRect(origin: .zero, size: size ?? host.fittingSize)
+        let window = NSWindow(contentRect: host.frame, styleMask: [.borderless], backing: .buffered, defer: false)
+        window.contentView = host
+        host.layoutSubtreeIfNeeded()
+        save(host, to: path)
     }
 
     private static func snapshotPanel(to path: String) {

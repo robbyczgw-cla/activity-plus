@@ -28,7 +28,7 @@ struct BatteryView: View {
                             CardHeader(title: "Health", systemImage: "heart", tint: .pink)
                             BigNumber(text: b.health.map { Format.percent($0) } ?? "–", size: 36)
                             StatLine(label: "Charge cycles", value: "\(b.cycleCount)")
-                            if let t = b.temperature { StatLine(label: "Temperature", value: String(format: "%.1f °C", t)) }
+                            if let t = b.temperature { StatLine(label: "Temperature", value: Format.temperature(t, decimals: 1)) }
                             Text("Health is the current full-charge capacity compared with the battery's design capacity.")
                                 .font(.caption).foregroundStyle(.secondary)
                         }

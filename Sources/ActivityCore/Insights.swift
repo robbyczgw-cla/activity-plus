@@ -13,6 +13,10 @@ public struct Anomaly: Sendable, Identifiable, Hashable {
     /// How far from normal (e.g. 3.2 = 3.2 × the usual value).
     public let factor: Double
     public var id: String { "\(kind.rawValue):\(appID)" }
+
+    public init(appID: String, appName: String, kind: Kind, title: String, detail: String, factor: Double) {
+        (self.appID, self.appName, self.kind, self.title, self.detail, self.factor) = (appID, appName, kind, title, detail, factor)
+    }
 }
 
 public enum AnomalyDetector {

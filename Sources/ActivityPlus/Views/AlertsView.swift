@@ -82,6 +82,11 @@ struct AlertsView: View {
         case .network: "network"
         case .thermal: "thermometer.high"
         case .accessory: "battery.25percent"
+        case .unusual: "sparkle.magnifyingglass"
+        case .leak: "drop.triangle"
+        case .hang: "hourglass"
+        case .automation: "wand.and.stars"
+        case .weekly: "calendar"
         }
     }
 
