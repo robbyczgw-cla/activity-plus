@@ -137,3 +137,7 @@ Der Code besteht aus `ActivityCore` (Messung, Verlauf, Regeln; ohne Oberfläche)
 Activity+ ist jung. Lautstärke pro App, Hänger-Erkennung und die Zubehör-Akkus sind Beta: gebaut und geprüft, aber noch wenig im Alltag erprobt. Was als Nächstes kommt, steht in [ROADMAP.md](ROADMAP.md).
 
 Inspiriert von der Aktivitätsanzeige, [Vitals](https://vitalsmac.com) und [Stats](https://mac-stats.com).
+
+## Lizenz
+
+MIT, siehe [LICENSE](LICENSE).

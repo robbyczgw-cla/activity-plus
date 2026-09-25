@@ -62,8 +62,9 @@ if [[ "${1:-}" == "--site" ]]; then
     --download-url-prefix "https://activityplus.xyz/download/" --link "https://activityplus.xyz" "$STAGE"
   cp "$STAGE/appcast.xml" "$SITE/appcast.xml"
   # The appcast references the delta updates generate_appcast just made: publish them too.
-  rm -f "$SITE"/download/*.delta
-  cp "$STAGE"/*.delta "$SITE/download/" 2>/dev/null || true
+  # (N): zsh treats a glob without matches as an error under set -e; N makes it expand to nothing.
+  rm -f "$SITE"/download/*.delta(N)
+  for delta in "$STAGE"/*.delta(N); do cp "$delta" "$SITE/download/"; done
   shasum -a 256 "$ZIP" | awk '{print $1}' > "$SITE/download/latest.sha256"
   echo "✓ Site updated: $SITE/download/$(basename "$ZIP") + appcast.xml"
 fi

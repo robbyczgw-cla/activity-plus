@@ -11,9 +11,15 @@
 - Process inspector, connections per app, sleep & battery drain, weekly report, automations, unusual-activity and memory-leak detection, freeze detection (beta)
 - `aplus mcp`: read-only MCP server for AI agents
 
+**v0.2.1–0.2.3 (25.09.2026)**
+- Menu bar quick menu (modules, presets, symbols), dark screenshots, background mode that renders nothing while hidden (about 1.4 % CPU)
+- Uninstall with leftovers, large and old files, disk speed test, panel editor with tiles and themes
+- Privileged helper (SMAppService daemon + XPC, read-only) built and notarized
+- Safety and accuracy fixes after an independent code review (0.2.3)
+
 ## Next
 - [ ] Universal build (arm64 + x86_64) so Intel Macs can run it
-- [ ] **Privileged helper** (SMAppService daemon + XPC) for exact disk, energy and memory figures of root processes
+- [ ] Privileged helper: test in daily use (exact disk, energy and memory figures of root processes)
 - [ ] Test per-app volume, freeze detection and accessory batteries in daily use
 - [ ] CPU power: find a documented source (IOReport's CPU energy channels read 0 on macOS 27)
 - [ ] Menu bar item for any single sensor from the sensor list

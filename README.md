@@ -137,3 +137,7 @@ The code is split into `ActivityCore` (samplers, history, rules; no UI), the Swi
 Activity+ is young. Per-app volume, freeze detection and accessory batteries are beta: they are built and pass their checks, but have seen little real-world testing. See [ROADMAP.md](ROADMAP.md) for what is next.
 
 Inspired by Activity Monitor, [Vitals](https://vitalsmac.com) and [Stats](https://mac-stats.com).
+
+## License
+
+MIT, see [LICENSE](LICENSE).
