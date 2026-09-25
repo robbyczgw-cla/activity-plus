@@ -144,6 +144,8 @@ struct MenuBarItemConfig: Codable, Identifiable, Hashable {
     var clockShowsSeconds = false
     /// Hide the item while the value is below this (e.g. show CPU only when busy). 0 = always.
     var hideBelowPercent: Double = 0
+    /// A small symbol (cpu, memory chip, thermometer…) in front of the value.
+    var showIcon = false
 
     init(module: Module, style: Style) {
         self.module = module
@@ -170,6 +172,51 @@ struct MenuBarItemConfig: Codable, Identifiable, Hashable {
         timeZones = (try? c.decode([String].self, forKey: .timeZones)) ?? []
         clockShowsSeconds = (try? c.decode(Bool.self, forKey: .clockShowsSeconds)) ?? false
         hideBelowPercent = (try? c.decode(Double.self, forKey: .hideBelowPercent)) ?? 0
+        showIcon = (try? c.decode(Bool.self, forKey: .showIcon)) ?? false
+    }
+
+    /// A good first look when a module is switched on from the quick menu.
+    static func quick(_ module: Module) -> MenuBarItemConfig {
+        var item: MenuBarItemConfig
+        switch module {
+        case .network: item = MenuBarItemConfig(module: .network, style: .speed)
+        case .battery: item = MenuBarItemConfig(module: .battery, style: .battery); item.showLabel = true
+        case .status: item = MenuBarItemConfig(module: .status, style: .icon)
+        case .clock: item = MenuBarItemConfig(module: .clock, style: .text)
+        case .disk: item = MenuBarItemConfig(module: .disk, style: .text); item.showIcon = true
+        default: item = MenuBarItemConfig(module: module, style: .text); item.showIcon = true
+        }
+        return item
+    }
+
+    /// Ready-made menu bars for the quick menu.
+    enum Preset: String, CaseIterable, Identifiable {
+        case minimal, balanced, everything, iconOnly
+        var id: String { rawValue }
+        var title: String {
+            switch self {
+            case .minimal: "Minimal (CPU)"
+            case .balanced: "Balanced (CPU, memory, network, temperature)"
+            case .everything: "Everything"
+            case .iconOnly: "Just the Activity+ icon"
+            }
+        }
+        var items: [MenuBarItemConfig] {
+            switch self {
+            case .minimal:
+                return [MenuBarItemConfig.quick(.cpu)]
+            case .balanced:
+                var cpu = MenuBarItemConfig(module: .cpu, style: .ring)
+                cpu.showLabel = true
+                cpu.colorMode = .byLevel
+                return [cpu, MenuBarItemConfig.quick(.memory), MenuBarItemConfig.quick(.network), MenuBarItemConfig.quick(.temperature)]
+            case .everything:
+                let modules: [Module] = [.cpu, .memory, .gpu, .network, .disk, .temperature, .battery, .clock]
+                return modules.map(MenuBarItemConfig.quick)
+            case .iconOnly:
+                return [MenuBarItemConfig.quick(.status)]
+            }
+        }
     }
 }
 
@@ -182,7 +229,10 @@ enum MenuBarItemStore {
            let items = try? JSONDecoder().decode([MenuBarItemConfig].self, from: data) {
             return items
         }
-        return migrateFromSingleItem()
+        // Persist the first result so item IDs (and with them the menu bar positions macOS remembers) stay stable.
+        let migrated = migrateFromSingleItem()
+        if let data = try? JSONEncoder().encode(migrated) { UserDefaults.standard.set(data, forKey: key) }
+        return migrated
     }
 
     static func save(_ items: [MenuBarItemConfig]) {

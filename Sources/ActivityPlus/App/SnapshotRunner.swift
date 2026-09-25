@@ -7,9 +7,16 @@ import SwiftUI
 @MainActor
 enum SnapshotRunner {
     static let selectNotification = Notification.Name("ActivityPlusSelectPage")
+    static var isActive: Bool { ProcessInfo.processInfo.environment["ACTIVITYPLUS_SNAPSHOTS"] != nil }
 
     static func runIfRequested() {
         guard let dir = ProcessInfo.processInfo.environment["ACTIVITYPLUS_SNAPSHOTS"] else { return }
+        // ACTIVITYPLUS_APPEARANCE=dark|light renders marketing shots in one consistent look.
+        switch ProcessInfo.processInfo.environment["ACTIVITYPLUS_APPEARANCE"] {
+        case "dark": NSApp.appearance = NSAppearance(named: .darkAqua)
+        case "light": NSApp.appearance = NSAppearance(named: .aqua)
+        default: break
+        }
         let pages = (ProcessInfo.processInfo.environment["ACTIVITYPLUS_PAGES"] ?? "overview,metric:cpu,metric:memory,metric:gpu,metric:disk,metric:network,metric:energy,battery,sensors,projects,history,alerts,sound,diagnosis,startup,storage,weekly,automations,sleep,connections")
             .split(separator: ",").map(String.init)
         let warmup = Double(ProcessInfo.processInfo.environment["ACTIVITYPLUS_WARMUP"] ?? "12") ?? 12
@@ -19,6 +26,12 @@ enum SnapshotRunner {
             if pages.contains("startup") || pages.contains("diagnosis") { AppServices.shared.scanStartupItems() }
             try? await Task.sleep(for: .seconds(warmup))
             try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+            for window in NSApp.windows {
+                NSLog("snapshot window: title=%@ id=%@ class=%@ visible=%d size=%@", window.title, window.identifier?.rawValue ?? "-",
+                      String(describing: type(of: window)), window.isVisible ? 1 : 0, NSStringFromSize(window.frame.size))
+            }
+            NSLog("snapshot statusItems: %d configured, %d NSStatusBarWindows", MenuBarItemStore.load().count,
+                  NSApp.windows.filter { String(describing: type(of: $0)) == "NSStatusBarWindow" }.count)
             for page in pages {
                 NotificationCenter.default.post(name: selectNotification, object: page)
                 try? await Task.sleep(for: .seconds(Double(ProcessInfo.processInfo.environment["ACTIVITYPLUS_PAGE_WAIT"] ?? "2") ?? 2))

@@ -151,7 +151,16 @@ private struct MenuBarSettings: View {
                         .disabled(selection == nil || items.count <= 1)
                         .help(items.count <= 1 ? "Keep at least one item so Activity+ stays reachable" : "Remove item")
                         Spacer()
-                        Text("Drag to reorder").font(.caption).foregroundStyle(.tertiary)
+                        Menu("Presets") {
+                            ForEach(MenuBarItemConfig.Preset.allCases) { preset in
+                                Button(preset.title) {
+                                    items = preset.items
+                                    selection = items.first?.id
+                                    save()
+                                }
+                            }
+                        }
+                        .menuStyle(.borderlessButton).fixedSize()
                     }
                     .padding(6)
                 }
@@ -228,6 +237,7 @@ private struct ItemEditor: View {
                 Toggle(item.style == .text || item.style == .labeled ? "Show label" : "Show the value next to it", isOn: $item.showLabel)
                 TextField("Label", text: $item.customLabel, prompt: Text(item.module.shortLabel))
                 Toggle("Decimals", isOn: $item.showDecimals)
+                if ![.icon, .battery].contains(item.style) { Toggle("Symbol in front", isOn: $item.showIcon) }
             }
             Picker("Color", selection: $item.colorMode) {
                 ForEach(MenuBarItemConfig.ColorMode.allCases) { Text($0.title).tag($0) }

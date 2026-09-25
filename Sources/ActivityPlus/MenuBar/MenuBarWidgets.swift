@@ -142,6 +142,11 @@ struct MenuBarWidget: View {
             if showWarning {
                 Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 12)).foregroundStyle(monochrome ? ink : .orange)
             }
+            if config.showIcon && ![.icon, .battery].contains(config.style) {
+                Image(systemName: config.module.systemImage)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(ink.opacity(0.85))
+            }
             if config.showLabel && config.style != .labeled && !config.label.isEmpty {
                 Text(config.label).font(.system(size: 8, weight: .semibold)).foregroundStyle(ink.opacity(0.8))
             }

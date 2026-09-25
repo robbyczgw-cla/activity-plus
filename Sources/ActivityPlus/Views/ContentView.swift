@@ -88,7 +88,12 @@ struct ContentView: View {
             .navigationSplitViewColumnWidth(min: 190, ideal: 210)
         } detail: {
             // A hidden or fully covered window renders nothing: charts would otherwise redraw every sample.
-            if monitor.windowVisible { detail } else { Color.clear }
+            if monitor.windowVisible {
+                // An opaque window background (instead of the translucent default) also keeps snapshots faithful.
+                detail.background(Color(nsColor: .windowBackgroundColor))
+            } else {
+                Color.clear
+            }
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -110,7 +115,10 @@ struct ContentView: View {
         .frame(minWidth: 820, minHeight: 560)
         .background(WindowActionsCapture())
         .tint(AccentChoice.color(accent))
-        .background(WindowVisibilityTracker { visible in monitor.windowVisible = visible })
+        .background(WindowVisibilityTracker { visible in
+            // Snapshot runs render offscreen-ish windows that macOS may report as covered.
+            monitor.windowVisible = visible || SnapshotRunner.isActive
+        })
         .onAppear { selection = Self.decode(stored) }
         .onDisappear { monitor.windowVisible = false }
         .onChange(of: selection) { _, new in stored = Self.encode(new ?? .overview) }

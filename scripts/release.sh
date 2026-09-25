@@ -2,6 +2,7 @@
 # Builds, signs with Developer ID (hardened runtime), notarizes and staples Activity+.
 # Result: dist/Activity+.app (stapled) and dist/Activity+-<version>.zip, ready to hand out.
 #   scripts/release.sh             sign + notarize
+#   scripts/release.sh --site      … and put the zip + a signed appcast.xml into the homepage (../activityplus-site)
 #   scripts/release.sh --publish   … and create the GitHub release with appcast.xml (notes: docs/release-notes/v<version>.md)
 #
 # One-time setup — stores the App Store Connect API key as a keychain profile:
@@ -47,6 +48,22 @@ rm -f "$ZIP"
 ditto -c -k --keepParent "$APP" "$ZIP"
 spctl -a -vv "$APP"
 echo "✓ $ZIP"
+
+# Homepage: activityplus.xyz serves the download and the update feed (works while the repo is private).
+if [[ "${1:-}" == "--site" ]]; then
+  SITE="${SITE_DIR:-../activityplus-site}"
+  mkdir -p "$SITE/download"
+  cp "$ZIP" "$SITE/download/"
+  STAGE="dist/appcast-site"
+  rm -rf "$STAGE" && mkdir -p "$STAGE"
+  # Keep older zips next to the new one so generate_appcast lists the history.
+  cp "$SITE"/download/*.zip "$STAGE/"
+  .build/artifacts/sparkle/Sparkle/bin/generate_appcast --account activityplus \
+    --download-url-prefix "https://activityplus.xyz/download/" --link "https://activityplus.xyz" "$STAGE"
+  cp "$STAGE/appcast.xml" "$SITE/appcast.xml"
+  shasum -a 256 "$ZIP" | awk '{print $1}' > "$SITE/download/latest.sha256"
+  echo "✓ Site updated: $SITE/download/$(basename "$ZIP") + appcast.xml"
+fi
 
 # Appcast for Sparkle: signed with the EdDSA key in the keychain (account "activityplus").
 # Every GitHub release carries appcast.xml, so .../releases/latest/download/appcast.xml always points at the newest.

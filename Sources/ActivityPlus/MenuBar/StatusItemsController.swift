@@ -33,7 +33,11 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
     }
 
     /// Recreates all items; creation order decides the position (the first item ends up rightmost).
+    private var reloads = 0
+
     func reload() {
+        reloads += 1
+        if ProcessInfo.processInfo.environment["ACTIVITYPLUS_SNAPSHOTS"] != nil { NSLog("snapshot statusItems reload #%d", reloads) }
         entries.forEach { NSStatusBar.system.removeStatusItem($0.item) }
         entries = []
         var configs = MenuBarItemStore.load()
@@ -117,6 +121,36 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
     private func showMenu(for item: NSStatusItem) {
         let menu = NSMenu()
         menu.addItem(withTitle: "Open Activity+", action: #selector(openMain), keyEquivalent: "o").target = self
+        menu.addItem(.separator())
+
+        // Quick choice of what the menu bar shows; finer control lives in Settings → Menu Bar.
+        let shown = Set(entries.map(\.config.module))
+        let header = NSMenuItem(title: "Show in Menu Bar", action: nil, keyEquivalent: "")
+        header.isEnabled = false
+        menu.addItem(header)
+        for module in MenuBarItemConfig.Module.allCases where module != .status {
+            let entry = NSMenuItem(title: module.title, action: #selector(toggleModule(_:)), keyEquivalent: "")
+            entry.target = self
+            entry.representedObject = module.rawValue
+            entry.state = shown.contains(module) ? .on : .off
+            entry.image = NSImage(systemSymbolName: module.systemImage, accessibilityDescription: nil)
+            menu.addItem(entry)
+        }
+        let symbols = NSMenuItem(title: "Symbols Next to Values", action: #selector(toggleSymbols), keyEquivalent: "")
+        symbols.target = self
+        symbols.state = entries.contains(where: \.config.showIcon) ? .on : .off
+        menu.addItem(symbols)
+        let presets = NSMenuItem(title: "Presets", action: nil, keyEquivalent: "")
+        let presetMenu = NSMenu()
+        for preset in MenuBarItemConfig.Preset.allCases {
+            let entry = NSMenuItem(title: preset.title, action: #selector(applyPreset(_:)), keyEquivalent: "")
+            entry.target = self
+            entry.representedObject = preset.rawValue
+            presetMenu.addItem(entry)
+        }
+        presets.submenu = presetMenu
+        menu.addItem(presets)
+        menu.addItem(.separator())
         menu.addItem(withTitle: "Customize Menu Bar…", action: #selector(openMenuBarSettings), keyEquivalent: ",").target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Activity+", action: #selector(quit), keyEquivalent: "q").target = self
@@ -126,6 +160,32 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
     }
 
     @objc private func openMain() { WindowOpener.openMain() }
+
+    @objc private func toggleModule(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String, let module = MenuBarItemConfig.Module(rawValue: raw) else { return }
+        var items = MenuBarItemStore.load()
+        if items.contains(where: { $0.module == module }) {
+            items.removeAll { $0.module == module }
+            // Never end up with an empty menu bar: Activity+ would become unreachable.
+            if items.isEmpty { items = [.quick(.status)] }
+        } else {
+            items.removeAll { $0.module == .status }
+            items.append(.quick(module))
+        }
+        MenuBarItemStore.save(items)
+    }
+
+    @objc private func toggleSymbols() {
+        var items = MenuBarItemStore.load()
+        let on = !items.contains(where: \.showIcon)
+        for index in items.indices { items[index].showIcon = on }
+        MenuBarItemStore.save(items)
+    }
+
+    @objc private func applyPreset(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String, let preset = MenuBarItemConfig.Preset(rawValue: raw) else { return }
+        MenuBarItemStore.save(preset.items)
+    }
     @objc private func openMenuBarSettings() { WindowOpener.openSettings(tab: "menuBar") }
     @objc private func quit() { NSApp.terminate(nil) }
 

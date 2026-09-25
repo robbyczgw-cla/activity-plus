@@ -76,7 +76,7 @@ struct AccessoryTests {
         let json = """
         {"SPBluetoothDataType":[{"controller_properties":{},
           "device_connected":[
-            {"Robert's AirPods Pro":{"device_batteryLevelCase":"52%","device_batteryLevelLeft":"80%","device_batteryLevelRight":"78%","device_minorType":"Headphones"}},
+            {"AirPods Pro":{"device_batteryLevelCase":"52%","device_batteryLevelLeft":"80%","device_batteryLevelRight":"78%","device_minorType":"Headphones"}},
             {"Magic Mouse":{"device_batteryLevelMain":"41%","device_minorType":"Mouse"}},
             {"Speaker":{"device_minorType":"Speaker"}}
           ],
