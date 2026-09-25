@@ -194,6 +194,8 @@ public final class HistoryStore: @unchecked Sendable {
         public let date: Date
         public let cpu: Double
         public let memory: Double
+        /// nil for rows written before v0.2.
+        public let processes: Int?
         public var id: Date { date }
     }
 
@@ -201,7 +203,7 @@ public final class HistoryStore: @unchecked Sendable {
     public func appSeries(_ appID: String, since start: Date) -> [AppPoint] {
         queue.sync {
             var statement: OpaquePointer?
-            let sql = "SELECT ts, cpu, mem FROM apps WHERE app_id = ? AND ts >= ? ORDER BY ts"
+            let sql = "SELECT ts, cpu, mem, procs FROM apps WHERE app_id = ? AND ts >= ? ORDER BY ts"
             guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK, let statement else { return [] }
             defer { sqlite3_finalize(statement) }
             bindText(statement, 1, appID)
@@ -209,7 +211,8 @@ public final class HistoryStore: @unchecked Sendable {
             var points: [AppPoint] = []
             while sqlite3_step(statement) == SQLITE_ROW {
                 points.append(AppPoint(date: Date(timeIntervalSince1970: sqlite3_column_double(statement, 0)),
-                                       cpu: sqlite3_column_double(statement, 1), memory: sqlite3_column_double(statement, 2)))
+                                       cpu: sqlite3_column_double(statement, 1), memory: sqlite3_column_double(statement, 2),
+                                       processes: sqlite3_column_type(statement, 3) == SQLITE_NULL ? nil : Int(sqlite3_column_int(statement, 3))))
             }
             return points
         }
@@ -343,6 +346,8 @@ public final class HistoryStore: @unchecked Sendable {
         // v0.2: remember whether the Mac ran on battery (fails harmlessly when the column exists).
         exec("ALTER TABLE system ADD COLUMN on_battery INTEGER DEFAULT 0")
         exec("ALTER TABLE apps ADD COLUMN on_battery INTEGER DEFAULT 0")
+        // v0.2: how many processes the app had, so growth from new processes is not mistaken for a leak.
+        exec("ALTER TABLE apps ADD COLUMN procs INTEGER")
         exec("CREATE INDEX IF NOT EXISTS apps_app ON apps(app_id, ts)")
     }
 
@@ -370,7 +375,7 @@ public final class HistoryStore: @unchecked Sendable {
 
     private func writeAppRows(at date: Date) {
         exec("BEGIN")
-        let sql = "INSERT INTO apps (ts, app_id, name, bundle, cpu, mem, mem_peak, disk, net, energy, gpu, on_battery) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+        let sql = "INSERT INTO apps (ts, app_id, name, bundle, cpu, mem, mem_peak, disk, net, energy, gpu, on_battery, procs) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
         let onBattery: Int32 = windowOnBattery * 2 > windowSampleCount ? 1 : 0
         var statement: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { exec("COMMIT"); return }
@@ -390,6 +395,7 @@ public final class HistoryStore: @unchecked Sendable {
             sqlite3_bind_double(statement, 10, a.energyJoules / 3600)
             sqlite3_bind_double(statement, 11, a.gpu / windowSamples)
             sqlite3_bind_int(statement, 12, onBattery)
+            sqlite3_bind_int(statement, 13, Int32(a.processCount))
             sqlite3_step(statement)
         }
         sqlite3_finalize(statement)
@@ -459,9 +465,11 @@ private struct AppAccumulator {
     var count = 0
     var cpu = 0.0, memory = 0.0, memoryPeak = 0.0, gpu = 0.0
     var diskBytes = 0.0, netBytes = 0.0, energyJoules = 0.0
+    var processCount = 0
 
     mutating func add(_ app: AppGroup, interval: TimeInterval) {
         count += 1
+        processCount = app.processes.count
         cpu += app.cpuPercent
         memory += Double(app.memory)
         memoryPeak = max(memoryPeak, Double(app.memory))

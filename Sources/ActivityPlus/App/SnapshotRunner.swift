@@ -94,8 +94,15 @@ enum SnapshotRunner {
         save(host, to: path)
     }
 
+    /// Always renders at 2× so screenshots stay sharp even when the Mac drives a 1× display.
     private static func save(_ view: NSView, to path: String) {
-        guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+        let size = view.bounds.size
+        guard size.width > 0, size.height > 0,
+              let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width * 2), pixelsHigh: Int(size.height * 2),
+                                         bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                         colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)
+        else { return }
+        rep.size = size
         view.cacheDisplay(in: view.bounds, to: rep)
         try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
     }

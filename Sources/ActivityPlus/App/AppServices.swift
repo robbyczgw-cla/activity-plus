@@ -137,7 +137,16 @@ final class AppServices {
     private(set) var leaks: [String: LeakForecast] = [:]
     @ObservationIgnored private var baselines: [String: HistoryStore.Baseline] = [:]
     @ObservationIgnored private var baselinesLoadedAt = Date.distantPast
-    @ObservationIgnored private var insightNotified: [String: Date] = [:]
+    /// When each insight last notified; persisted so restarts do not repeat the same warning.
+    @ObservationIgnored private var insightNotified: [String: Date] = {
+        let stored = UserDefaults.standard.dictionary(forKey: "insightNotified") as? [String: Double] ?? [:]
+        return stored.mapValues { Date(timeIntervalSince1970: $0) }
+    }() {
+        didSet {
+            let recent = insightNotified.filter { Date().timeIntervalSince($0.value) < 86_400 }
+            UserDefaults.standard.set(recent.mapValues(\.timeIntervalSince1970), forKey: "insightNotified")
+        }
+    }
 
     private func refreshInsights() {
         let store = history
@@ -159,7 +168,12 @@ final class AppServices {
         let since = Date().addingTimeInterval(-2 * 3600)
         var forecasts: [String: LeakForecast] = [:]
         for app in candidates {
-            var points = store.appSeries(app.id, since: since).map { (date: $0.date, memory: $0.memory) }
+            let series = store.appSeries(app.id, since: since)
+            // An app that gained processes (new tabs, new sessions) grows for a reason; only a stable set can leak.
+            let counts = series.map(\.processes) + [app.processes.count]
+            guard counts.allSatisfy({ $0 != nil }), let low = counts.compactMap({ $0 }).min(),
+                  let high = counts.compactMap({ $0 }).max(), high - low <= 1 else { continue }
+            var points = series.map { (date: $0.date, memory: $0.memory) }
             points.append((Date(), Double(app.memory)))
             if let forecast = LeakDetector.forecast(points) {
                 forecasts[app.id] = forecast

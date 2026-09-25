@@ -1,78 +1,118 @@
 # Activity+
 
-A system monitor for macOS that answers the question Activity Monitor leaves open: **which app is responsible, and what should I do about it?**
+**A system monitor for macOS that tells you which app is responsible, and what to do about it.**
 
-Activity+ folds ~800 processes into ~80 apps, keeps 30 days of history, warns you when an app misbehaves, and lives in the menu bar. Everything stays on your Mac: no account, no analytics, no network requests.
+[Deutsch](README.de.md)
+
+Activity Monitor lists about 800 processes. Activity+ folds them into about 80 apps, keeps 30 days of history, warns you when an app misbehaves, explains why your Mac is slow, and lives in your menu bar, looking exactly the way you want it to. Everything stays on your Mac.
+
+![Overview](docs/screenshots/overview.png)
+
+## Download
+
+Get the latest notarized build from [Releases](https://github.com/robbyczgw-cla/activity-plus/releases/latest). Unzip it, move **Activity+.app** to Applications and open it. Updates arrive automatically once a day; you can turn that off in Settings.
+
+Requires macOS 15 Sequoia or later. Developed and tested on Apple silicon (M1 Max); Intel Macs should work but are untested.
 
 ## What it does
 
-**Live monitoring**
-- **Processes grouped by app.** Chrome's 96 helpers become one Chrome row. It uses the same "responsible process" information macOS uses for permission prompts, so `node` started in Terminal counts toward Terminal and MCP servers count toward Claude.
-- **Per-app CPU, memory, GPU, disk, network and energy.** Energy is measured in watts by the kernel's per-task energy counters, not an "energy impact" score.
-- **Per-app GPU time.** Read from the Metal driver's per-client counters. Activity Monitor and Vitals don't show this.
-- **CPU per core** (efficiency and performance cores), memory pressure, swap, compression, disk and network throughput.
-- **Temperatures and fans** for CPU, GPU and battery; fan RPM against each fan's min/max.
-- **Battery:** health, charge cycles, whole-Mac power draw, time remaining, plus AirPods, Magic Mouse/Keyboard/Trackpad and game-controller batteries.
+### See which app is responsible
+- **Processes grouped by app.** Chrome's helpers become one Chrome row. Activity+ uses the same "responsible process" information macOS uses for permission prompts, so `node` started in Terminal counts toward Terminal, and MCP servers count toward the app that launched them.
+- **Per-app CPU, memory, GPU, disk, network and energy.** Energy is measured in watts by the kernel's per-task counters. GPU time per app comes from the Metal driver.
+- **Process inspector.** Double-click a process to see its command line, working folder, who started it, who signed it (and whether it is notarized), open files and network connections.
+- **Connections.** Which servers each app talks to right now. Host names are looked up only if you switch that on.
 
-**Menu bar**
-- Show an icon, a figure, a mini graph or two stacked figures (CPU, memory, GPU, network, temperature or battery).
-- The item turns into a warning sign while the Mac is under strain (critical memory pressure, overheating, CPU pinned).
-- Click for a compact dashboard with a tab per metric and the busiest apps. "Open Activity+" opens the main window on the same tab.
+![CPU](docs/screenshots/metric-cpu.png)
 
-**History and alerts**
-- **30 days of history** in one small SQLite file (about 10 MB). Covers the last 12 h, 24 h, 7 days or 30 days, which apps used the most, and data written/downloaded today and this week.
-- **Alerts** when an app keeps the CPU busy, keeps growing in memory, or hammers the disk or network. System alerts cover memory running out, a nearly full disk, overheating and low accessory batteries. Thresholds are adjustable, you can ignore individual apps, and there is a cooldown so nothing nags.
+### Hardware
+- CPU per core (efficiency and performance), **clock speed per cluster**, load average, thermal state.
+- Memory pressure, swap, compression.
+- GPU load, clock and power.
+- **Every drive** with free space, throughput, SMART status and NVMe wear, temperature, hours and data written.
+- Network throughput, interfaces, addresses, Wi-Fi signal, channel and link speed. Your public IP is fetched only when you click for it.
+- **All sensors**: several hundred temperatures, voltages, currents and power readings, plus fans.
+- Battery health, charge cycles and power draw, plus AirPods, Magic Mouse, Keyboard and Trackpad batteries.
 
-**For developers**
-- **Projects:** dev servers grouped by project folder, with their ports (click a port to open it), memory, uptime and whether they are working, idle or barely used. Stop a forgotten server with one confirmed click.
+![Disk](docs/screenshots/metric-disk.png)
 
-**Beyond Vitals**
-- **Why is my Mac slow?** A one-click diagnosis in plain words: not enough memory, a runaway app, thermal throttling, nearly full disk, Spotlight indexing, idle dev servers, long uptime with heavy swap, worn battery. Each finding shows its evidence and offers a fix.
-- **Startup items:** every LaunchAgent and LaunchDaemon, grouped by the app it belongs to, with running state. Agents in your account can be turned off and on; for system-wide items it copies the admin command.
-- **Storage by app:** how much space each app takes including everything it keeps in `~/Library`, plus developer caches (npm, pnpm, Cargo, pip, Homebrew, Xcode). Caches and logs can be moved to the Trash; app data and settings are never touched.
-- **Per-app volume** through Core Audio process taps (beta).
-- **Share card:** a 1200 × 630 image of memory, top apps and CPU in light or dark, or copy the whole dashboard.
-- **`aplus` CLI:** the same data in the terminal, with `--json` for scripts.
+### A menu bar that looks the way you want
+Add as many menu bar items as you like. Each shows one thing (CPU, memory, GPU, disk, network, temperature, fans, battery, power or a clock with time zones) in one of eleven styles: value, label and value, line chart, bar chart, bar per core, ring, gauge, dot, up/down speed, battery or icon. Colors can match the menu bar, go from green to red with the load, or use a color you pick. An item can hide itself until its value is high. Click an item for a compact panel on the matching tab; right-click for a menu.
 
-Quitting apps, force quitting, stopping servers, turning off startup items and moving files to the Trash always ask first.
+![Menu bar styles](docs/screenshots/widgets-dark.png)
 
-## Build and run
+<p>
+<img src="docs/screenshots/menubar-overview.png" width="360" alt="Menu bar panel">
+<img src="docs/screenshots/settings-menuBar.png" width="480" alt="Menu bar settings">
+</p>
 
-Requires macOS 15 or later, Apple silicon or Intel, and Xcode 26 or later (the build uses `/Applications/Xcode-beta.app` by default; set `DEVELOPER_DIR` to use another Xcode).
+The rest is adjustable too: which pages the sidebar shows, which Overview cards appear and in which order, the accent color, °C or °F, bytes or bits for network speeds, the refresh interval, and which tabs the menu bar panel has.
+
+### Why is my Mac slow?
+One click gives a plain-language verdict: not enough memory, an app running flat out, heat throttling, a nearly full disk, Spotlight indexing, idle dev servers, a long uptime with heavy swap, a worn battery. Each finding shows its evidence and offers the fix.
+
+![Diagnosis](docs/screenshots/diagnosis.png)
+
+### History, alerts and insights
+- **30 days of history** in one small SQLite file: charts for 12 hours to 30 days, which apps used the most, data written and downloaded today and this week.
+- **Alerts** when an app keeps the CPU busy, keeps growing in memory, or hammers the disk or network, and when memory runs out, the disk fills up, the Mac overheats or an app freezes.
+- **Unusual for this app.** Activity+ learns what is normal for each app and tells you when it is far off ("Slack uses 3.2× its usual memory"). Steady growth with a stable set of processes is reported as a likely memory leak, with a forecast.
+- **Weekly report** every Monday: the apps that used the most energy, memory, CPU and network, compared with the week before.
+- **Sleep & battery drain.** What is keeping your Mac awake right now, what woke it up, and which apps drained the battery while it was unplugged.
+
+### Let it take care of things
+- **Automations**: "stop dev servers that have been idle for a day", "quit an app when it uses more than 4 GB". Each rule asks first with a notification button, unless you explicitly allow it to act on its own.
+- **Dev servers by project**, with their ports and whether they are working, idle or barely used. Stop a forgotten one with one confirmed click.
+- **Startup items** grouped by app, with switches for the ones in your account.
+- **Storage by app**, including everything the app keeps in your Library, plus developer caches. Caches and logs can be moved to the Trash; app data is never touched.
+- **Per-app volume** (beta), quit and force quit from any list, and a 1200 × 630 share card of your Mac's state.
+
+Anything that quits a process, stops a server, changes a startup item or moves files asks first.
+
+## For AI agents
+
+`aplus mcp` is a read-only [Model Context Protocol](https://modelcontextprotocol.io) server with seven tools: overview, top apps, an app's processes, diagnosis, dev servers, history and startup items. With Claude Code:
 
 ```bash
-scripts/build-app.sh --run      # release build → dist/Activity+.app, then launch
-swift test                      # unit tests (parsers, grouping, alert and diagnosis rules, history)
-.build/debug/aplus --memory     # terminal view, sorted by memory
+claude mcp add activity-plus -- "/Applications/Activity+.app/Contents/Resources/aplus" mcp
 ```
 
-## How it gets its numbers
-
-| Figure | Source |
-|---|---|
-| Process list, CPU time of system processes | `/bin/ps` (setuid, sees every process without a helper) |
-| Memory footprint, disk I/O, energy of your processes | `proc_pid_rusage` (`RUSAGE_INFO_V6`) |
-| App grouping | `responsibility_get_pid_responsible_for_pid`, then bundle paths, then the parent chain |
-| CPU per core, memory, swap, pressure | `host_processor_info`, `host_statistics64`, `vm.swapusage`, `kern.memorystatus_vm_pressure_level` |
-| Disk throughput | IOKit `IOBlockStorageDriver` statistics |
-| Network (64-bit counters) | `sysctl NET_RT_IFLIST2`; per app via `nettop` |
-| GPU and per-app GPU time | IOKit `IOAccelerator` performance statistics and per-client `AppUsage` |
-| Temperatures, fans | IOHIDEventSystem sensors (Apple silicon), AppleSMC |
-| Battery | `AppleSmartBattery`, `IOPSGetTimeRemainingEstimate`; accessories via IORegistry and `system_profiler` |
-| Dev servers | `lsof` for listening sockets, process working directories |
-
-Processes owned by other users (root, `_windowserver`) get CPU time and resident memory from `ps` but no disk or energy figures; the UI marks them "limited details". A privileged helper would close this gap (see the roadmap).
-
-## Layout
-
-```
-Sources/ActivityCore   samplers, grouping, history, alerts, diagnosis, scanners (no UI; used by app and CLI)
-Sources/ActivityPlus   SwiftUI app: main window, menu bar, settings
-Sources/aplus          command-line tool
-Tests/                 Swift Testing unit tests
-scripts/build-app.sh   builds and ad-hoc signs dist/Activity+.app
-```
+Then ask "why is my Mac slow?" or "which dev server is idle?". The same binary prints a terminal view (`aplus`, `aplus --memory`) and JSON (`aplus --json`).
 
 ## Privacy
 
-Activity+ makes no network requests. History lives in `~/Library/Application Support/Activity+/history.sqlite` and alerts in `alerts.json` next to it; delete the folder to remove everything.
+Activity+ has no account and no analytics. Its only automatic network request is the daily update check, which you can turn off. The public IP lookup and host-name lookups happen only when you ask for them. History lives in `~/Library/Application Support/Activity+/`; delete that folder to remove everything.
+
+## How it measures
+
+| Figure | Source |
+|---|---|
+| Process list; CPU of other users' processes | `/bin/ps` (sees every process without a privileged helper) |
+| Memory footprint, disk I/O, energy of your processes | `proc_pid_rusage` |
+| App grouping | responsible process, then app bundle paths, then the parent chain |
+| CPU, memory, swap, pressure | `host_processor_info`, `host_statistics64`, `sysctl` |
+| Clock speeds, GPU power | IOReport performance states and energy model |
+| GPU load and per-app GPU time | IOKit `IOAccelerator` |
+| Temperatures, voltages, currents, fans | IOHID event system and the SMC |
+| Drives and NVMe health | IOKit block storage statistics and the NVMe SMART log |
+| Network | `sysctl NET_RT_IFLIST2`, `nettop` per app, SystemConfiguration, CoreWLAN |
+| Dev servers and connections | `lsof` |
+
+Processes owned by other users (root, `_windowserver`) show CPU and resident memory but no disk or energy figures; they are marked "limited details".
+
+## Build from source
+
+Needs Xcode 26 or later. The scripts use `/Applications/Xcode-beta.app`; set `DEVELOPER_DIR` to use another Xcode.
+
+```bash
+scripts/build-app.sh --run      # debug-signed build in dist/, then launch
+swift test                      # unit tests
+scripts/release.sh              # Developer ID signing and notarization (needs credentials)
+```
+
+The code is split into `ActivityCore` (samplers, history, rules; no UI), the SwiftUI app `ActivityPlus`, and the `aplus` command-line tool.
+
+## Status
+
+Activity+ is young. Per-app volume, freeze detection and accessory batteries are beta: they are built and pass their checks, but have seen little real-world testing. See [ROADMAP.md](ROADMAP.md) for what is next.
+
+Inspired by Activity Monitor, [Vitals](https://vitalsmac.com) and [Stats](https://mac-stats.com).
