@@ -81,7 +81,10 @@ One click gives a plain-language verdict: not enough memory, an app running flat
 - **Automations**: "stop dev servers that have been idle for a day", "quit an app when it uses more than 4 GB". Each rule asks first with a notification button, unless you explicitly allow it to act on its own.
 - **Dev servers by project**, with their ports and whether they are working, idle or barely used. Stop a forgotten one with one confirmed click.
 - **Startup items** grouped by app, with switches for the ones in your account.
-- **Storage by app**, including everything the app keeps in your Library, plus developer caches. Caches and logs can be moved to the Trash; app data is never touched.
+- **Storage by app**, including everything the app keeps in your Library, plus developer caches. Caches and logs can be moved to the Trash. **Uninstall** an app together with its leftovers (shared data of other apps stays).
+- **Large and old files**: installers you already used, downloads you never opened again, huge files. Nothing is selected unless you choose it.
+- **Disk speed test**: sequential write and read speed of your SSD.
+- **Panel editor**: choose and order the tiles of the menu bar panel, how many busy apps it lists, and its theme.
 - **Per-app volume** (beta), quit and force quit from any list, and a 1200 × 630 share card of your Mac's state.
 
 Anything that quits a process, stops a server, changes a startup item or moves files asks first.

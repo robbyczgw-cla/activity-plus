@@ -81,7 +81,10 @@ Ein Klick liefert eine Antwort in klaren Worten: zu wenig Speicher, eine App unt
 - **Automationen**: „Dev-Server stoppen, die seit einem Tag nichts tun“, „App beenden, wenn sie mehr als 4 GB braucht“. Jede Regel fragt zuerst per Mitteilung mit Knopf nach – außer Sie erlauben ausdrücklich, dass sie selbstständig handelt.
 - **Dev-Server nach Projekt**, mit Ports und Angabe, ob sie arbeiten, ruhen oder kaum genutzt werden. Einen vergessenen Server mit einem bestätigten Klick stoppen.
 - **Startobjekte** nach App gruppiert, mit Schaltern für die Einträge im eigenen Benutzerkonto.
-- **Speicherplatz pro App**, inklusive allem, was die App in der Library ablegt, dazu Entwickler-Caches. Caches und Logs lassen sich in den Papierkorb legen; App-Daten werden nie angefasst.
+- **Speicherplatz pro App**, inklusive allem, was die App in der Library ablegt, dazu Entwickler-Caches. Caches und Logs lassen sich in den Papierkorb legen. **Deinstallieren** samt Resten (gemeinsame Daten anderer Apps bleiben).
+- **Große und alte Dateien**: benutzte Installer, nie wieder geöffnete Downloads, Riesendateien. Ausgewählt wird nur, was Sie wählen.
+- **Festplatten-Speedtest**: sequenzielle Schreib- und Leserate der SSD.
+- **Panel-Editor**: Kacheln des Menüleisten-Panels auswählen und sortieren, Anzahl der aktivsten Apps, Theme.
 - **Lautstärke pro App** (Beta), Beenden und sofort Beenden aus jeder Liste sowie eine Share-Card (1200 × 630) mit dem Zustand des Macs.
 
 Alles, was einen Prozess beendet, einen Server stoppt, ein Startobjekt ändert oder Dateien verschiebt, fragt vorher nach.

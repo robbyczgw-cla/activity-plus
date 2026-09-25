@@ -47,6 +47,8 @@ struct StorageView: View {
                     }
                 }
 
+                CleanupCandidatesCard()
+
                 if let result {
                     Label(result, systemImage: "trash").padding(10).frame(maxWidth: .infinity, alignment: .leading)
                         .background(.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
