@@ -27,7 +27,12 @@ enum SnapshotRunner {
                     save(view, to: "\(dir)/\(page.replacingOccurrences(of: ":", with: "-")).png")
                 }
             }
-            snapshotPanel(to: "\(dir)/menubar-panel.png")
+            let previousTab = UserDefaults.standard.string(forKey: "menuBarPanelTab")
+            for tab in MenuBarPanel.Tab.allCases {
+                UserDefaults.standard.set(tab.rawValue, forKey: "menuBarPanelTab")
+                snapshotPanel(to: "\(dir)/menubar-\(tab.rawValue).png")
+            }
+            UserDefaults.standard.set(previousTab ?? MenuBarPanel.Tab.overview.rawValue, forKey: "menuBarPanelTab")
             for dark in [false, true] {
                 if let png = ShareCard.pngData(Monitor.shared.snapshot, dark: dark) {
                     try? png.write(to: URL(fileURLWithPath: "\(dir)/sharecard-\(dark ? "dark" : "light").png"))
