@@ -8,6 +8,10 @@ let package = Package(
         .executable(name: "ActivityPlus", targets: ["ActivityPlus"]),
         .executable(name: "aplus", targets: ["aplus"]),
     ],
+    dependencies: [
+        // Auto-updates. The framework is copied into the app bundle by scripts/build-app.sh.
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.7.0"),
+    ],
     targets: [
         // Samplers and models. No UI imports, so it stays testable and reusable (CLI later).
         .target(
@@ -16,8 +20,9 @@ let package = Package(
         ),
         .executableTarget(
             name: "ActivityPlus",
-            dependencies: ["ActivityCore"],
-            swiftSettings: [.swiftLanguageMode(.v5)]
+            dependencies: ["ActivityCore", .product(name: "Sparkle", package: "Sparkle")],
+            swiftSettings: [.swiftLanguageMode(.v5)],
+            linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]
         ),
         .executableTarget(
             name: "aplus",

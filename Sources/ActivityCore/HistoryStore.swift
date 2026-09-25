@@ -97,6 +97,7 @@ public final class HistoryStore: @unchecked Sendable {
         queue.async { [self] in
             minute.add(snapshot)
             windowSampleCount += 1
+            if let battery = snapshot.battery, !battery.isPluggedIn { windowOnBattery += 1 }
             for app in snapshot.apps where app.cpuPercent > 0.2 || app.memory > 50_000_000
                 || app.diskWriteRate + app.diskReadRate > 10_000 || app.netInRate + app.netOutRate > 5_000 || app.powerWatts > 0.05
             {
@@ -160,15 +161,21 @@ public final class HistoryStore: @unchecked Sendable {
     }
 
     public func topApps(_ range: Range, until end: Date = Date()) -> [AppTotal] {
+        topApps(from: end.addingTimeInterval(-range.seconds), to: end)
+    }
+
+    /// Per-app totals for any period. `onBatteryOnly` keeps only 5-minute windows spent on battery.
+    public func topApps(from start: Date, to end: Date, onBatteryOnly: Bool = false) -> [AppTotal] {
         queue.sync {
-            let from = Int(end.timeIntervalSince1970 - range.seconds)
+            let from = Int(start.timeIntervalSince1970), to = Int(end.timeIntervalSince1970)
+            let filter = "ts >= \(from) AND ts <= \(to)" + (onBatteryOnly ? " AND on_battery = 1" : "")
             // Averages are over every recorded 5-minute window (an app that ran 1 of 24 hours counts 1/24).
-            let recorded = query("SELECT COUNT(DISTINCT ts) FROM apps WHERE ts >= \(from)") { sqlite3_column_int64($0, 0) }.first ?? 1
+            let recorded = query("SELECT COUNT(DISTINCT ts) FROM apps WHERE \(filter)") { sqlite3_column_int64($0, 0) }.first ?? 1
             let windows = max(1, recorded)
             let sql = """
                 SELECT app_id, MAX(name), MAX(bundle), SUM(cpu) / \(windows), SUM(mem) / \(windows), MAX(mem_peak),
                        SUM(disk), SUM(net), SUM(energy), SUM(gpu) / \(windows)
-                FROM apps WHERE ts >= \(from) GROUP BY app_id
+                FROM apps WHERE \(filter) GROUP BY app_id
                 """
             return query(sql) { s in
                 AppTotal(
@@ -180,6 +187,105 @@ public final class HistoryStore: @unchecked Sendable {
                     gpuAverage: sqlite3_column_double(s, 9)
                 )
             }
+        }
+    }
+
+    public struct AppPoint: Sendable, Identifiable {
+        public let date: Date
+        public let cpu: Double
+        public let memory: Double
+        public var id: Date { date }
+    }
+
+    /// One app's 5-minute averages, oldest first (for its history chart and leak detection).
+    public func appSeries(_ appID: String, since start: Date) -> [AppPoint] {
+        queue.sync {
+            var statement: OpaquePointer?
+            let sql = "SELECT ts, cpu, mem FROM apps WHERE app_id = ? AND ts >= ? ORDER BY ts"
+            guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK, let statement else { return [] }
+            defer { sqlite3_finalize(statement) }
+            bindText(statement, 1, appID)
+            sqlite3_bind_int64(statement, 2, Int64(start.timeIntervalSince1970))
+            var points: [AppPoint] = []
+            while sqlite3_step(statement) == SQLITE_ROW {
+                points.append(AppPoint(date: Date(timeIntervalSince1970: sqlite3_column_double(statement, 0)),
+                                       cpu: sqlite3_column_double(statement, 1), memory: sqlite3_column_double(statement, 2)))
+            }
+            return points
+        }
+    }
+
+    /// What is normal for each app: averages over the windows in which it was running.
+    public struct Baseline: Sendable {
+        public let appID: String
+        public let averageCPU: Double
+        public let averageMemory: Double
+        public let typicalPeakMemory: Double
+        public let windows: Int
+    }
+
+    public func baselines(from start: Date, to end: Date) -> [String: Baseline] {
+        queue.sync {
+            let sql = """
+                SELECT app_id, AVG(cpu), AVG(mem), AVG(mem_peak), COUNT(*) FROM apps
+                WHERE ts >= \(Int(start.timeIntervalSince1970)) AND ts <= \(Int(end.timeIntervalSince1970)) GROUP BY app_id
+                """
+            let rows = query(sql) { s in
+                Baseline(appID: Self.text(s, 0), averageCPU: sqlite3_column_double(s, 1), averageMemory: sqlite3_column_double(s, 2),
+                         typicalPeakMemory: sqlite3_column_double(s, 3), windows: Int(sqlite3_column_int64(s, 4)))
+            }
+            return Dictionary(rows.map { ($0.appID, $0) }, uniquingKeysWith: { a, _ in a })
+        }
+    }
+
+    public struct BatteryDrain: Sendable {
+        public var hoursOnBattery: Double = 0
+        public var percentUsed: Double = 0
+        public var energyWh: Double = 0
+        public init() {}
+    }
+
+    /// How much battery was used while unplugged since `start`, from the per-minute system rows.
+    public func batteryDrain(since start: Date) -> BatteryDrain {
+        queue.sync {
+            let rows = query("SELECT ts, secs, battery, power FROM system WHERE on_battery = 1 AND ts >= \(Int(start.timeIntervalSince1970)) ORDER BY ts") { s in
+                (ts: sqlite3_column_int64(s, 0), secs: sqlite3_column_double(s, 1),
+                 battery: sqlite3_column_type(s, 2) == SQLITE_NULL ? nil : sqlite3_column_double(s, 2),
+                 power: sqlite3_column_type(s, 3) == SQLITE_NULL ? 0 : sqlite3_column_double(s, 3))
+            }
+            var drain = BatteryDrain()
+            var previous: (ts: Int64, battery: Double?)?
+            for row in rows {
+                drain.hoursOnBattery += row.secs / 3600
+                drain.energyWh += row.power * row.secs / 3600
+                // Sum the drops between consecutive minutes; a gap (sleep, charging) starts a new run.
+                if let prev = previous, let before = prev.battery, let now = row.battery, row.ts - prev.ts <= 180, now < before {
+                    drain.percentUsed += before - now
+                }
+                previous = (row.ts, row.battery)
+            }
+            return drain
+        }
+    }
+
+    /// Byte and energy totals between two dates (for week-over-week comparisons).
+    public func totals(from start: Date, to end: Date) -> Totals {
+        queue.sync {
+            let sql = "SELECT SUM(disk_w * secs), SUM(disk_r * secs), SUM(net_in * secs), SUM(net_out * secs), SUM(power * secs) / 3600, AVG(cpu) FROM system WHERE ts >= \(Int(start.timeIntervalSince1970)) AND ts <= \(Int(end.timeIntervalSince1970))"
+            return query(sql) { s in
+                Totals(diskWritten: sqlite3_column_double(s, 0), diskRead: sqlite3_column_double(s, 1),
+                       received: sqlite3_column_double(s, 2), sent: sqlite3_column_double(s, 3),
+                       energyWh: sqlite3_column_double(s, 4), averageCPU: sqlite3_column_double(s, 5))
+            }.first ?? Totals()
+        }
+    }
+
+    /// When the oldest stored sample is from (for "not enough history yet").
+    public var oldestSample: Date? {
+        queue.sync {
+            query("SELECT MIN(ts) FROM system") { s in
+                sqlite3_column_type(s, 0) == SQLITE_NULL ? nil : Date(timeIntervalSince1970: sqlite3_column_double(s, 0))
+            }.first ?? nil
         }
     }
 
@@ -234,13 +340,17 @@ public final class HistoryStore: @unchecked Sendable {
                 cpu REAL, mem REAL, mem_peak REAL, disk REAL, net REAL, energy REAL, gpu REAL)
             """)
         exec("CREATE INDEX IF NOT EXISTS apps_ts ON apps(ts)")
+        // v0.2: remember whether the Mac ran on battery (fails harmlessly when the column exists).
+        exec("ALTER TABLE system ADD COLUMN on_battery INTEGER DEFAULT 0")
+        exec("ALTER TABLE apps ADD COLUMN on_battery INTEGER DEFAULT 0")
+        exec("CREATE INDEX IF NOT EXISTS apps_app ON apps(app_id, ts)")
     }
 
     private func writeSystemRow(_ a: Accumulator, at date: Date) {
         guard a.count > 0 else { return }
         let n = Double(a.count)
         var statement: OpaquePointer?
-        let sql = "INSERT INTO system VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+        let sql = "INSERT INTO system (ts, secs, cpu, mem, gpu, disk_r, disk_w, net_in, net_out, battery, power, on_battery) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return }
         defer { sqlite3_finalize(statement) }
         sqlite3_bind_int64(statement, 1, Int64(date.timeIntervalSince1970))
@@ -254,12 +364,14 @@ public final class HistoryStore: @unchecked Sendable {
         sqlite3_bind_double(statement, 9, a.netOut / n)
         if a.batteryCount > 0 { sqlite3_bind_double(statement, 10, a.battery / Double(a.batteryCount)) } else { sqlite3_bind_null(statement, 10) }
         if a.powerCount > 0 { sqlite3_bind_double(statement, 11, a.power / Double(a.powerCount)) } else { sqlite3_bind_null(statement, 11) }
+        sqlite3_bind_int(statement, 12, a.onBattery * 2 > a.count ? 1 : 0)
         sqlite3_step(statement)
     }
 
     private func writeAppRows(at date: Date) {
         exec("BEGIN")
-        let sql = "INSERT INTO apps VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+        let sql = "INSERT INTO apps (ts, app_id, name, bundle, cpu, mem, mem_peak, disk, net, energy, gpu, on_battery) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+        let onBattery: Int32 = windowOnBattery * 2 > windowSampleCount ? 1 : 0
         var statement: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { exec("COMMIT"); return }
         let windowSamples = Double(max(1, minuteSamplesPerWindow))
@@ -277,14 +389,17 @@ public final class HistoryStore: @unchecked Sendable {
             sqlite3_bind_double(statement, 9, a.netBytes)
             sqlite3_bind_double(statement, 10, a.energyJoules / 3600)
             sqlite3_bind_double(statement, 11, a.gpu / windowSamples)
+            sqlite3_bind_int(statement, 12, onBattery)
             sqlite3_step(statement)
         }
         sqlite3_finalize(statement)
         exec("COMMIT")
         windowSampleCount = 0
+        windowOnBattery = 0
     }
 
     private var windowSampleCount = 0
+    private var windowOnBattery = 0
     private var minuteSamplesPerWindow: Int { max(windowSampleCount, appWindow.values.map(\.count).max() ?? 1) }
 
     private func exec(_ sql: String) {
@@ -317,6 +432,7 @@ private struct Accumulator {
     var diskRead = 0.0, diskWrite = 0.0, netIn = 0.0, netOut = 0.0
     var battery = 0.0, batteryCount = 0
     var power = 0.0, powerCount = 0
+    var onBattery = 0
 
     mutating func add(_ s: SystemSnapshot) {
         count += 1
@@ -332,6 +448,7 @@ private struct Accumulator {
             battery += b.percent
             batteryCount += 1
             if let p = b.systemPower { power += p; powerCount += 1 }
+            if !b.isPluggedIn { onBattery += 1 }
         }
     }
 }

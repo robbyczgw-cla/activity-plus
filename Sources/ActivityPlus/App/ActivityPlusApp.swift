@@ -13,6 +13,9 @@ struct ActivityPlusApp: App {
                 .environment(AppServices.shared)
         }
         .defaultSize(width: 1080, height: 720)
+        .commands {
+            CommandGroup(after: .appInfo) { CheckForUpdatesButton() }
+        }
 
         MenuBarExtra {
             MenuBarPanel().environment(monitor).environment(AppServices.shared)
@@ -32,6 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let showDock = UserDefaults.standard.object(forKey: "showDockIcon") as? Bool ?? true
         NSApp.setActivationPolicy(showDock ? .regular : .accessory)
         MainActor.assumeIsolated {
+            _ = Updates.shared
             AppServices.shared.attach(to: Monitor.shared)
             Monitor.shared.start()
             SnapshotRunner.runIfRequested()

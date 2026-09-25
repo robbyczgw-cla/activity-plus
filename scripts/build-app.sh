@@ -17,6 +17,9 @@ cp "$BIN/ActivityPlus" "$APP/Contents/MacOS/"
 cp "$BIN/aplus" "$APP/Contents/Resources/"
 cp Resources/Info.plist "$APP/Contents/"
 [[ -f Resources/AppIcon.icns ]] && cp Resources/AppIcon.icns "$APP/Contents/Resources/"
+# Sparkle ships as a binary framework; the executable finds it through @executable_path/../Frameworks.
+mkdir -p "$APP/Contents/Frameworks"
+ditto .build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework "$APP/Contents/Frameworks/Sparkle.framework"
 codesign --force --sign - --timestamp=none "$APP"
 echo "Built $APP"
 

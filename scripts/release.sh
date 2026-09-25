@@ -1,6 +1,8 @@
 #!/bin/zsh
 # Builds, signs with Developer ID (hardened runtime), notarizes and staples Activity+.
 # Result: dist/Activity+.app (stapled) and dist/Activity+-<version>.zip, ready to hand out.
+#   scripts/release.sh             sign + notarize
+#   scripts/release.sh --publish   … and create the GitHub release with appcast.xml (notes: docs/release-notes/v<version>.md)
 #
 # One-time setup — stores the App Store Connect API key as a keychain profile:
 #   xcrun notarytool store-credentials activityplus \
@@ -19,16 +21,16 @@ scripts/build-app.sh
 /usr/libexec/PlistBuddy -c "Set CFBundleVersion $(git rev-list --count HEAD)" "$APP/Contents/Info.plist"
 
 echo "→ Signing with $IDENTITY"
-# Inside-out: nested executables and frameworks first, the app last.
-find "$APP/Contents" -type f \( -perm -u+x -o -name "*.dylib" \) ! -path "*/MacOS/ActivityPlus" -print0 |
-  while IFS= read -r -d '' file; do
-    codesign --force --options runtime --timestamp --sign "$IDENTITY" "$file"
+sign() { codesign --force --options runtime --timestamp --sign "$IDENTITY" "$@"; }
+# Inside-out: Sparkle's XPC services and helper apps, then the framework, our CLI, and the app last.
+SPARKLE="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
+if [[ -d "$SPARKLE" ]]; then
+  for item in "$SPARKLE"/XPCServices/*.xpc(N) "$SPARKLE/Autoupdate" "$SPARKLE/Updater.app"; do
+    [[ -e "$item" ]] && sign "$item"
   done
-if [[ -d "$APP/Contents/Frameworks" ]]; then
-  for framework in "$APP"/Contents/Frameworks/*.framework(N); do
-    codesign --force --options runtime --timestamp --sign "$IDENTITY" "$framework"
-  done
+  sign "$APP/Contents/Frameworks/Sparkle.framework"
 fi
+sign "$APP/Contents/Resources/aplus"
 codesign --force --options runtime --timestamp --entitlements Resources/ActivityPlus.entitlements --sign "$IDENTITY" "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 
@@ -44,3 +46,18 @@ rm -f "$ZIP"
 ditto -c -k --keepParent "$APP" "$ZIP"
 spctl -a -vv "$APP"
 echo "✓ $ZIP"
+
+# Appcast for Sparkle: signed with the EdDSA key in the keychain (account "activityplus").
+# Every GitHub release carries appcast.xml, so .../releases/latest/download/appcast.xml always points at the newest.
+if [[ "${1:-}" == "--publish" ]]; then
+  STAGE="dist/appcast"
+  rm -rf "$STAGE" && mkdir -p "$STAGE"
+  cp "$ZIP" "$STAGE/"
+  .build/artifacts/sparkle/Sparkle/bin/generate_appcast --account activityplus \
+    --download-url-prefix "https://github.com/robbyczgw-cla/activity-plus/releases/download/v$VERSION/" \
+    --link "https://github.com/robbyczgw-cla/activity-plus" "$STAGE"
+  NOTES="${RELEASE_NOTES:-docs/release-notes/v$VERSION.md}"
+  gh release create "v$VERSION" "$ZIP" "$STAGE/appcast.xml" --repo robbyczgw-cla/activity-plus \
+    --title "Activity+ $VERSION" --notes-file "$NOTES"
+  echo "✓ Published v$VERSION"
+fi

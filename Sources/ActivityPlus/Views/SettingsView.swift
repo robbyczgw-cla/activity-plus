@@ -55,8 +55,14 @@ struct SettingsView: View {
                         }
                     }
             }
+            Section("Updates") {
+                Toggle("Check for updates automatically", isOn: Binding(
+                    get: { Updates.shared.updater.automaticallyChecksForUpdates },
+                    set: { Updates.shared.updater.automaticallyChecksForUpdates = $0 }))
+                CheckForUpdatesButton()
+            }
             Section("Privacy") {
-                Text("Activity+ keeps everything on this Mac. It has no account, no analytics and makes no network requests.")
+                Text("Activity+ keeps everything on this Mac. It has no account and no analytics. Its only network request is the daily update check, which you can turn off above.")
                     .font(.callout).foregroundStyle(.secondary)
             }
         }

@@ -5,8 +5,11 @@ import Foundation
 //   aplus            top 15 apps by CPU after a 2 s measurement
 //   aplus --memory   sort by memory
 //   aplus --json     machine-readable output
+//   aplus mcp        MCP server for AI agents (read-only tools)
 
 let arguments = Set(CommandLine.arguments.dropFirst())
+// `aplus mcp`: Model Context Protocol server on stdin/stdout for Claude, Codex & co.
+if arguments.contains("mcp") { MCPServer.run() }
 let sampler = SystemSampler()
 if arguments.contains("--bench") {
     for (name, ms) in sampler.benchmark() { print(name.padding(toLength: 20, withPad: " ", startingAt: 0), String(format: "%7.1f ms", ms)) }
