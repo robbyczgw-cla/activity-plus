@@ -4,3 +4,12 @@
 *.xcodeproj/
 .swiftpm/
 .delegate/
+
+### backup-managed ###
+node_modules/
+.next/
+dist/
+build/
+*.log
+.DS_Store
+### end backup-managed ###
