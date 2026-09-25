@@ -90,6 +90,9 @@ public struct AutomationMatch: Sendable, Identifiable, Hashable {
 public final class AutomationEngine: @unchecked Sendable {
     private var conditionSince: [String: Date] = [:]
     private var lastFired: [String: Date] = [:]
+    /// When this engine first saw each dev server. Idleness only counts from here on: before that,
+    /// nobody watched it, and lifetime numbers ("barely used") say nothing about the last hours.
+    private var firstSeen: [String: Date] = [:]
     public var cooldown: TimeInterval = 3600
 
     public init() {}
@@ -108,18 +111,22 @@ public final class AutomationEngine: @unchecked Sendable {
         for rule in rules where rule.enabled {
             switch rule.trigger {
             case .devServerIdle(let hours):
+                var current: Set<String> = []
                 for server in servers {
-                    let idleFor: TimeInterval? = switch server.activity(now: now) {
-                    case .idle(let since): since
-                    case .barelyUsed(let uptime): uptime
-                    case .working: nil
-                    }
-                    if let idleFor, idleFor >= hours * 3600 {
+                    let key = "\(server.pid):\(server.startTime.timeIntervalSince1970)"
+                    current.insert(key)
+                    let seen = firstSeen[key] ?? now
+                    firstSeen[key] = seen
+                    if case .working = server.activity(now: now) { continue }
+                    // Observed inactivity only: since its last burst of work, and never longer than we watched it.
+                    let idleFor = min(now.timeIntervalSince(server.lastActive ?? server.startTime), now.timeIntervalSince(seen))
+                    if idleFor >= hours * 3600 {
                         let project = server.directory.map { ($0 as NSString).lastPathComponent } ?? server.name
                         matches.append(AutomationMatch(rule: rule, target: .server(server),
                             reason: "\(project) (port \(server.ports.map(String.init).joined(separator: ", "))) has done nothing for \(Format.duration(idleFor)).", date: now))
                     }
                 }
+                if !servers.isEmpty { firstSeen = firstSeen.filter { current.contains($0.key) } }
             case .batteryBelow(let percent):
                 if let battery = snapshot.battery, !battery.isPluggedIn, battery.percent < percent {
                     matches.append(AutomationMatch(rule: rule, target: .none,

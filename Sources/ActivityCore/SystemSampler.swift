@@ -76,8 +76,10 @@ public final class SystemSampler: @unchecked Sendable {
         let wantSensors = options.sensors && (visible || options.sensorsInBackground)
         if wantSensors, tick % 5 == 1 { lastSensors = sensorSampler.sample() }
         snapshot.sensors = wantSensors ? lastSensors : SensorStats()
-        if wantsSensorList, tick % 3 == 1 { lastSensorList = sensorSampler.allSensors() }
-        snapshot.sensorList = wantsSensorList ? lastSensorList : []
+        // The full list is the most expensive sensor read: it obeys the same Performance switch.
+        let wantList = wantsSensorList && options.sensors
+        if wantList, tick % 3 == 1 { lastSensorList = sensorSampler.allSensors() }
+        snapshot.sensorList = wantList ? lastSensorList : []
         if snapshot.battery?.temperature == nil, let temperature = snapshot.sensors.batteryTemperature {
             snapshot.battery?.temperature = temperature
         }

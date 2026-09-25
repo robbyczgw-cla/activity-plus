@@ -76,6 +76,22 @@ struct AutomationTests {
         #expect(engine.evaluate([rule], snapshot: busy, servers: [], now: t.addingTimeInterval(640)).count == 1)
     }
 
+    @Test func idleServerRuleCountsObservedInactivityOnly() {
+        let engine = AutomationEngine()
+        let rule = AutomationRule(trigger: .devServerIdle(hours: 24), action: .stopDevServer)
+        let t = Date()
+        // Up for two days with almost no CPU ("barely used"), but it worked ten minutes ago.
+        var server = DevServer(pid: 4242, name: "node", command: "vite", ports: [5173], directory: "/tmp/site",
+                               startTime: t.addingTimeInterval(-48 * 3600), memory: 0, cpuPercent: 0, cpuTime: 10,
+                               lastActive: t.addingTimeInterval(-600), pids: [4242])
+        #expect(engine.evaluate([rule], snapshot: SystemSnapshot(), servers: [server], now: t).isEmpty)
+        // Never seen working, but only watched for an hour: not yet.
+        server.lastActive = nil
+        #expect(engine.evaluate([rule], snapshot: SystemSnapshot(), servers: [server], now: t.addingTimeInterval(3600)).isEmpty)
+        // Watched and quiet for more than a day: now it may ask.
+        #expect(engine.evaluate([rule], snapshot: SystemSnapshot(), servers: [server], now: t.addingTimeInterval(25 * 3600)).count == 1)
+    }
+
     @Test func disabledRulesDoNothing() {
         var rule = AutomationRule(trigger: .batteryBelow(percent: 50), action: .notify)
         rule.enabled = false
@@ -84,5 +100,16 @@ struct AutomationTests {
         battery.percent = 10
         snapshot.battery = battery
         #expect(AutomationEngine().evaluate([rule], snapshot: snapshot, servers: [], now: Date()).isEmpty)
+    }
+}
+
+@Suite("Uninstall safety")
+struct UninstallSafetyTests {
+    @Test func bundleMetadataCannotEscapeLibraryFolders() {
+        #expect(StorageScanner.isSafeFolderName("com.tinyspeck.slackmacgap"))
+        #expect(StorageScanner.isSafeFolderName("Visual Studio Code"))
+        for bad in ["", "..", "../../Documents", ".hidden", "a/b", "AC/DC", " Slack", "x:y"] {
+            #expect(!StorageScanner.isSafeFolderName(bad), "\(bad) must be rejected")
+        }
     }
 }

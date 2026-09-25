@@ -116,7 +116,8 @@ public enum NetworkInfo {
     }
 
     public static func publicIP(timeout: TimeInterval = 5) async -> String? {
-        for endpoint in ["https://api.ipify.org", "https://icanhazip.com"] {
+        // Only api.ipify.org: the privacy notes on the website and in the app name exactly this one service.
+        for endpoint in ["https://api.ipify.org"] {
             guard let url = URL(string: endpoint) else { continue }
             var request = URLRequest(url: url)
             request.httpMethod = "GET"

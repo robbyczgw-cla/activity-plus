@@ -235,6 +235,12 @@ public final class StorageScanner: @unchecked Sendable {
 
     // MARK: - Matching
 
+    /// A name from an app's Info.plist that can safely become one folder name.
+    static func isSafeFolderName(_ name: String) -> Bool {
+        !name.isEmpty && !name.hasPrefix(".") && !name.contains("/") && !name.contains(":") && !name.contains("\0")
+            && name.trimmingCharacters(in: .whitespaces) == name
+    }
+
     private func locations(for info: BundleInfo, bundle: URL) -> [StorageLocation] {
         let library = home.appendingPathComponent("Library", isDirectory: true)
         var paths: [(String, StorageLocation.Kind)] = []
@@ -242,19 +248,24 @@ public final class StorageScanner: @unchecked Sendable {
 
         func add(_ url: URL, kind: StorageLocation.Kind) {
             let path = url.standardizedFileURL.path
+            // Every leftover must sit directly inside its Library folder, whatever the app's
+            // Info.plist says (a bundle id like "../../Documents" must never reach the Trash).
+            if kind != .bundle {
+                guard url.standardizedFileURL.deletingLastPathComponent().path.hasPrefix(library.path + "/") else { return }
+            }
             guard seen.insert(path).inserted else { return }
             paths.append((path, kind))
         }
 
         add(bundle, kind: .bundle)
-        let names = [info.bundleID, info.name].compactMap { $0 }.filter { !$0.isEmpty }
+        let names = [info.bundleID, info.name].compactMap { $0 }.filter(Self.isSafeFolderName)
         let uniqueNames = Array(Set(names))
         for name in uniqueNames {
             add(library.appendingPathComponent("Application Support/\(name)", isDirectory: true), kind: .applicationSupport)
             add(library.appendingPathComponent("Caches/\(name)", isDirectory: true), kind: .caches)
             add(library.appendingPathComponent("Logs/\(name)", isDirectory: true), kind: .logs)
         }
-        if let bundleID = info.bundleID, !bundleID.isEmpty {
+        if let bundleID = info.bundleID, Self.isSafeFolderName(bundleID) {
             add(library.appendingPathComponent("Containers/\(bundleID)", isDirectory: true), kind: .containers)
             add(library.appendingPathComponent("Saved Application State/\(bundleID).savedState", isDirectory: true), kind: .savedState)
             add(library.appendingPathComponent("Preferences/\(bundleID).plist"), kind: .preferences)

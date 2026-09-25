@@ -182,21 +182,31 @@ struct StorageView: View {
         let bundleOnly = app.locations.filter { $0.kind == .bundle }
         let otherCopy = all.contains { $0.id != app.id && $0.bundleID != nil && $0.bundleID == app.bundleID }
         if otherCopy { return bundleOnly }
-        return app.locations.filter { $0.kind != .groupContainers }
+        // A folder that another installed app also claims (same name, e.g. "Application Support/Code")
+        // is shared data and stays.
+        let claimedByOthers = Set(all.filter { $0.id != app.id }.flatMap { $0.locations.filter { $0.kind != .bundle }.map(\.path) })
+        return app.locations.filter { $0.kind != .groupContainers && !claimedByOthers.contains($0.path) }
+    }
+
+    /// Running copies of exactly this bundle, not other copies with the same bundle id elsewhere.
+    private static func runningCopies(of app: AppDiskUsage) -> [NSRunningApplication] {
+        guard let bundleID = app.bundleID, let path = app.bundlePath else { return [] }
+        let target = URL(fileURLWithPath: path).standardizedFileURL.path
+        return NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+            .filter { $0.bundleURL?.standardizedFileURL.path == target }
     }
 
     private func uninstall(_ app: AppDiskUsage) {
-        if let bundleID = app.bundleID {
-            for running in NSRunningApplication.runningApplications(withBundleIdentifier: bundleID) { running.terminate() }
-        }
+        Self.runningCopies(of: app).forEach { $0.terminate() }
         // Give it a moment to quit, then move the bundle and its folders.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            if let bundleID = app.bundleID, !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty {
+            if !Self.runningCopies(of: app).isEmpty {
                 result = "\(app.name) is still running. Quit it and try again."
                 return
             }
-            let outcome = StorageScanner.moveToTrash(Self.uninstallLocations(app, among: services.storage))
-            let moved = Set(app.locations.map(\.path)).subtracting(outcome.failures.keys)
+            let locations = Self.uninstallLocations(app, among: services.storage)
+            let outcome = StorageScanner.moveToTrash(locations)
+            let moved = Set(locations.map(\.path)).subtracting(outcome.failures.keys)
             services.didTrash(moved)
             result = outcome.failures.isEmpty
                 ? "Uninstalled \(app.name): \(Format.storage(outcome.freed)) moved to the Trash."

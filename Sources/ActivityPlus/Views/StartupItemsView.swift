@@ -6,6 +6,7 @@ struct StartupItemsView: View {
     @AppStorage("startupShowApple") private var showApple = false
     @State private var search = ""
     @State private var pendingDisable: StartupItem?
+    @State private var pendingEnable: StartupItem?
     @State private var errorMessage: String?
 
     private var groups: [(owner: String, bundle: String?, items: [StartupItem])] {
@@ -64,6 +65,12 @@ struct StartupItemsView: View {
         } message: { item in
             Text("It stops now and does not start at login. \(item.ownerName) may lose a background feature (updates, sync, helpers). You can turn it back on here.")
         }
+        .confirmationDialog("Turn on \(pendingEnable?.label ?? "")?", isPresented: Binding(get: { pendingEnable != nil }, set: { if !$0 { pendingEnable = nil } }), presenting: pendingEnable) { item in
+            Button("Turn On") { apply(item, enabled: true) }
+            Button("Cancel", role: .cancel) {}
+        } message: { item in
+            Text("It starts now and at every login. Its program: \(item.program ?? item.plistPath ?? item.label)")
+        }
         .alert("Could not change it", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
             Button("OK") {}
         } message: { Text(errorMessage ?? "") }
@@ -74,7 +81,7 @@ struct StartupItemsView: View {
     }
 
     private func toggle(_ item: StartupItem, enabled: Bool) {
-        if enabled { apply(item, enabled: true) } else { pendingDisable = item }
+        if enabled { pendingEnable = item } else { pendingDisable = item }
     }
 
     private func apply(_ item: StartupItem, enabled: Bool) {
@@ -110,9 +117,9 @@ private struct StartupRow: View {
                     .toggleStyle(.switch).labelsHidden()
             } else {
                 Menu("Admin") {
-                    Button("Copy Terminal command to turn off") {
+                    Button(item.scope == .globalDaemon ? "Copy Terminal command to turn off (needs admin)" : "Copy Terminal command to turn off") {
                         NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString("sudo " + StartupItemsScanner.adminCommand(toDisable: item), forType: .string)
+                        NSPasteboard.general.setString(StartupItemsScanner.adminCommand(toDisable: item), forType: .string)
                     }
                     if let plist = item.plistPath { Button("Show in Finder") { ProcessActions.reveal(plist) } }
                 }

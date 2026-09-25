@@ -102,7 +102,7 @@ enum MCPServer {
             return ["headline": d.headline, "severity": String(describing: d.severity), "summary": d.summary, "findings": d.findings.map { ["id": $0.id, "severity": String(describing: $0.severity), "title": $0.title, "detail": $0.detail, "evidence": $0.evidence] as [String: Any] }]
         case "dev_servers":
             let processes = s.apps.flatMap(\.processes)
-            let result = projects.scan(processes)
+            let result = queue.sync { projects.scan(processes) }   // same serial queue as observe()
             return result.projects.map { project in ["name": project.name, "root": project.root, "servers": project.servers.map { server in ["pid": server.pid, "name": server.name, "ports": server.ports, "command": server.command, "memory": server.memory, "formatted_memory": Format.memory(server.memory), "activity": activityText(server), "idle": server.isIdle()] as [String: Any] }] as [String: Any] }
         case "history":
             let ranges: [String: HistoryStore.Range] = ["12h": .hours12, "24h": .hours24, "7d": .days7, "30d": .days30]

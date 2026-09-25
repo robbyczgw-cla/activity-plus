@@ -37,7 +37,7 @@ struct ProcessInspectorView: View {
                                 row("Signed by", signature.authority ?? (signature.isApple ? "Apple" : "Unknown"))
                                 if let team = signature.teamID { row("Team ID", team) }
                                 if let identifier = signature.identifier { row("Identifier", identifier) }
-                                row("Valid", signature.isValid ? "Yes" : "No — the code was changed after signing")
+                                row("Valid", signature.isValid ? "Yes (signature and program code)" : "No — the program was changed after signing, or the signature is broken")
                                 if let notarized = signature.isNotarized { row("Notarized", signature.isApple ? "Part of macOS" : (notarized ? "Yes" : "No")) }
                             }
                         }

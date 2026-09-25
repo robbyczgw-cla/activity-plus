@@ -12,7 +12,15 @@ enum ProcessActions {
     @discardableResult
     static func quit(_ app: AppGroup, force: Bool) -> Outcome {
         if let bundleID = app.bundleID {
-            let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+            // Only the copy the user saw: two copies of an app can run from different folders.
+            let pids = Set(app.processes.map(\.pid))
+            let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).filter { running in
+                guard pids.contains(running.processIdentifier),
+                      let sample = app.processes.first(where: { $0.pid == running.processIdentifier }),
+                      isSame(sample) else { return false }
+                guard let path = app.bundlePath else { return true }
+                return running.bundleURL?.standardizedFileURL.path == URL(fileURLWithPath: path).standardizedFileURL.path
+            }
             if !running.isEmpty {
                 for app in running { if force { app.forceTerminate() } else { app.terminate() } }
                 if force { app.processes.forEach { _ = signal($0, force: true) } }
@@ -30,6 +38,9 @@ enum ProcessActions {
 
     @discardableResult
     static func quit(_ process: ProcessSample, force: Bool) -> Outcome {
+        guard isSame(process) else {
+            return .denied("\(process.name) (pid \(process.pid)) has already quit.")
+        }
         if let app = NSRunningApplication(processIdentifier: process.pid) {
             if force { app.forceTerminate() } else { app.terminate() }
             return .done
@@ -42,10 +53,13 @@ enum ProcessActions {
     /// Signals the process only if it is still the one the user saw: pids get reused, and the
     /// confirmation dialog may have been open for a while.
     private static func signal(_ process: ProcessSample, force: Bool) -> Bool {
-        let pid = process.pid
-        guard pid > 1, pid != getpid(), ProcessIdentity.isSame(pid: pid, startTime: process.startTime, hasDetails: process.hasDetails)
-        else { return false }
-        return kill(pid, force ? SIGKILL : SIGTERM) == 0
+        guard isSame(process) else { return false }
+        return kill(process.pid, force ? SIGKILL : SIGTERM) == 0
+    }
+
+    private static func isSame(_ process: ProcessSample) -> Bool {
+        process.pid > 1 && process.pid != getpid()
+            && ProcessIdentity.isSame(pid: process.pid, startTime: process.startTime, hasDetails: process.hasDetails)
     }
 
     static func reveal(_ path: String?) {

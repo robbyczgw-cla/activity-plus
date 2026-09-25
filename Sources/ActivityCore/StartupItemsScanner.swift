@@ -56,7 +56,7 @@ public enum StartupItemsScanner {
                 let owner = ownerInfo(program: program, label: label, apps: apps)
                 result.append(StartupItem(id: url.path, label: label, scope: scope, plistPath: url.path, program: program, arguments: args,
                     runAtLoad: dict["RunAtLoad"] as? Bool ?? false, keepAlive: (dict["KeepAlive"] as? Bool) == true || dict["KeepAlive"] is [String: Any],
-                    isDisabled: (scope == .userAgent ? disabledUser : disabledSystem).contains(label), isRunning: pid != nil, pid: pid,
+                    isDisabled: (scope == .globalDaemon ? disabledSystem : disabledUser).contains(label), isRunning: pid != nil, pid: pid,
                     ownerBundlePath: owner.path, ownerName: owner.name, isApple: label.hasPrefix("com.apple.")))
             }
         }
@@ -69,16 +69,30 @@ public enum StartupItemsScanner {
     public static func setEnabled(_ enabled: Bool, item: StartupItem) throws {
         guard item.scope == .userAgent, let plist = item.plistPath else { throw Error("Only user LaunchAgents can be toggled.") }
         let domain = "gui/\(getuid())", service = domain + "/" + item.label
-        let commands = enabled ? [["enable", service], ["bootstrap", domain, plist]] : [["bootout", domain, plist], ["disable", service]]
-        for args in commands {
-            let result = run("/bin/launchctl", args)
-            if result.status != 0 { throw Error("launchctl \(args.joined(separator: " ")) failed (\(result.status)): \(result.stderr.trimmingCharacters(in: .whitespacesAndNewlines))") }
+        // The persistent enable/disable flag comes first and must succeed. Loading or unloading
+        // afterwards may fail harmlessly: the agent can already be (un)loaded.
+        let persistent = enabled ? ["enable", service] : ["disable", service]
+        let result = run("/bin/launchctl", persistent)
+        if result.status != 0 { throw Error("launchctl \(persistent.joined(separator: " ")) failed (\(result.status)): \(result.stderr.trimmingCharacters(in: .whitespacesAndNewlines))") }
+        let load = enabled ? ["bootstrap", domain, plist] : ["bootout", domain, plist]
+        let loaded = run("/bin/launchctl", load)
+        if loaded.status != 0, !enabled, item.isRunning {
+            throw Error("It will not start at login any more, but it could not be stopped now: launchctl \(load.joined(separator: " ")) failed (\(loaded.status)).")
         }
     }
 
     public static func adminCommand(toDisable item: StartupItem) -> String {
-        guard item.scope == .globalAgent || item.scope == .globalDaemon, let path = item.plistPath else { return "" }
-        return "sudo launchctl bootout system \(shellQuote(path)) && sudo launchctl disable system/\(shellQuote(item.label))"
+        guard let path = item.plistPath else { return "" }
+        switch item.scope {
+        case .globalDaemon:
+            return "sudo launchctl bootout system \(shellQuote(path)); sudo launchctl disable system/\(shellQuote(item.label))"
+        case .globalAgent:
+            // Agents in /Library/LaunchAgents run in each user's GUI domain, not in the system domain.
+            let domain = "gui/\(getuid())"
+            return "launchctl bootout \(domain) \(shellQuote(path)); launchctl disable \(domain)/\(shellQuote(item.label))"
+        case .userAgent, .loginItem:
+            return ""
+        }
     }
 
     private static func run(_ executable: String, _ args: [String]) -> CommandResult {

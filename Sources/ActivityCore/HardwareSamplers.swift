@@ -129,9 +129,12 @@ final class MemorySampler {
 // MARK: - Disk
 
 final class DiskSampler {
-    private var baseline: (read: UInt64, write: UInt64)?
-    private var previous: (read: UInt64, write: UInt64)?
+    /// Lifetime counters per drive (IORegistry entry id). Deltas are taken per drive, so a drive that
+    /// appears with old counters, or one that is ejected, never looks like a burst of traffic.
+    private var previous: [UInt64: (read: UInt64, write: UInt64)] = [:]
     private var previousTime: UInt64 = 0
+    private var readSinceLaunch: UInt64 = 0
+    private var writtenSinceLaunch: UInt64 = 0
     private var cachedVolume: (name: String, total: UInt64, free: UInt64)?
     private var volumeCheckedAt: UInt64 = 0
 
@@ -150,22 +153,24 @@ final class DiskSampler {
             stats.free = volume.free
         }
 
-        let totals = Self.blockStorageTotals()
-        if baseline == nil { baseline = totals }
-        // Totals drop when a disk is ejected; start counting from the new total instead of wrapping around.
-        if let prev = previous, totals.read < prev.read || totals.write < prev.write {
-            let sinceLaunch = (read: (previous?.read ?? 0) &- (baseline?.read ?? 0), write: (previous?.write ?? 0) &- (baseline?.write ?? 0))
-            baseline = (totals.read &- sinceLaunch.read, totals.write &- sinceLaunch.write)
-            previous = nil
+        let counters = Self.blockStorageCounters()
+        var read: UInt64 = 0, written: UInt64 = 0
+        for (id, current) in counters {
+            // New drives only set their baseline; a counter that went backwards was reset.
+            guard let prev = previous[id], current.read >= prev.read, current.write >= prev.write else { continue }
+            read += current.read - prev.read
+            written += current.write - prev.write
         }
-        if let prev = previous, previousTime > 0 {
+        if previousTime > 0 {
             let elapsed = Double(now - previousTime) / 1_000_000_000
-            stats.readRate = Double(totals.read - prev.read) / elapsed
-            stats.writeRate = Double(totals.write - prev.write) / elapsed
+            stats.readRate = Double(read) / elapsed
+            stats.writeRate = Double(written) / elapsed
+            readSinceLaunch &+= read
+            writtenSinceLaunch &+= written
         }
-        stats.readSinceLaunch = totals.read &- (baseline?.read ?? totals.read)
-        stats.writtenSinceLaunch = totals.write &- (baseline?.write ?? totals.write)
-        previous = totals
+        stats.readSinceLaunch = readSinceLaunch
+        stats.writtenSinceLaunch = writtenSinceLaunch
+        previous = counters
         previousTime = now
         return stats
     }
@@ -180,24 +185,25 @@ final class DiskSampler {
         )
     }
 
-    private static func blockStorageTotals() -> (read: UInt64, write: UInt64) {
+    private static func blockStorageCounters() -> [UInt64: (read: UInt64, write: UInt64)] {
         var iterator: io_iterator_t = 0
         guard IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching("IOBlockStorageDriver"), &iterator) == KERN_SUCCESS
-        else { return (0, 0) }
+        else { return [:] }
         defer { IOObjectRelease(iterator) }
 
-        var read: UInt64 = 0
-        var write: UInt64 = 0
+        var counters: [UInt64: (read: UInt64, write: UInt64)] = [:]
         var service = IOIteratorNext(iterator)
         while service != 0 {
-            if let stats = IOKitProperty(service, "Statistics") as? [String: Any] {
-                read += (stats["Bytes (Read)"] as? NSNumber)?.uint64Value ?? 0
-                write += (stats["Bytes (Write)"] as? NSNumber)?.uint64Value ?? 0
+            var id: UInt64 = 0
+            if IORegistryEntryGetRegistryEntryID(service, &id) == KERN_SUCCESS,
+               let stats = IOKitProperty(service, "Statistics") as? [String: Any] {
+                counters[id] = ((stats["Bytes (Read)"] as? NSNumber)?.uint64Value ?? 0,
+                                (stats["Bytes (Write)"] as? NSNumber)?.uint64Value ?? 0)
             }
             IOObjectRelease(service)
             service = IOIteratorNext(iterator)
         }
-        return (read, write)
+        return counters
     }
 }
 

@@ -92,8 +92,12 @@ public final class HistoryStore: @unchecked Sendable {
 
     // MARK: Writing
 
+    /// Longer gaps between samples mean the Mac slept (or the app hung): the first sample after
+    /// such a gap must not be stretched over the whole gap, so it is left out.
+    static let maxSampleGap: TimeInterval = 120
+
     public func record(_ snapshot: SystemSnapshot) {
-        guard snapshot.interval > 0 else { return }
+        guard snapshot.interval > 0, snapshot.interval <= Self.maxSampleGap else { return }
         queue.async { [self] in
             minute.add(snapshot)
             windowSampleCount += 1
@@ -352,8 +356,8 @@ public final class HistoryStore: @unchecked Sendable {
     }
 
     private func writeSystemRow(_ a: Accumulator, at date: Date) {
-        guard a.count > 0 else { return }
-        let n = Double(a.count)
+        guard a.count > 0, a.seconds > 0 else { return }
+        let n = a.seconds   // time-weighted sums ÷ covered seconds = averages
         var statement: OpaquePointer?
         let sql = "INSERT INTO system (ts, secs, cpu, mem, gpu, disk_r, disk_w, net_in, net_out, battery, power, on_battery) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return }
@@ -440,16 +444,19 @@ private struct Accumulator {
     var power = 0.0, powerCount = 0
     var onBattery = 0
 
+    /// Values are weighted by the time each sample covers: foreground (1–2 s) and background
+    /// (5–15 s) samples mix within one minute, and a plain mean would count them equally.
     mutating func add(_ s: SystemSnapshot) {
+        let dt = s.interval
         count += 1
-        seconds += s.interval
-        cpu += s.cpu.total
-        memory += Double(s.memory.used)
-        gpu += s.gpu?.utilization ?? 0
-        diskRead += s.disk.readRate
-        diskWrite += s.disk.writeRate
-        netIn += s.network.inRate
-        netOut += s.network.outRate
+        seconds += dt
+        cpu += s.cpu.total * dt
+        memory += Double(s.memory.used) * dt
+        gpu += (s.gpu?.utilization ?? 0) * dt
+        diskRead += s.disk.readRate * dt
+        diskWrite += s.disk.writeRate * dt
+        netIn += s.network.inRate * dt
+        netOut += s.network.outRate * dt
         if let b = s.battery {
             battery += b.percent
             batteryCount += 1

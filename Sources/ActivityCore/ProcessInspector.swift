@@ -139,7 +139,9 @@ public enum ProcessInspector {
         let requirement = requirementText(info)
         let appleAnchor = requirement.map(isAppleAnchor) ?? false
 
-        let valid = SecStaticCodeCheckValidity(code, SecCSFlags(rawValue: kSecCSBasicValidateOnly), nil) == errSecSuccess
+        // Checks the signature and every page of the executable. Resources (images, nibs) are skipped:
+        // validating them can take seconds for large apps, and the inspector opens on a double-click.
+        let valid = SecStaticCodeCheckValidity(code, SecCSFlags(rawValue: kSecCSDoNotValidateResources), nil) == errSecSuccess
         return CodeSignature(
             identifier: identifier,
             teamID: teamID,

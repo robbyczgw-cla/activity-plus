@@ -39,6 +39,9 @@ final class AppVolumeController {
         let aggregateID: AudioDeviceID
         let ioProcID: AudioDeviceIOProcID
         let gain: GainBox
+        /// The Core Audio process objects this tap covers; when the app starts another audio
+        /// process, the set changes and the tap is rebuilt so the new process is covered too.
+        var processObjects: Set<AudioObjectID> = []
 
         init(tapID: AudioObjectID, aggregateID: AudioDeviceID, ioProcID: AudioDeviceIOProcID, gain: GainBox) {
             self.tapID = tapID
@@ -105,6 +108,10 @@ final class AppVolumeController {
             activeTaps.removeValue(forKey: id)
         }
         for (id, value) in grouped where effectiveGain(for: id) != 1 {
+            if let tap = activeTaps[id], tap.processObjects != Set(value.objects) {
+                Self.destroy(tap)
+                activeTaps.removeValue(forKey: id)
+            }
             if activeTaps[id] == nil { createTap(for: id, processObjects: value.objects) }
         }
     }
@@ -236,7 +243,9 @@ final class AppVolumeController {
             setError("Unable to start audio processing for \(id) (\(status)).")
             return
         }
-        activeTaps[id] = ActiveTap(tapID: tapID, aggregateID: aggregateID, ioProcID: ioProcID, gain: gain)
+        let tap = ActiveTap(tapID: tapID, aggregateID: aggregateID, ioProcID: ioProcID, gain: gain)
+        tap.processObjects = Set(processObjects)
+        activeTaps[id] = tap
         lastError = nil
     }
 

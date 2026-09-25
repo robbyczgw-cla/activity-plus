@@ -25,6 +25,7 @@ final class AppServices {
     @ObservationIgnored private let scanQueue = DispatchQueue(label: "at.hifiteam.activityplus.projects", qos: .utility)
     @ObservationIgnored private var scanning = false
     @ObservationIgnored private var lastScan = Date.distantPast
+    @ObservationIgnored private var lastPrune = Date.distantPast
     @ObservationIgnored private lazy var volume = AppVolumeController()
     /// Apps that stopped responding (beachball), from WindowServer's own flag.
     @ObservationIgnored let hangs = HangDetector()
@@ -49,6 +50,7 @@ final class AppServices {
                                   detail: "It froze for \(Int(hang.duration)) seconds at \(hang.started.formatted(date: .omitted, time: .shortened))."))
         }
         history.prune()
+        lastPrune = Date()
         monitor.observers.append { [weak self] snapshot in
             MainActor.assumeIsolated { self?.handle(snapshot) }
         }
@@ -57,6 +59,11 @@ final class AppServices {
 
     private func handle(_ snapshot: SystemSnapshot) {
         history.record(snapshot)
+        // Keep the promise of 30 days also when Activity+ runs for weeks without a restart.
+        if snapshot.date.timeIntervalSince(lastPrune) >= 86_400 {
+            lastPrune = snapshot.date
+            history.prune()
+        }
         // The scanner's state is only touched on its own queue (scan() runs there too).
         let scanner = scanner
         let processes = snapshot.apps.flatMap(\.processes)

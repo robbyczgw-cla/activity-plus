@@ -61,6 +61,9 @@ if [[ "${1:-}" == "--site" ]]; then
   .build/artifacts/sparkle/Sparkle/bin/generate_appcast --account activityplus \
     --download-url-prefix "https://activityplus.xyz/download/" --link "https://activityplus.xyz" "$STAGE"
   cp "$STAGE/appcast.xml" "$SITE/appcast.xml"
+  # The appcast references the delta updates generate_appcast just made: publish them too.
+  rm -f "$SITE"/download/*.delta
+  cp "$STAGE"/*.delta "$SITE/download/" 2>/dev/null || true
   shasum -a 256 "$ZIP" | awk '{print $1}' > "$SITE/download/latest.sha256"
   echo "✓ Site updated: $SITE/download/$(basename "$ZIP") + appcast.xml"
 fi
