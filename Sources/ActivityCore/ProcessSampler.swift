@@ -1,8 +1,25 @@
 import Darwin
 import Foundation
 
+/// Counters for a process of another user, supplied by the privileged helper.
+public struct PrivilegedUsage: Sendable {
+    public let startTime: Date
+    public let footprint: UInt64
+    public let cpuTicks: UInt64
+    public let diskRead: UInt64
+    public let diskWritten: UInt64
+    public let energyNJ: UInt64
+    public let path: String?
+    public init(startTime: Date, footprint: UInt64, cpuTicks: UInt64, diskRead: UInt64, diskWritten: UInt64, energyNJ: UInt64, path: String?) {
+        (self.startTime, self.footprint, self.cpuTicks, self.diskRead, self.diskWritten, self.energyNJ, self.path) =
+            (startTime, footprint, cpuTicks, diskRead, diskWritten, energyNJ, path)
+    }
+}
+
 /// Reads every process from the kernel and turns cumulative counters into per-second rates.
 final class ProcessSampler {
+    /// Set when the privileged helper is installed: exact counters for processes we may not read.
+    var privilegedUsage: (([pid_t]) -> [pid_t: PrivilegedUsage])?
     private struct Counters {
         let startTime: Date
         let cpuNanos: Double
@@ -41,20 +58,25 @@ final class ProcessSampler {
         var current: [pid_t: Counters] = [:]
         var seenPaths: [pid_t: (start: Date, path: String?)] = [:]
 
+        // Other users' processes: one batched request to the helper per sample, if it is installed.
+        let me = getuid()
+        let privileged = privilegedUsage?(listed.values.filter { $0.uid != me }.map(\.pid)) ?? [:]
+
         for pid in Self.allPIDs() {
             let bsd = Self.bsdInfo(pid)
             let entry = listed[pid]
+            let helperUsage = privileged[pid]
             // Neither the kernel nor the last `ps` knows it: it started a moment ago under another user.
             guard bsd != nil || entry != nil else { continue }
             let start = bsd.map {
                 Date(timeIntervalSince1970: TimeInterval($0.pbi_start_tvsec) + TimeInterval($0.pbi_start_tvusec) / 1_000_000)
-            } ?? Self.pseudoStart(for: entry!)
+            } ?? helperUsage?.startTime ?? Self.pseudoStart(for: entry!)
 
             let path: String?
             if let cached = pathCache[pid], cached.start == start {
                 path = cached.path
             } else {
-                path = Self.path(of: pid) ?? entry.flatMap { $0.command.hasPrefix("/") ? $0.command : nil }
+                path = Self.path(of: pid) ?? helperUsage?.path ?? entry.flatMap { $0.command.hasPrefix("/") ? $0.command : nil }
             }
             seenPaths[pid] = (start, path)
 
@@ -67,16 +89,23 @@ final class ProcessSampler {
                 startTime: start
             )
 
-            if let usage = Self.rusage(pid) {
-                let counters = Counters(
-                    startTime: start,
-                    cpuNanos: Double(usage.ri_user_time + usage.ri_system_time) * Sys.nanosPerTick,
-                    diskRead: usage.ri_diskio_bytesread,
-                    diskWritten: usage.ri_diskio_byteswritten,
-                    energyNJ: usage.ri_energy_nj
-                )
+            let exact: (counters: Counters, footprint: UInt64)? = {
+                if let usage = Self.rusage(pid) {
+                    return (Counters(startTime: start, cpuNanos: Double(usage.ri_user_time + usage.ri_system_time) * Sys.nanosPerTick,
+                                     diskRead: usage.ri_diskio_bytesread, diskWritten: usage.ri_diskio_byteswritten,
+                                     energyNJ: usage.ri_energy_nj), usage.ri_phys_footprint)
+                }
+                if let helperUsage, abs(helperUsage.startTime.timeIntervalSince(start)) < 0.001 || bsd == nil {
+                    return (Counters(startTime: start, cpuNanos: Double(helperUsage.cpuTicks) * Sys.nanosPerTick,
+                                     diskRead: helperUsage.diskRead, diskWritten: helperUsage.diskWritten,
+                                     energyNJ: helperUsage.energyNJ), helperUsage.footprint)
+                }
+                return nil
+            }()
+            if let exact {
+                let counters = exact.counters
                 current[pid] = counters
-                sample.memory = usage.ri_phys_footprint
+                sample.memory = exact.footprint
                 sample.cpuTime = counters.cpuNanos / 1_000_000_000
 
                 // Only compare against the same process: pids get reused.

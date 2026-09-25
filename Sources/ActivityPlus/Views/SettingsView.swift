@@ -55,6 +55,7 @@ private struct GeneralSettings: View {
                 Toggle("Show in Dock", isOn: $showDockIcon)
                     .onChange(of: showDockIcon) { _, show in NSApp.setActivationPolicy(show ? .regular : .accessory) }
             }
+            HelperSection()
             Section("Look") {
                 Picker("Accent color", selection: $accent) {
                     ForEach(AccentChoice.allCases) { choice in
@@ -339,5 +340,38 @@ private struct UpdatesSettings: View {
             }
         }
         .formStyle(.grouped)
+    }
+}
+
+/// Optional privileged helper for exact figures of system processes.
+private struct HelperSection: View {
+    @State private var helper = HelperClient.shared
+    @Environment(Monitor.self) private var monitor
+
+    var body: some View {
+        Section("Exact figures for system processes") {
+            HStack {
+                switch helper.state {
+                case .running:
+                    Label("Helper installed", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                    Spacer()
+                    Button("Remove") { helper.uninstall() }
+                case .needsApproval:
+                    Label("Allow “Activity+” in Login Items", systemImage: "exclamationmark.circle.fill").foregroundStyle(.orange)
+                    Spacer()
+                    Button("Open System Settings") { SMAppService.openSystemSettingsLoginItems() }
+                case .notInstalled:
+                    Text("\(monitor.snapshot.restrictedProcessCount) system processes show only CPU and memory.")
+                    Spacer()
+                    Button("Install Helper…") { helper.install() }
+                case .unavailable(let reason):
+                    Text(reason).foregroundStyle(.secondary)
+                }
+            }
+            Text("A small helper that runs with administrator rights and only reads process counters (memory footprint, disk and energy) that macOS hides from apps for system processes. It cannot quit or change anything. macOS asks you to allow it once.")
+                .font(.caption).foregroundStyle(.secondary)
+            if let error = helper.lastError { Text(error).font(.caption).foregroundStyle(.red) }
+        }
+        .onAppear { helper.refresh() }
     }
 }

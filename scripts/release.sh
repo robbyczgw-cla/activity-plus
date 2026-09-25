@@ -31,6 +31,7 @@ if [[ -d "$SPARKLE" ]]; then
   sign "$APP/Contents/Frameworks/Sparkle.framework"
 fi
 sign "$APP/Contents/Resources/aplus"
+sign --identifier at.hifiteam.activityplus.helper "$APP/Contents/MacOS/ActivityPlusHelper"
 codesign --force --options runtime --timestamp --entitlements Resources/ActivityPlus.entitlements --sign "$IDENTITY" "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 

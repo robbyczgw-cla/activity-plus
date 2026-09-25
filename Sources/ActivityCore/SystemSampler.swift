@@ -33,6 +33,12 @@ public final class SystemSampler: @unchecked Sendable {
 
     public init() {}
 
+    /// Supplied by the app when the privileged helper is installed (called on the sampling queue).
+    public var privilegedUsage: (([Int32]) -> [Int32: PrivilegedUsage])? {
+        get { processSampler.privilegedUsage }
+        set { processSampler.privilegedUsage = newValue }
+    }
+
     /// Every sensor the Mac reports (temperatures, voltages, currents, power, fans).
     public func sensorList() -> [SensorReading] { sensorSampler.allSensors() }
 

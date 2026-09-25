@@ -84,6 +84,12 @@ final class Monitor {
 
     private var started = false
 
+    /// Wires in the privileged helper (see HelperClient); runs on the sampling queue.
+    func setPrivilegedUsage(_ provider: @escaping @Sendable ([Int32]) -> [Int32: PrivilegedUsage]) {
+        let sampler = sampler
+        queue.async { sampler.privilegedUsage = provider }
+    }
+
     func start() {
         guard !started else { return }
         started = true

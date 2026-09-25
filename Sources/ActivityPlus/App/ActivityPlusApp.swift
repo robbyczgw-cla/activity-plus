@@ -32,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             UnitPreferences.apply()
             _ = Updates.shared
             AppServices.shared.attach(to: Monitor.shared)
+            HelperClient.shared.attach(to: Monitor.shared)
             Monitor.shared.start()
             StatusItemsController.shared.start()
             SnapshotRunner.runIfRequested()
