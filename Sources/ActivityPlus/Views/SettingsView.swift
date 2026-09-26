@@ -1,3 +1,4 @@
+import UniformTypeIdentifiers
 import ActivityCore
 import ServiceManagement
 import SwiftUI
@@ -64,6 +65,15 @@ private struct GeneralSettings: View {
                 Text(presenceHint).font(.caption).foregroundStyle(.secondary)
             }
             HelperSection()
+            Section("Backup") {
+                HStack {
+                    Button("Export Settings…", action: exportSettings)
+                    Button("Import Settings…", action: importSettings)
+                    Spacer()
+                }
+                Text("Menu bar, panel, alert rules, automations and performance switches in one file, for another Mac or a fresh start. History stays on this Mac.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             Section("Look") {
                 Picker("Accent color", selection: $accent) {
                     ForEach(AccentChoice.allCases) { choice in
@@ -77,6 +87,46 @@ private struct GeneralSettings: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    private func exportSettings() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "Activity+ Settings.plist"
+        panel.allowedContentTypes = [.propertyList]
+        guard panel.runModal() == .OK, let url = panel.url,
+              let domain = UserDefaults.standard.persistentDomain(forName: Bundle.main.bundleIdentifier ?? "at.hifiteam.activityplus"),
+              let data = try? SettingsBackup.export(domain) else { return }
+        try? data.write(to: url, options: .atomic)
+    }
+
+    private func importSettings() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.propertyList]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url, let data = try? Data(contentsOf: url) else { return }
+        let settings: [String: Any]
+        do { settings = try SettingsBackup.settings(from: data) } catch {
+            let alert = NSAlert(error: error)
+            alert.runModal()
+            return
+        }
+        let confirm = NSAlert()
+        confirm.messageText = "Replace your settings with \"\(url.lastPathComponent)\"?"
+        confirm.informativeText = "\(settings.count) settings are replaced: menu bar, panel, alert rules, automations and performance switches. Your history stays. Activity+ restarts to apply them."
+        confirm.addButton(withTitle: "Replace and Restart")
+        confirm.addButton(withTitle: "Cancel")
+        guard confirm.runModal() == .alertFirstButtonReturn else { return }
+        let defaults = UserDefaults.standard
+        if let domain = defaults.persistentDomain(forName: Bundle.main.bundleIdentifier ?? "") {
+            for key in domain.keys where SettingsBackup.isPortable(key) { defaults.removeObject(forKey: key) }
+        }
+        for (key, value) in settings { defaults.set(value, forKey: key) }
+        defaults.synchronize()
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) { _, _ in
+            DispatchQueue.main.async { NSApp.terminate(nil) }
+        }
     }
 
     private var presenceHint: String {

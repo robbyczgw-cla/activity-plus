@@ -87,6 +87,7 @@ struct AlertsView: View {
         case .hang: "hourglass"
         case .automation: "wand.and.stars"
         case .weekly: "calendar"
+        case .power: "powerplug"
         }
     }
 

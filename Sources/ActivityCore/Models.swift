@@ -198,6 +198,12 @@ public struct BatteryStats: Sendable, Hashable {
     /// Current full-charge capacity relative to design capacity, 0…100.
     public var health: Double?
     public var temperature: Double?
+    /// The connected power adapter, when plugged in: its rating, and the voltage it negotiated.
+    public var adapterWatts: Int?
+    public var adapterVoltage: Double?
+    public var adapterName: String?
+    /// Plugged in but the battery still loses charge: the adapter cannot keep up with the load.
+    public var drainsWhilePluggedIn: Bool { isPluggedIn && !isFullyCharged && batteryPower < -1 }
     public init() {}
 }
 

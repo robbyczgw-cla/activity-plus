@@ -95,6 +95,7 @@ struct MetricDetailView: View {
                     .frame(height: 150)
                 }
             }
+            DisplaysCard()
         case .disk:
             HStack(alignment: .top, spacing: 14) {
                 Card {

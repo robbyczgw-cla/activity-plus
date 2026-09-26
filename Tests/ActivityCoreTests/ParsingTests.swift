@@ -115,3 +115,22 @@ struct ConnectionQualityTests {
     }
 }
 
+@Suite("Settings backup")
+struct SettingsBackupTests {
+    @Test func roundTripKeepsOwnKeysOnly() throws {
+        let domain: [String: Any] = ["menuBarItems": Data([1, 2, 3]), "sampleInterval": 2.0, "perf.sensors": false,
+                                     "NSWindow Frame main": "0 0 100 100", "SULastCheckTime": Date(), "settingsTab": "general"]
+        let data = try SettingsBackup.export(domain)
+        let back = try SettingsBackup.settings(from: data)
+        #expect(Set(back.keys) == ["menuBarItems", "sampleInterval", "perf.sensors"])
+        #expect(back["menuBarItems"] as? Data == Data([1, 2, 3]))
+        #expect(back["sampleInterval"] as? Double == 2.0)
+    }
+
+    @Test func rejectsOtherFiles() {
+        let other = try! PropertyListSerialization.data(fromPropertyList: ["hello": "world"], format: .xml, options: 0)
+        #expect(throws: SettingsBackup.Failure.self) { try SettingsBackup.settings(from: other) }
+        #expect(throws: (any Error).self) { try SettingsBackup.settings(from: Data("not a plist".utf8)) }
+    }
+}
+

@@ -441,6 +441,11 @@ final class BatterySampler {
         let amperage = Double((32_768..<65_536).contains(rawAmperage) ? Int64(Int16(truncatingIfNeeded: rawAmperage)) : rawAmperage)
         let voltage = number("Voltage")?.doubleValue ?? 0
         stats.batteryPower = amperage * voltage / 1_000_000
+        if stats.isPluggedIn, let adapter = IOPSCopyExternalPowerAdapterDetails()?.takeRetainedValue() as? [String: Any] {
+            stats.adapterWatts = (adapter[kIOPSPowerAdapterWattsKey] as? NSNumber)?.intValue
+            stats.adapterVoltage = (adapter["AdapterVoltage"] as? NSNumber).map { $0.doubleValue / 1000 }
+            stats.adapterName = adapter["Name"] as? String
+        }
 
         if let telemetry = dict["PowerTelemetryData"] as? [String: Any],
            let load = (telemetry["SystemLoad"] as? NSNumber)?.doubleValue, load > 0

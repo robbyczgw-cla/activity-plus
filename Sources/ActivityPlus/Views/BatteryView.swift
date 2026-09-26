@@ -16,7 +16,15 @@ struct BatteryView: View {
                             UsageBar(fraction: b.percent / 100, tint: b.percent < 20 ? .red : .green)
                             StatLine(label: "Time remaining", value: b.timeRemaining.map(Format.duration) ?? (b.isPluggedIn ? "Plugged in" : "Calculating…"))
                             StatLine(label: "Mac power draw", value: b.systemPower.map(Format.watts) ?? "–")
-                            if b.isCharging {
+                            if let watts = b.adapterWatts {
+                                StatLine(label: "Power adapter", value: [b.adapterName, "\(watts) W", b.adapterVoltage.map { String(format: "at %.0f V", $0) }]
+                                    .compactMap { $0 }.joined(separator: " · "))
+                            }
+                            if b.drainsWhilePluggedIn {
+                                StatLine(label: "Battery", value: "Losing \(Format.watts(abs(b.batteryPower))) although plugged in")
+                                Label("The adapter cannot keep up with the load. A stronger adapter or fewer heavy apps help.", systemImage: "exclamationmark.triangle.fill")
+                                    .font(.caption).foregroundStyle(.orange)
+                            } else if b.isCharging {
                                 StatLine(label: "Charging at", value: Format.watts(abs(b.batteryPower)))
                             } else if b.isPluggedIn {
                                 StatLine(label: "Battery", value: "Resting, the adapter powers the Mac")

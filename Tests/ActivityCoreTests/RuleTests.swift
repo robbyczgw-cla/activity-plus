@@ -35,6 +35,33 @@ struct AlertTests {
         #expect(fired.first?.title.contains("Busy") == true)
     }
 
+    @Test func batteryDrainingWhilePluggedInFiresAfterThreeMinutes() {
+        let engine = AlertEngine()
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+        var fired: [AppAlert] = []
+        for step in 0..<9 {   // 4 minutes, every 30 s
+            var s = snapshot(at: start.addingTimeInterval(Double(step) * 30))
+            var battery = BatteryStats()
+            battery.isPluggedIn = true
+            battery.percent = 60
+            battery.batteryPower = -8
+            battery.systemPower = 38
+            battery.adapterWatts = 30
+            s.battery = battery
+            fired += engine.evaluate(s)
+        }
+        let power = fired.filter { $0.kind == .power }
+        #expect(power.count == 1)
+        #expect(power.first?.detail.contains("30 W adapter") == true)
+
+        // A full battery that rests on the adapter is fine.
+        var full = BatteryStats()
+        full.isPluggedIn = true
+        full.isFullyCharged = true
+        full.batteryPower = -3
+        #expect(!full.drainsWhilePluggedIn)
+    }
+
     @Test func shortSpikeDoesNotFire() {
         let engine = AlertEngine()
         let start = Date(timeIntervalSince1970: 1_800_000_000)

@@ -18,7 +18,7 @@ public struct AlertSettings: Codable, Sendable, Hashable {
 public struct AppAlert: Codable, Sendable, Identifiable, Hashable {
     public enum Kind: String, Codable, Sendable {
         case cpu, memoryGrowth, disk, network, memoryPressure, diskFull, thermal, accessory
-        case unusual, leak, hang, automation, weekly
+        case unusual, leak, hang, automation, weekly, power
     }
     public var id = UUID()
     public let date: Date
@@ -52,6 +52,7 @@ public final class AlertEngine: @unchecked Sendable {
     private var names: [String: String] = [:]
     private var lastFired: [String: Date] = [:]
     private var pressureSince: Date?
+    private var drainSince: Date?
 
     public init(settings: AlertSettings = AlertSettings()) {
         self.settings = settings
@@ -144,6 +145,18 @@ public final class AlertEngine: @unchecked Sendable {
                 fire(&alerts, .diskFull, nil, "Disk", now,
                      title: "The disk is almost full",
                      detail: "Only \(Format.storage(disk.free)) free on \(disk.volumeName).")
+            }
+            if let battery = snapshot.battery, battery.drainsWhilePluggedIn {
+                drainSince = drainSince ?? now
+                if now.timeIntervalSince(drainSince!) >= 180 {
+                    let adapter = battery.adapterWatts.map { "The \($0) W adapter" } ?? "The adapter"
+                    let draw = battery.systemPower.map { "the Mac draws \(Format.watts($0))" } ?? "the Mac draws more than it delivers"
+                    fire(&alerts, .power, nil, "Power", now,
+                         title: "The battery drains while plugged in",
+                         detail: "\(adapter) cannot keep up: \(draw). Use a stronger adapter or close heavy apps.")
+                }
+            } else {
+                drainSince = nil
             }
             if snapshot.thermal == .serious || snapshot.thermal == .critical {
                 fire(&alerts, .thermal, nil, "Temperature", now,
