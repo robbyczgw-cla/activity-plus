@@ -22,6 +22,9 @@
 - Connection quality (latency, jitter, loss; off by default); displays with held-back refresh warning; power adapter and drain-while-plugged-in alert
 - Menu bar, Dock or both; settings export and import
 
+**v0.2.5 (26.09.2026)**
+- The history traces spikes to child processes (busiest processes per app, redacted command lines); alerts and sessions name the process; MCP `history` answers "what was busy around …"
+
 ## Next
 - [ ] Universal build (arm64 + x86_64) so Intel Macs can run it
 - [ ] Privileged helper: test in daily use (exact disk, energy and memory figures of root processes)
