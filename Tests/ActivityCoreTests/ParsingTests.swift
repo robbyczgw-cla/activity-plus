@@ -143,6 +143,11 @@ struct ProcessAttributionTests {
         #expect(ProcessCommand.short(arguments: ["curl", "https://bob:hunter2@example.com/x"]) == "curl https://•••@example.com/x")
         #expect(ProcessCommand.short(arguments: ["tool", "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8"]) == "tool •••")
         #expect(ProcessCommand.short(arguments: ["cargo", "build", "--release"]) == "cargo build --release")
+        // Electron/Chromium helpers: keep the process type, drop paths and long flag values.
+        #expect(ProcessCommand.short(arguments: ["/Applications/Paseo.app/Contents/Frameworks/Paseo Helper.app/Contents/MacOS/Paseo Helper",
+                                                 "--type=gpu-process", "--user-data-dir=/Users/me/Library/Application Support/Paseo",
+                                                 "--enable-features=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,BBBB", "--lang=de"])
+                == "Paseo Helper --type=gpu-process --user-data-dir=… --enable-features=… --lang=de")
     }
 
     @Test func historyTracesAnAppBackToItsChildProcess() throws {

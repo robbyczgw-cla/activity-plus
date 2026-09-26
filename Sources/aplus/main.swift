@@ -5,6 +5,7 @@ import Foundation
 //   aplus            top 15 apps by CPU after a 2 s measurement
 //   aplus --memory   sort by memory
 //   aplus --json     machine-readable output
+//   aplus --processes the busiest processes with the command line the history keeps
 //   aplus mcp        MCP server for AI agents (read-only tools)
 
 let arguments = Set(CommandLine.arguments.dropFirst())
@@ -52,6 +53,19 @@ let snapshot = sampler.sample()
 
 let sorted = snapshot.apps.sorted {
     arguments.contains("--memory") ? $0.memory > $1.memory : $0.cpuPercent > $1.cpuPercent
+}
+
+if arguments.contains("--processes") {
+    // The busiest processes with the shortened, redacted command line the history stores.
+    func weight(_ p: ProcessSample) -> Double { p.cpuPercent + Double(p.memory) / 1_000_000_000 }
+    var pairs: [(String, ProcessSample)] = []
+    for app in snapshot.apps { for p in app.processes { pairs.append((app.name, p)) } }
+    let processes = pairs.sorted { weight($0.1) > weight($1.1) }.prefix(25)
+    for (app, p) in processes {
+        let command = p.hasDetails ? ProcessCommand.short(pid: p.pid, fallback: p.name) : p.name
+        print(app.padding(toLength: 18, withPad: " ", startingAt: 0), String(format: "%6.1f%%", p.cpuPercent), String(p.pid).padding(toLength: 7, withPad: " ", startingAt: 0), command)
+    }
+    exit(0)
 }
 
 if arguments.contains("--json") {

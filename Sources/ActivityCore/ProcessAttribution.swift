@@ -42,10 +42,15 @@ public enum ProcessCommand {
             if let eq = arg.firstIndex(of: "="), arg[..<eq].range(of: secretKeys, options: .regularExpression) != nil {
                 arg = String(arg[...eq]) + "•••"
             }
+            // --flag=value with a path or a long value: the flag says enough ("--user-data-dir=…").
+            if arg.hasPrefix("-"), let eq = arg.firstIndex(of: "="), !arg.hasSuffix("•••") {
+                let value = arg[arg.index(after: eq)...]
+                if value.contains("/") || value.count > 24 { arg = String(arg[...eq]) + "…" }
+            }
             // user:password@host in URLs.
             arg = arg.replacingOccurrences(of: #"://[^/\s:@]+:[^/\s@]+@"#, with: "://•••@", options: .regularExpression)
             // Long opaque strings (keys, hashes) that are not paths.
-            if !arg.contains("/"), arg.range(of: #"^[A-Za-z0-9_\-+=.]{28,}$"#, options: .regularExpression) != nil {
+            if index > 0, !arg.contains("/"), arg.range(of: #"^[A-Za-z0-9_\-+=.]{28,}$"#, options: .regularExpression) != nil {
                 arg = "•••"
             }
             // Paths: keep the last component.

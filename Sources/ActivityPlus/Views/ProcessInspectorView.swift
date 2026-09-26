@@ -20,7 +20,7 @@ struct ProcessInspectorView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text(name).font(.title3.weight(.semibold))
-                Text("pid \(pid)").foregroundStyle(.secondary)
+                Text(verbatim: "pid \(pid)").foregroundStyle(.secondary)
                 Spacer()
                 Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
             }

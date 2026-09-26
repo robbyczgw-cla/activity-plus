@@ -90,7 +90,16 @@ struct HistoryView: View {
             .padding(20)
         }
         .navigationTitle("History")
-        .task(id: "\(range.rawValue)") { expanded = []; appProcesses = [:]; selectedDate = nil; await load() }
+        .onChange(of: selectedDate) { _, date in loadAround(date) }
+        .task(id: "\(range.rawValue)") {
+            expanded = []; appProcesses = [:]; selectedDate = nil
+            await load()
+            // Snapshots: ACTIVITYPLUS_HISTORY_SELECT=<minutes ago> preselects a moment and expands the top app.
+            if let minutes = Double(ProcessInfo.processInfo.environment["ACTIVITYPLUS_HISTORY_SELECT"] ?? "") {
+                selectedDate = Date().addingTimeInterval(-minutes * 60)
+                if let top = apps.max(by: { value($0) < value($1) }) { toggle(top.appID) }
+            }
+        }
         .task {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(60))
@@ -118,7 +127,6 @@ struct HistoryView: View {
             }
         }
             .chartXSelection(value: $selectedDate)
-            .onChange(of: selectedDate) { _, date in loadAround(date) }
             .chartYAxis {
                 AxisMarks(position: .trailing) { value in
                     AxisGridLine()
@@ -151,7 +159,7 @@ struct HistoryView: View {
             if showApp { Text(p.appName).fontWeight(.medium).lineLimit(1) }
             Text(p.command.isEmpty ? p.name : p.command).font(.callout.monospaced()).lineLimit(1).truncationMode(.middle)
                 .foregroundStyle(showApp ? .secondary : .primary)
-            Text("pid \(p.pid)").font(.caption2).foregroundStyle(.tertiary)
+            Text(verbatim: "pid \(p.pid)").font(.caption2).foregroundStyle(.tertiary)
             Spacer()
             Text(metric == .memory ? Format.memory(UInt64(p.peakMemory)) + " peak"
                  : metric == .disk ? Format.storage(UInt64(p.diskBytes))
