@@ -75,7 +75,7 @@ Ein Klick liefert eine Antwort in klaren Worten: zu wenig Speicher, eine App unt
 ![Diagnose](docs/screenshots/diagnosis.jpg)
 
 ### Verlauf, Warnungen und Auffälligkeiten
-- **30 Tage Verlauf** in einer kleinen SQLite-Datei: Diagramme von 12 Stunden bis 30 Tage, welche Apps am meisten verbraucht haben, heute und diese Woche geschriebene und geladene Daten.
+- **30 Tage Verlauf** in einer kleinen SQLite-Datei: Diagramme von 12 Stunden bis 30 Tage, welche Apps am meisten verbraucht haben, heute und diese Woche geschriebene und geladene Daten. Auf einen Ausschlag zeigen verrät die Prozesse dahinter: aus „Terminal“ wird `node vite` (Befehlszeilen werden gekürzt, alles, was nach Token oder Passwort aussieht, wird geschwärzt).
 - **Warnungen**, wenn eine App die CPU dauerhaft belastet, ständig mehr Speicher braucht oder Festplatte bzw. Netzwerk stark beansprucht – und wenn der Speicher knapp wird, die Festplatte vollläuft, der Mac überhitzt oder eine App hängt.
 - **Ungewöhnlich für diese App.** Activity+ lernt, was für jede App normal ist, und meldet deutliche Abweichungen („Slack braucht 3,2 × so viel Speicher wie sonst“). Gleichmäßiges Wachstum bei gleichbleibenden Prozessen wird als wahrscheinliches Speicherleck gemeldet, mit Prognose.
 - **Mess-Sessions.** Vor einem Build, einem Rendering oder allem, was den Mac langsam macht, eine Aufnahme starten: Activity+ misst jede Sekunde, merkt sich die aktivsten Apps, vergleicht zwei Sessions und exportiert CSV oder JSON.

@@ -75,7 +75,7 @@ One click gives a plain-language verdict: not enough memory, an app running flat
 ![Diagnosis](docs/screenshots/diagnosis.jpg)
 
 ### History, alerts and insights
-- **30 days of history** in one small SQLite file: charts for 12 hours to 30 days, which apps used the most, data written and downloaded today and this week.
+- **30 days of history** in one small SQLite file: charts for 12 hours to 30 days, which apps used the most, data written and downloaded today and this week. Point at a spike to see the processes behind it: "Terminal" turns out to be `node vite` (command lines are shortened, and anything that looks like a token or password is blanked).
 - **Alerts** when an app keeps the CPU busy, keeps growing in memory, or hammers the disk or network, and when memory runs out, the disk fills up, the Mac overheats or an app freezes.
 - **Unusual for this app.** Activity+ learns what is normal for each app and tells you when it is far off ("Slack uses 3.2× its usual memory"). Steady growth with a stable set of processes is reported as a likely memory leak, with a forecast.
 - **Recording sessions.** Start a recording before a build, a render or whatever makes your Mac slow; Activity+ measures every second, keeps the top apps, compares two sessions and exports CSV or JSON.
