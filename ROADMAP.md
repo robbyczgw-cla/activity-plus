@@ -17,6 +17,11 @@
 - Privileged helper (SMAppService daemon + XPC, read-only) built and notarized
 - Safety and accuracy fixes after an independent code review (0.2.3)
 
+**v0.2.4 (26.09.2026)**
+- Recording sessions with compare and CSV/JSON export; performance/efficiency cores and IPC per app; Neural Engine memory per app
+- Connection quality (latency, jitter, loss; off by default); displays with held-back refresh warning; power adapter and drain-while-plugged-in alert
+- Menu bar, Dock or both; settings export and import
+
 ## Next
 - [ ] Universal build (arm64 + x86_64) so Intel Macs can run it
 - [ ] Privileged helper: test in daily use (exact disk, energy and memory figures of root processes)
