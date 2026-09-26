@@ -35,6 +35,8 @@ Voraussetzung ist ein Mac mit Apple silicon und macOS 15 Sequoia oder neuer. Ent
 - **CPU, Speicher, GPU, Festplatte, Netzwerk und Energie pro App.** Energie wird in Watt aus den Zählern des Kernels gemessen, GPU-Zeit pro App aus dem Metal-Treiber.
 - **Prozess-Inspektor.** Doppelklick auf einen Prozess zeigt Befehlszeile, Arbeitsordner, wer ihn gestartet hat, wer ihn signiert hat (und ob er notarisiert ist), offene Dateien und Netzwerkverbindungen.
 - **Verbindungen.** Mit welchen Servern jede App gerade spricht. Hostnamen werden nur nachgeschlagen, wenn Sie das einschalten.
+- **Leistungs- oder Effizienzkerne.** Pro App, wie viel der Rechenzeit auf Leistungskernen läuft und wie viele Befehle pro Takt sie schafft (IPC).
+- **Neural-Engine-Speicher pro App**, damit Core ML und lokale Modelle sichtbar werden, statt sich hinter der GPU-Anzeige zu verstecken.
 
 ![CPU](docs/screenshots/metric-memory.jpg)
 
@@ -44,8 +46,10 @@ Voraussetzung ist ein Mac mit Apple silicon und macOS 15 Sequoia oder neuer. Ent
 - GPU-Auslastung, Takt und Leistung.
 - **Alle Laufwerke** mit freiem Platz, Durchsatz, SMART-Status sowie NVMe-Verschleiß, -Temperatur, Betriebsstunden und geschriebenen Daten.
 - Netzwerk-Durchsatz, Schnittstellen, Adressen, WLAN-Signal, Kanal und Verbindungsgeschwindigkeit. Die öffentliche IP wird nur auf Klick abgefragt.
+- **Verbindungsqualität** (aus, bis Sie sie einschalten): Latenz, Jitter und Paketverlust zum Router alle 30 Sekunden, im Verlauf gespeichert – so lässt sich eine wackelige von einer langsamen Verbindung unterscheiden.
+- **Bildschirme**: Bildrate, Auflösung, HDR und ProMotion pro Bildschirm, mit Warnung, wenn ein Kabel oder Dock einen Monitor unter seiner möglichen Bildrate hält.
 - **Alle Sensoren**: mehrere hundert Temperaturen, Spannungen, Ströme und Leistungswerte, dazu die Lüfter.
-- Akku-Zustand, Ladezyklen und Leistungsaufnahme, dazu die Akkus von AirPods, Magic Mouse, Keyboard und Trackpad.
+- Akku-Zustand, Ladezyklen und Leistungsaufnahme, die Leistung des Netzteils und eine Warnung, wenn der Akku trotz Kabel leerer wird. Dazu die Akkus von AirPods, Magic Mouse, Keyboard und Trackpad.
 
 ![Festplatte](docs/screenshots/metric-disk.jpg)
 
@@ -74,6 +78,7 @@ Ein Klick liefert eine Antwort in klaren Worten: zu wenig Speicher, eine App unt
 - **30 Tage Verlauf** in einer kleinen SQLite-Datei: Diagramme von 12 Stunden bis 30 Tage, welche Apps am meisten verbraucht haben, heute und diese Woche geschriebene und geladene Daten.
 - **Warnungen**, wenn eine App die CPU dauerhaft belastet, ständig mehr Speicher braucht oder Festplatte bzw. Netzwerk stark beansprucht – und wenn der Speicher knapp wird, die Festplatte vollläuft, der Mac überhitzt oder eine App hängt.
 - **Ungewöhnlich für diese App.** Activity+ lernt, was für jede App normal ist, und meldet deutliche Abweichungen („Slack braucht 3,2 × so viel Speicher wie sonst“). Gleichmäßiges Wachstum bei gleichbleibenden Prozessen wird als wahrscheinliches Speicherleck gemeldet, mit Prognose.
+- **Mess-Sessions.** Vor einem Build, einem Rendering oder allem, was den Mac langsam macht, eine Aufnahme starten: Activity+ misst jede Sekunde, merkt sich die aktivsten Apps, vergleicht zwei Sessions und exportiert CSV oder JSON.
 - **Wochenbericht** jeden Montag: die Apps mit dem meisten Energie-, Speicher-, CPU- und Netzwerkverbrauch, im Vergleich zur Vorwoche.
 - **Schlaf und Akkuverbrauch.** Was den Mac gerade wach hält, was ihn geweckt hat und welche Apps den Akku ohne Netzteil geleert haben.
 
@@ -85,6 +90,7 @@ Ein Klick liefert eine Antwort in klaren Worten: zu wenig Speicher, eine App unt
 - **Große und alte Dateien**: benutzte Installer, nie wieder geöffnete Downloads, Riesendateien. Ausgewählt wird nur, was Sie wählen.
 - **Festplatten-Speedtest**: sequenzielle Schreib- und Leserate der SSD.
 - **Panel-Editor**: Kacheln des Menüleisten-Panels auswählen und sortieren, Anzahl der aktivsten Apps, Theme.
+- **Menüleiste, Dock oder beides** und **Einstellungen exportieren und importieren** für einen anderen Mac.
 - **Lautstärke pro App** (Beta), Beenden und sofort Beenden aus jeder Liste sowie eine Share-Card (1200 × 630) mit dem Zustand des Macs.
 
 Alles, was einen Prozess beendet, einen Server stoppt, ein Startobjekt ändert oder Dateien verschiebt, fragt vorher nach.
@@ -101,7 +107,7 @@ Danach etwa fragen: „Warum ist mein Mac langsam?“ oder „Welcher Dev-Server
 
 ## Datenschutz
 
-Activity+ hat kein Konto und keine Analyse. Die einzige automatische Netzwerkanfrage ist die tägliche Update-Prüfung, die sich abschalten lässt. Öffentliche IP und Hostnamen werden nur auf Wunsch abgefragt. Der Verlauf liegt in `~/Library/Application Support/Activity+/`; wer diesen Ordner löscht, entfernt alles.
+Activity+ hat kein Konto und keine Analyse. Die einzige automatische Netzwerkanfrage ist die tägliche Update-Prüfung, die sich abschalten lässt. Öffentliche IP und Hostnamen werden nur auf Wunsch abgefragt. Die Verbindungsqualität pingt, wenn eingeschaltet, Ihren Router; einen öffentlichen Host nur, wenn Sie einen eintragen – der sieht dann Ihre IP-Adresse. Der Verlauf liegt in `~/Library/Application Support/Activity+/`; wer diesen Ordner löscht, entfernt alles.
 
 ## Woher die Zahlen kommen
 

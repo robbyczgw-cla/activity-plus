@@ -35,6 +35,8 @@ Requires a Mac with Apple silicon and macOS 15 Sequoia or later. Developed and t
 - **Per-app CPU, memory, GPU, disk, network and energy.** Energy is measured in watts by the kernel's per-task counters. GPU time per app comes from the Metal driver.
 - **Process inspector.** Double-click a process to see its command line, working folder, who started it, who signed it (and whether it is notarized), open files and network connections.
 - **Connections.** Which servers each app talks to right now. Host names are looked up only if you switch that on.
+- **Performance or efficiency cores.** For each app, how much of its CPU time runs on performance cores and how many instructions it gets through per clock cycle (IPC).
+- **Neural Engine memory per app**, so Core ML and local models show up instead of hiding behind the GPU figure.
 
 ![CPU](docs/screenshots/metric-memory.jpg)
 
@@ -44,8 +46,10 @@ Requires a Mac with Apple silicon and macOS 15 Sequoia or later. Developed and t
 - GPU load, clock and power.
 - **Every drive** with free space, throughput, SMART status and NVMe wear, temperature, hours and data written.
 - Network throughput, interfaces, addresses, Wi-Fi signal, channel and link speed. Your public IP is fetched only when you click for it.
+- **Connection quality** (off until you turn it on): latency, jitter and packet loss to your router every 30 seconds, kept in the history, so a flaky connection is told apart from a slow one.
+- **Displays**: refresh rate, resolution, HDR and ProMotion per screen, with a warning when a cable or dock holds a monitor below the rate it can do.
 - **All sensors**: several hundred temperatures, voltages, currents and power readings, plus fans.
-- Battery health, charge cycles and power draw, plus AirPods, Magic Mouse, Keyboard and Trackpad batteries.
+- Battery health, charge cycles and power draw, the power adapter's rating, and a warning when the battery drains although the Mac is plugged in. Plus AirPods, Magic Mouse, Keyboard and Trackpad batteries.
 
 ![Disk](docs/screenshots/metric-disk.jpg)
 
@@ -74,6 +78,7 @@ One click gives a plain-language verdict: not enough memory, an app running flat
 - **30 days of history** in one small SQLite file: charts for 12 hours to 30 days, which apps used the most, data written and downloaded today and this week.
 - **Alerts** when an app keeps the CPU busy, keeps growing in memory, or hammers the disk or network, and when memory runs out, the disk fills up, the Mac overheats or an app freezes.
 - **Unusual for this app.** Activity+ learns what is normal for each app and tells you when it is far off ("Slack uses 3.2× its usual memory"). Steady growth with a stable set of processes is reported as a likely memory leak, with a forecast.
+- **Recording sessions.** Start a recording before a build, a render or whatever makes your Mac slow; Activity+ measures every second, keeps the top apps, compares two sessions and exports CSV or JSON.
 - **Weekly report** every Monday: the apps that used the most energy, memory, CPU and network, compared with the week before.
 - **Sleep & battery drain.** What is keeping your Mac awake right now, what woke it up, and which apps drained the battery while it was unplugged.
 
@@ -85,6 +90,7 @@ One click gives a plain-language verdict: not enough memory, an app running flat
 - **Large and old files**: installers you already used, downloads you never opened again, huge files. Nothing is selected unless you choose it.
 - **Disk speed test**: sequential write and read speed of your SSD.
 - **Panel editor**: choose and order the tiles of the menu bar panel, how many busy apps it lists, and its theme.
+- **Menu bar, Dock or both**, and **settings export and import** for another Mac.
 - **Per-app volume** (beta), quit and force quit from any list, and a 1200 × 630 share card of your Mac's state.
 
 Anything that quits a process, stops a server, changes a startup item or moves files asks first.
@@ -101,7 +107,7 @@ Then ask "why is my Mac slow?" or "which dev server is idle?". The same binary p
 
 ## Privacy
 
-Activity+ has no account and no analytics. Its only automatic network request is the daily update check, which you can turn off. The public IP lookup and host-name lookups happen only when you ask for them. History lives in `~/Library/Application Support/Activity+/`; delete that folder to remove everything.
+Activity+ has no account and no analytics. Its only automatic network request is the daily update check, which you can turn off. The public IP lookup and host-name lookups happen only when you ask for them. Connection quality, when you turn it on, pings your router; it pings a public host only if you enter one, and that host then sees your IP address. History lives in `~/Library/Application Support/Activity+/`; delete that folder to remove everything.
 
 ## How it measures
 
