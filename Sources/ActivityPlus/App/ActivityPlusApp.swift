@@ -26,8 +26,7 @@ struct ActivityPlusApp: App {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        let showDock = UserDefaults.standard.object(forKey: "showDockIcon") as? Bool ?? true
-        NSApp.setActivationPolicy(showDock ? .regular : .accessory)
+        NSApp.setActivationPolicy(AppPresence.current.showsDock ? .regular : .accessory)
         MainActor.assumeIsolated {
             UnitPreferences.apply()
             _ = Updates.shared
@@ -55,4 +54,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Closing the window keeps Activity+ running in the menu bar.
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
+
+    /// A click on the Dock icon brings the window back (the only way in when the menu bar is off).
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag { MainActor.assumeIsolated { WindowOpener.openMain() } }
+        return true
+    }
 }

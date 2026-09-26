@@ -25,7 +25,7 @@ struct SettingsView: View {
 
 private struct GeneralSettings: View {
     @Environment(Monitor.self) private var monitor
-    @AppStorage("showDockIcon") private var showDockIcon = true
+    @State private var presence = AppPresence.current
     @AppStorage("openWindowAtLaunch") private var openWindowAtLaunch = true
     @AppStorage("accentColor") private var accent = "system"
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
@@ -54,8 +54,14 @@ private struct GeneralSettings: View {
                         }
                     }
                 Toggle("Open the window at launch", isOn: $openWindowAtLaunch)
-                Toggle("Show in Dock", isOn: $showDockIcon)
-                    .onChange(of: showDockIcon) { _, show in NSApp.setActivationPolicy(show ? .regular : .accessory) }
+                Picker("Show Activity+ in", selection: $presence) {
+                    ForEach(AppPresence.allCases) { Text($0.title).tag($0) }
+                }
+                .onChange(of: presence) { _, value in
+                    UserDefaults.standard.set(value.rawValue, forKey: AppPresence.key)
+                    AppPresence.apply(value)
+                }
+                Text(presenceHint).font(.caption).foregroundStyle(.secondary)
             }
             HelperSection()
             Section("Look") {
@@ -71,6 +77,14 @@ private struct GeneralSettings: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    private var presenceHint: String {
+        switch presence {
+        case .both: "Click a menu bar item for the panel, or use the Dock icon for the window."
+        case .menuBarOnly: "No Dock icon. Open the window from any menu bar item (right-click → Open Activity+)."
+        case .dockOnly: "No menu bar items. Click the Dock icon to open the window; Activity+ keeps measuring in the background."
+        }
     }
 }
 
@@ -107,6 +121,11 @@ private struct MenuBarSettings: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if !AppPresence.current.showsMenuBar {
+                Label("The menu bar is off (General → Show Activity+ in → Dock only). These items appear once you turn it back on.",
+                      systemImage: "info.circle")
+                    .font(.callout).foregroundStyle(.secondary)
+            }
             // Live preview of the whole menu bar, in the order it appears (left to right).
             HStack(spacing: 10) {
                 Spacer()

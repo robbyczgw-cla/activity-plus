@@ -40,6 +40,12 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
         if ProcessInfo.processInfo.environment["ACTIVITYPLUS_SNAPSHOTS"] != nil { NSLog("snapshot statusItems reload #%d", reloads) }
         entries.forEach { NSStatusBar.system.removeStatusItem($0.item) }
         entries = []
+        popover.performClose(nil)
+        // "Dock only": no menu bar items at all (the snapshot mode still renders them).
+        guard AppPresence.current.showsMenuBar || ProcessInfo.processInfo.environment["ACTIVITYPLUS_SNAPSHOTS"] != nil else {
+            if ProcessInfo.processInfo.environment["ACTIVITYPLUS_DEBUG_MENUBAR"] != nil { NSLog("menubar items: 0 (presence dockOnly)") }
+            return
+        }
         var configs = MenuBarItemStore.load()
         // An app without any menu bar item could not be reached once its window is closed.
         if configs.isEmpty { configs = [MenuBarItemConfig(module: .status, style: .icon)] }
@@ -56,6 +62,9 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
             entries.insert((config, item), at: 0)
         }
         refresh()
+        if ProcessInfo.processInfo.environment["ACTIVITYPLUS_DEBUG_MENUBAR"] != nil {
+            NSLog("menubar items: %d (presence %@)", entries.count, AppPresence.current.rawValue)
+        }
     }
 
     func refresh(onlyClocks: Bool = false) {
