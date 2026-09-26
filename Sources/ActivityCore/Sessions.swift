@@ -46,6 +46,8 @@ public struct SessionApp: Sendable, Identifiable, Hashable {
     public let energyWh: Double
     public let diskBytes: Double
     public let networkBytes: Double
+    /// The child process that did most of the work, when the app has several.
+    public var topProcess: String?
 }
 
 struct SessionAppAccumulator {
@@ -57,6 +59,7 @@ struct SessionAppAccumulator {
     var energyJoules = 0.0
     var diskBytes = 0.0
     var netBytes = 0.0
+    var processCPU: [String: Double] = [:]
 }
 
 extension HistoryStore {
@@ -76,6 +79,7 @@ extension HistoryStore {
                 session_id INTEGER NOT NULL, app_id TEXT NOT NULL, name TEXT, cpu_avg REAL, cpu_peak REAL,
                 mem_peak REAL, energy_wh REAL, disk REAL, net REAL)
             """)
+        exec("ALTER TABLE session_apps ADD COLUMN top_process TEXT")   // v0.2.5; fails harmlessly when present
     }
 
     // MARK: Recording
@@ -128,6 +132,9 @@ extension HistoryStore {
                 a.energyJoules += app.powerWatts * dt
                 a.diskBytes += (app.diskReadRate + app.diskWriteRate) * dt
                 a.netBytes += (app.netInRate + app.netOutRate) * dt
+                if app.processes.count > 1 {
+                    for p in app.processes where p.cpuPercent > 0.5 { a.processCPU[p.name, default: 0] += p.cpuPercent * dt }
+                }
                 totals[app.id] = a
             }
             sessionAppTotals[id] = totals
@@ -144,7 +151,7 @@ extension HistoryStore {
             exec("BEGIN")
             for (appID, a) in top {
                 var statement: OpaquePointer?
-                guard sqlite3_prepare_v2(db, "INSERT INTO session_apps VALUES (?,?,?,?,?,?,?,?,?)", -1, &statement, nil) == SQLITE_OK else { continue }
+                guard sqlite3_prepare_v2(db, "INSERT INTO session_apps (session_id, app_id, name, cpu_avg, cpu_peak, mem_peak, energy_wh, disk, net, top_process) VALUES (?,?,?,?,?,?,?,?,?,?)", -1, &statement, nil) == SQLITE_OK else { continue }
                 sqlite3_bind_int64(statement, 1, id)
                 bindText(statement, 2, appID)
                 bindText(statement, 3, a.name)
@@ -154,6 +161,7 @@ extension HistoryStore {
                 sqlite3_bind_double(statement, 7, a.energyJoules / 3600)
                 sqlite3_bind_double(statement, 8, a.diskBytes)
                 sqlite3_bind_double(statement, 9, a.netBytes)
+                if let top = a.processCPU.max(by: { $0.value < $1.value })?.key { bindText(statement, 10, top) } else { sqlite3_bind_null(statement, 10) }
                 sqlite3_step(statement)
                 sqlite3_finalize(statement)
             }
@@ -210,10 +218,11 @@ extension HistoryStore {
 
     public func sessionApps(_ id: Int64) -> [SessionApp] {
         queue.sync {
-            query("SELECT app_id, name, cpu_avg, cpu_peak, mem_peak, energy_wh, disk, net FROM session_apps WHERE session_id = \(id) ORDER BY cpu_avg DESC") { r in
+            query("SELECT app_id, name, cpu_avg, cpu_peak, mem_peak, energy_wh, disk, net, top_process FROM session_apps WHERE session_id = \(id) ORDER BY cpu_avg DESC") { r in
                 SessionApp(id: Self.text(r, 0), name: Self.text(r, 1), averageCPU: sqlite3_column_double(r, 2), peakCPU: sqlite3_column_double(r, 3),
                            peakMemory: sqlite3_column_double(r, 4), energyWh: sqlite3_column_double(r, 5),
-                           diskBytes: sqlite3_column_double(r, 6), networkBytes: sqlite3_column_double(r, 7))
+                           diskBytes: sqlite3_column_double(r, 6), networkBytes: sqlite3_column_double(r, 7),
+                           topProcess: sqlite3_column_type(r, 8) == SQLITE_NULL ? nil : Self.text(r, 8))
             }
         }
     }
@@ -270,7 +279,7 @@ public enum SessionExport {
                         "disk_bytes": session.diskBytes, "network_bytes": session.networkBytes],
             "apps": apps.map { ["name": $0.name, "id": $0.id, "average_cpu_percent": $0.averageCPU, "peak_cpu_percent": $0.peakCPU,
                                 "peak_memory_bytes": $0.peakMemory, "energy_Wh": $0.energyWh, "disk_bytes": $0.diskBytes,
-                                "network_bytes": $0.networkBytes] },
+                                "network_bytes": $0.networkBytes, "top_process": $0.topProcess as Any? ?? NSNull()] },
             "samples": samples.map { s -> [String: Any] in
                 ["time": iso.string(from: s.date), "elapsed_s": s.date.timeIntervalSince(session.started), "cpu_percent": s.cpu,
                  "memory_bytes": s.memory, "gpu_percent": s.gpu, "disk_read_Bps": s.diskRead, "disk_write_Bps": s.diskWrite,

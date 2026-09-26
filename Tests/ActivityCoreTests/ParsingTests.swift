@@ -134,3 +134,47 @@ struct SettingsBackupTests {
     }
 }
 
+@Suite("Process attribution")
+struct ProcessAttributionTests {
+    @Test func commandLinesAreShortAndSecretsHidden() {
+        #expect(ProcessCommand.short(arguments: ["/usr/local/bin/node", "/Users/me/app/node_modules/.bin/vite", "--port", "5173"]) == "node vite --port 5173")
+        #expect(ProcessCommand.short(arguments: ["gh", "--token", "ghp_abcdefghijklmnopqrstuvwxyz123456"]) == "gh --token •••")
+        #expect(ProcessCommand.short(arguments: ["env", "OPENAI_API_KEY=sk-123", "python3", "run.py"]) == "env OPENAI_API_KEY=••• python3 run.py")
+        #expect(ProcessCommand.short(arguments: ["curl", "https://bob:hunter2@example.com/x"]) == "curl https://•••@example.com/x")
+        #expect(ProcessCommand.short(arguments: ["tool", "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8"]) == "tool •••")
+        #expect(ProcessCommand.short(arguments: ["cargo", "build", "--release"]) == "cargo build --release")
+    }
+
+    @Test func historyTracesAnAppBackToItsChildProcess() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("activityplus-procs-\(UUID()).sqlite")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let store = HistoryStore(url: url)
+        let start = Date().addingTimeInterval(-900)
+        // 6 minutes of Terminal with two children: node busy, zsh idle-ish.
+        for step in 0..<180 {
+            var s = SystemSnapshot()
+            s.date = start.addingTimeInterval(Double(step) * 2)
+            s.interval = 2
+            var node = ProcessSample(pid: 900_001, ppid: 1, uid: 501, name: "node", path: "/usr/local/bin/node", startTime: .distantPast)
+            node.cpuPercent = 120
+            node.memory = 400_000_000
+            var zsh = ProcessSample(pid: 900_002, ppid: 1, uid: 501, name: "zsh", path: "/bin/zsh", startTime: .distantPast)
+            zsh.cpuPercent = 2
+            zsh.memory = 10_000_000
+            s.apps = [AppGroup(id: "/System/Applications/Utilities/Terminal.app", name: "Terminal", kind: .app,
+                               bundlePath: "/System/Applications/Utilities/Terminal.app", bundleID: "com.apple.Terminal", mainPID: nil, processes: [node, zsh])]
+            store.record(s)
+        }
+        store.flush()
+        let top = store.topProcesses(appID: "/System/Applications/Utilities/Terminal.app", from: start.addingTimeInterval(-60), to: Date())
+        let first = try #require(top.first)
+        #expect(first.name == "node")
+        #expect(first.appName == "Terminal")
+        #expect(first.averageCPU > 100)
+        #expect(top.contains { $0.name == "zsh" })
+        // flush() stamps the window with the current time.
+        let around = store.processesAround(Date().addingTimeInterval(-30))
+        #expect(around.first?.name == "node")
+    }
+}
+

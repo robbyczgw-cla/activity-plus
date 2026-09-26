@@ -78,7 +78,7 @@ enum MCPServer {
         tool("app_processes", "Processes belonging to apps whose name contains the query", ["app": ["type": "string"]], ["app"]),
         tool("diagnose", "Diagnose current system pressure using recent samples", [:]),
         tool("dev_servers", "Read-only inventory of development servers", [:]),
-        tool("history", "Historical app totals and system totals", ["range": enumSchema(["12h", "24h", "7d", "30d"]), "metric": enumSchema(["cpu", "memory", "gpu", "disk", "network", "energy"])]),
+        tool("history", "Historical app totals, the child processes behind the top apps, and system totals. Pass `around` (ISO 8601 time) to see which processes were busy in the 5-minute window around a moment, e.g. a spike.", ["range": enumSchema(["12h", "24h", "7d", "30d"]), "metric": enumSchema(["cpu", "memory", "gpu", "disk", "network", "energy"]), "around": ["type": "string", "description": "ISO 8601 date-time, optional"]]),
         tool("startup_items", "Non-Apple startup items", [:])
     ]
 
@@ -110,14 +110,23 @@ enum MCPServer {
             let metric = args["metric"] as? String ?? "cpu"
             let store = HistoryStore()
             let totals = store.totals(since: Calendar.current.startOfDay(for: Date()))
+            if let around = (args["around"] as? String).flatMap({ ISO8601DateFormatter().date(from: $0) }) {
+                return ["around": iso(around), "window_minutes": 5, "processes": store.processesAround(around, limit: 12).map(processObject)]
+            }
+            let end = Date(), start = end.addingTimeInterval(-range.seconds)
             let apps = store.topApps(range).sorted { historyScore($0, metric) > historyScore($1, metric) }
-            return ["range": args["range"] as? String ?? "24h", "apps": apps.map { ["name": $0.name, "average_cpu": $0.averageCPU, "average_memory": $0.averageMemory, "peak_memory": $0.peakMemory, "disk_bytes": $0.diskBytes, "network_bytes": $0.networkBytes, "energy_wh": $0.energyWh, "gpu_average": $0.gpuAverage] as [String: Any] }, "today_totals": ["disk_written": totals.diskWritten, "disk_read": totals.diskRead, "received": totals.received, "sent": totals.sent, "energy_wh": totals.energyWh, "average_cpu": totals.averageCPU]]
+            return ["range": args["range"] as? String ?? "24h", "apps": apps.enumerated().map { index, a -> [String: Any] in
+                var object: [String: Any] = ["name": a.name, "average_cpu": a.averageCPU, "average_memory": a.averageMemory, "peak_memory": a.peakMemory, "disk_bytes": a.diskBytes, "network_bytes": a.networkBytes, "energy_wh": a.energyWh, "gpu_average": a.gpuAverage]
+                if index < 5 { object["top_processes"] = store.topProcesses(appID: a.appID, from: start, to: end, limit: 3).map(processObject) }
+                return object
+            }, "today_totals": ["disk_written": totals.diskWritten, "disk_read": totals.diskRead, "received": totals.received, "sent": totals.sent, "energy_wh": totals.energyWh, "average_cpu": totals.averageCPU]]
         case "startup_items":
             return StartupItemsScanner.scan().filter { !$0.isApple }.map { ["id": $0.id, "label": $0.label, "scope": $0.scope.rawValue, "owner": $0.ownerName, "program": $0.program as Any? ?? NSNull(), "enabled": !$0.isDisabled, "running": $0.isRunning] as [String: Any] }
         default: return nil
         }
     }
 
+    private static func processObject(_ p: ProcessTotal) -> [String: Any] { ["app": p.appName, "name": p.name, "command": p.command, "pid": p.pid, "average_cpu": p.averageCPU, "peak_memory": p.peakMemory, "disk_bytes": p.diskBytes, "network_bytes": p.networkBytes] }
     private static func appObject(_ a: AppGroup) -> [String: Any] { ["name": a.name, "kind": a.kind.rawValue, "process_count": a.processes.count, "cpu": a.cpuPercent, "formatted_cpu": Format.percent(a.cpuPercent), "memory": a.memory, "formatted_memory": Format.memory(a.memory), "gpu": a.gpuPercent, "formatted_gpu": Format.percent(a.gpuPercent), "disk_read": a.diskReadRate, "disk_write": a.diskWriteRate, "formatted_disk_read": Format.rate(a.diskReadRate), "formatted_disk_write": Format.rate(a.diskWriteRate), "network_in": a.netInRate, "network_out": a.netOutRate, "formatted_network_in": Format.rate(a.netInRate), "formatted_network_out": Format.rate(a.netOutRate), "energy_watts": a.powerWatts, "formatted_energy": Format.watts(a.powerWatts), "neural_engine_memory": a.neuralMemory, "p_core_share": a.pCoreShare as Any? ?? NSNull(), "ipc": a.ipc as Any? ?? NSNull()] }
     private static func score(_ a: AppGroup, _ metric: String) -> Double { switch metric { case "memory": Double(a.memory); case "gpu": a.gpuPercent; case "disk": a.diskReadRate + a.diskWriteRate; case "network": a.netInRate + a.netOutRate; case "energy": a.powerWatts; default: a.cpuPercent } }
     private static func historyScore(_ a: HistoryStore.AppTotal, _ metric: String) -> Double { switch metric { case "memory": a.averageMemory; case "gpu": a.gpuAverage; case "disk": a.diskBytes; case "network": a.networkBytes; case "energy": a.energyWh; default: a.averageCPU } }

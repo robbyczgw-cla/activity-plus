@@ -178,7 +178,13 @@ private struct SessionDetail: View {
                     .font(.caption).foregroundStyle(.secondary)
                     ForEach(apps.prefix(12)) { app in
                         HStack {
-                            Text(app.name).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text(app.name).lineLimit(1)
+                                if let top = app.topProcess, top != app.name {
+                                    Text("mostly \(top)").font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             Text(Format.percent(app.averageCPU)).frame(width: 70, alignment: .trailing)
                             Text(Format.percent(app.peakCPU)).frame(width: 80, alignment: .trailing)
                             Text(Format.memory(UInt64(app.peakMemory))).frame(width: 100, alignment: .trailing)

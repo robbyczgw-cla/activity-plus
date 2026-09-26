@@ -139,6 +139,7 @@ public final class HistoryStore: @unchecked Sendable {
             exec("DELETE FROM system WHERE ts < \(cutoff)")
             exec("DELETE FROM apps WHERE ts < \(cutoff)")
             exec("DELETE FROM pings WHERE ts < \(cutoff)")
+            exec("DELETE FROM app_procs WHERE ts < \(cutoff)")
         }
     }
 
@@ -346,6 +347,7 @@ public final class HistoryStore: @unchecked Sendable {
         exec("CREATE INDEX IF NOT EXISTS system_ts ON system(ts)")
         createSessionTables()
         createPingTable()
+        createProcessTable()
         exec("""
             CREATE TABLE IF NOT EXISTS apps (
                 ts INTEGER NOT NULL, app_id TEXT NOT NULL, name TEXT, bundle TEXT,
@@ -406,6 +408,9 @@ public final class HistoryStore: @unchecked Sendable {
             sqlite3_bind_int(statement, 12, onBattery)
             sqlite3_bind_int(statement, 13, Int32(a.processCount))
             sqlite3_step(statement)
+        }
+        for (id, a) in appWindow where !a.processes.isEmpty {
+            writeProcessRows(appID: id, processes: Array(a.processes.values), windowSamples: windowSamples, at: Int64(date.timeIntervalSince1970))
         }
         sqlite3_finalize(statement)
         exec("COMMIT")
@@ -478,10 +483,23 @@ private struct AppAccumulator {
     var cpu = 0.0, memory = 0.0, memoryPeak = 0.0, gpu = 0.0
     var diskBytes = 0.0, netBytes = 0.0, energyJoules = 0.0
     var processCount = 0
+    /// Per process (pid + start time), for tracing the app's numbers back to a child process.
+    var processes: [String: ProcessAccumulator] = [:]
 
     mutating func add(_ app: AppGroup, interval: TimeInterval) {
         count += 1
         processCount = app.processes.count
+        if app.processes.count > 1 {
+            for p in app.processes where p.cpuPercent > 0.1 || p.memory > 20_000_000 {
+                let key = "\(p.pid)@\(p.startTime.timeIntervalSince1970)"
+                var acc = processes[key] ?? ProcessAccumulator(pid: p.pid, start: p.startTime, name: p.name)
+                acc.cpu += p.cpuPercent
+                acc.memoryPeak = max(acc.memoryPeak, Double(p.memory))
+                acc.diskBytes += (p.diskReadRate + p.diskWriteRate) * interval
+                acc.netBytes += (p.netInRate + p.netOutRate) * interval
+                processes[key] = acc
+            }
+        }
         cpu += app.cpuPercent
         memory += Double(app.memory)
         memoryPeak = max(memoryPeak, Double(app.memory))

@@ -10,6 +10,10 @@ struct HistoryView: View {
     @State private var apps: [HistoryStore.AppTotal] = []
     @State private var today = HistoryStore.Totals()
     @State private var week = HistoryStore.Totals()
+    @State private var selectedDate: Date?
+    @State private var around: [ProcessTotal] = []
+    @State private var expanded: Set<String> = []
+    @State private var appProcesses: [String: [ProcessTotal]] = [:]
 
     var body: some View {
         ScrollView {
@@ -42,6 +46,7 @@ struct HistoryView: View {
                             .foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 180)
                     } else {
                         chart.frame(height: 220)
+                        spikeDetail
                     }
                 }
 
@@ -54,6 +59,8 @@ struct HistoryView: View {
                     }
                     ForEach(Array(sorted)) { app in
                         HStack(spacing: 10) {
+                            Image(systemName: expanded.contains(app.appID) ? "chevron.down" : "chevron.right")
+                                .font(.caption2).foregroundStyle(.secondary).frame(width: 10)
                             if let path = app.bundlePath {
                                 Image(nsImage: NSWorkspace.shared.icon(forFile: path)).resizable().frame(width: 20, height: 20)
                             } else {
@@ -65,6 +72,16 @@ struct HistoryView: View {
                             Text(format(app)).monospacedDigit().frame(width: 90, alignment: .trailing)
                         }
                         .font(.callout)
+                        .contentShape(Rectangle())
+                        .onTapGesture { toggle(app.appID) }
+                        if expanded.contains(app.appID) {
+                            let processes = appProcesses[app.appID] ?? []
+                            if processes.isEmpty {
+                                Text("No process details for this period (they are kept from version 0.2.5 on, for apps with several processes).")
+                                    .font(.caption).foregroundStyle(.secondary).padding(.leading, 40)
+                            }
+                            ForEach(processes) { p in processRow(p, indent: 40) }
+                        }
                     }
                 }
                 Text("Stored on this Mac in \(services.history.url.path.replacingOccurrences(of: NSHomeDirectory(), with: "~")) (\(Format.storage(services.history.fileSize))).")
@@ -73,7 +90,7 @@ struct HistoryView: View {
             .padding(20)
         }
         .navigationTitle("History")
-        .task(id: "\(range.rawValue)") { await load() }
+        .task(id: "\(range.rawValue)") { expanded = []; appProcesses = [:]; selectedDate = nil; await load() }
         .task {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(60))
@@ -94,13 +111,75 @@ struct HistoryView: View {
     }
 
     private var chart: some View {
-        Chart(points) { point in marks(point) }
+        Chart {
+            ForEach(points) { point in marks(point) }
+            if let selectedDate {
+                RuleMark(x: .value("Selected", selectedDate)).foregroundStyle(.secondary.opacity(0.5))
+            }
+        }
+            .chartXSelection(value: $selectedDate)
+            .onChange(of: selectedDate) { _, date in loadAround(date) }
             .chartYAxis {
                 AxisMarks(position: .trailing) { value in
                     AxisGridLine()
                     AxisValueLabel { if let v = value.as(Double.self) { Text(metric.format(v)) } }
                 }
             }
+    }
+
+    /// Who was busy at the moment you point at: apps and the child processes behind them.
+    @ViewBuilder private var spikeDetail: some View {
+        if let selectedDate {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Around \(selectedDate.formatted(date: range == .hours12 || range == .hours24 ? .omitted : .abbreviated, time: .shortened)) (5-minute window)")
+                    .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                if around.isEmpty {
+                    Text("No process details for this moment. They are kept for apps with several processes, from version 0.2.5 on.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                ForEach(around) { p in processRow(p, indent: 0, showApp: true) }
+            }
+            .padding(.top, 6)
+        } else {
+            Text("Point at the chart to see which processes were behind a spike.").font(.caption).foregroundStyle(.tertiary)
+        }
+    }
+
+    private func processRow(_ p: ProcessTotal, indent: CGFloat, showApp: Bool = false) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "terminal").font(.caption).foregroundStyle(.secondary)
+            if showApp { Text(p.appName).fontWeight(.medium).lineLimit(1) }
+            Text(p.command.isEmpty ? p.name : p.command).font(.callout.monospaced()).lineLimit(1).truncationMode(.middle)
+                .foregroundStyle(showApp ? .secondary : .primary)
+            Text("pid \(p.pid)").font(.caption2).foregroundStyle(.tertiary)
+            Spacer()
+            Text(metric == .memory ? Format.memory(UInt64(p.peakMemory)) + " peak"
+                 : metric == .disk ? Format.storage(UInt64(p.diskBytes))
+                 : metric == .network ? Format.storage(UInt64(p.networkBytes))
+                 : Format.percent(p.averageCPU, decimals: 1))
+                .monospacedDigit().foregroundStyle(.secondary)
+        }
+        .font(.callout)
+        .padding(.leading, indent)
+    }
+
+    private func toggle(_ appID: String) {
+        if expanded.contains(appID) { expanded.remove(appID); return }
+        expanded.insert(appID)
+        let store = services.history, end = Date(), start = end.addingTimeInterval(-range.seconds)
+        Task.detached(priority: .userInitiated) {
+            let processes = store.topProcesses(appID: appID, from: start, to: end)
+            await MainActor.run { appProcesses[appID] = processes }
+        }
+    }
+
+    private func loadAround(_ date: Date?) {
+        guard let date else { around = []; return }
+        let store = services.history
+        Task.detached(priority: .userInitiated) {
+            let result = store.processesAround(date)
+            await MainActor.run { if selectedDate == date { around = result } }
+        }
     }
 
     private func total(_ title: String, _ value: String, _ tint: Color) -> some View {

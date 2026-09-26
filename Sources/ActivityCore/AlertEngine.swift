@@ -53,6 +53,8 @@ public final class AlertEngine: @unchecked Sendable {
     private var lastFired: [String: Date] = [:]
     private var pressureSince: Date?
     private var drainSince: Date?
+    /// The last snapshot's apps, to name the child process behind an alert.
+    private var latest: [String: AppGroup] = [:]
 
     public init(settings: AlertSettings = AlertSettings()) {
         self.settings = settings
@@ -76,6 +78,7 @@ public final class AlertEngine: @unchecked Sendable {
             if list.count > keep { list.removeFirst(list.count - keep) }
             buckets[app.id] = list
         }
+        latest = Dictionary(snapshot.apps.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         let live = Set(snapshot.apps.map(\.id))
         buckets = buckets.filter { live.contains($0.key) }
 
@@ -95,7 +98,7 @@ public final class AlertEngine: @unchecked Sendable {
                 if average >= settings.cpuPercent, Double(busyMinutes) >= Double(cpuWindow.count) * 0.8 {
                     fire(&alerts, .cpu, id, name, now,
                          title: "\(name) is keeping the CPU busy",
-                         detail: "\(Format.percent(average)) on average for \(settings.cpuMinutes) minutes.")
+                         detail: "\(Format.percent(average)) on average for \(settings.cpuMinutes) minutes." + culprit(id) { $0.cpuPercent })
                 }
             }
 
@@ -107,7 +110,7 @@ public final class AlertEngine: @unchecked Sendable {
                 if growth >= settings.memoryGrowthGB * 1_073_741_824, Double(rising) >= Double(memoryWindow.count - 1) * 0.6 {
                     fire(&alerts, .memoryGrowth, id, name, now,
                          title: "\(name) keeps using more memory",
-                         detail: "Up \(Format.memory(UInt64(growth))) in \(Self.minutesText(settings.memoryWindowMinutes)), now \(Format.memory(UInt64(last.averageMemory))).")
+                         detail: "Up \(Format.memory(UInt64(growth))) in \(Self.minutesText(settings.memoryWindowMinutes)), now \(Format.memory(UInt64(last.averageMemory)))." + culprit(id) { Double($0.memory) })
                 }
             }
 
@@ -117,13 +120,13 @@ public final class AlertEngine: @unchecked Sendable {
                 if disk >= settings.diskMBps * 1_000_000 {
                     fire(&alerts, .disk, id, name, now,
                          title: "\(name) is hammering the disk",
-                         detail: "\(Format.rate(disk)) for \(settings.ioMinutes) minutes, \(Format.storage(UInt64(disk * Double(settings.ioMinutes) * 60))) in total.")
+                         detail: "\(Format.rate(disk)) for \(settings.ioMinutes) minutes, \(Format.storage(UInt64(disk * Double(settings.ioMinutes) * 60))) in total." + culprit(id) { $0.diskReadRate + $0.diskWriteRate })
                 }
                 let network = ioWindow.reduce(0) { $0 + $1.averageNetwork } / Double(ioWindow.count)
                 if network >= settings.networkMBps * 1_000_000 {
                     fire(&alerts, .network, id, name, now,
                          title: "\(name) is using a lot of network",
-                         detail: "\(Format.rate(network)) for \(settings.ioMinutes) minutes.")
+                         detail: "\(Format.rate(network)) for \(settings.ioMinutes) minutes." + culprit(id) { $0.netInRate + $0.netOutRate })
                 }
             }
         }
@@ -177,6 +180,16 @@ public final class AlertEngine: @unchecked Sendable {
         if let last = lastFired[key], now.timeIntervalSince(last) < Double(settings.cooldownMinutes) * 60 { return }
         lastFired[key] = now
         alerts.append(AppAlert(date: now, kind: kind, appID: id, appName: name, title: title, detail: detail))
+    }
+
+    /// " Mostly node vite (pid 4312)." when the app has several processes and one clearly leads.
+    private func culprit(_ id: String, by value: (ProcessSample) -> Double) -> String {
+        guard let app = latest[id], app.processes.count > 1,
+              let top = app.processes.max(by: { value($0) < value($1) }), value(top) > 0 else { return "" }
+        let total = app.processes.reduce(0) { $0 + value($1) }
+        guard total > 0, value(top) / total >= 0.4 else { return "" }
+        let command = top.hasDetails ? ProcessCommand.short(pid: top.pid, fallback: top.name) : top.name
+        return " Mostly \(command) (pid \(top.pid))."
     }
 
     private static func minutesText(_ minutes: Int) -> String {
