@@ -130,6 +130,17 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
     private func showMenu(for item: NSStatusItem) {
         let menu = NSMenu()
         menu.addItem(withTitle: "Open Activity+", action: #selector(openMain), keyEquivalent: "o").target = self
+        if let recording = AppServices.shared.recording {
+            let stop = NSMenuItem(title: "Stop Recording \"\(recording.name)\" (\(Format.elapsed(recording.duration)))", action: #selector(toggleRecording), keyEquivalent: "")
+            stop.image = NSImage(systemSymbolName: "stop.circle.fill", accessibilityDescription: nil)
+            stop.target = self
+            menu.addItem(stop)
+        } else {
+            let start = NSMenuItem(title: "Start Recording", action: #selector(toggleRecording), keyEquivalent: "")
+            start.image = NSImage(systemSymbolName: "record.circle", accessibilityDescription: nil)
+            start.target = self
+            menu.addItem(start)
+        }
         menu.addItem(.separator())
 
         // Quick choice of what the menu bar shows; finer control lives in Settings → Menu Bar.
@@ -169,6 +180,10 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
     }
 
     @objc private func openMain() { WindowOpener.openMain() }
+    @objc private func toggleRecording() {
+        let services = AppServices.shared
+        if services.recording != nil { services.stopRecording() } else { services.startRecording(name: "") }
+    }
 
     @objc private func toggleModule(_ sender: NSMenuItem) {
         guard let raw = sender.representedObject as? String, let module = MenuBarItemConfig.Module(rawValue: raw) else { return }

@@ -71,8 +71,10 @@ public final class HistoryStore: @unchecked Sendable {
         }
     }
 
-    private var db: OpaquePointer?
-    private let queue = DispatchQueue(label: "at.hifiteam.activityplus.history")
+    var db: OpaquePointer?   // internal: Sessions.swift shares the connection
+    let queue = DispatchQueue(label: "at.hifiteam.activityplus.history")
+    /// Per-app totals of running recording sessions, keyed by session id (touched only on `queue`).
+    var sessionAppTotals: [Int64: [String: SessionAppAccumulator]] = [:]
     public let url: URL
 
     // Accumulators (touched only on `queue`)
@@ -341,6 +343,7 @@ public final class HistoryStore: @unchecked Sendable {
                 disk_r REAL, disk_w REAL, net_in REAL, net_out REAL, battery REAL, power REAL)
             """)
         exec("CREATE INDEX IF NOT EXISTS system_ts ON system(ts)")
+        createSessionTables()
         exec("""
             CREATE TABLE IF NOT EXISTS apps (
                 ts INTEGER NOT NULL, app_id TEXT NOT NULL, name TEXT, bundle TEXT,
@@ -412,11 +415,11 @@ public final class HistoryStore: @unchecked Sendable {
     private var windowOnBattery = 0
     private var minuteSamplesPerWindow: Int { max(windowSampleCount, appWindow.values.map(\.count).max() ?? 1) }
 
-    private func exec(_ sql: String) {
+    func exec(_ sql: String) {
         sqlite3_exec(db, sql, nil, nil, nil)
     }
 
-    private func query<T>(_ sql: String, _ row: (OpaquePointer) -> T) -> [T] {
+    func query<T>(_ sql: String, _ row: (OpaquePointer) -> T) -> [T] {
         var statement: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK, let statement else { return [] }
         defer { sqlite3_finalize(statement) }
@@ -425,11 +428,11 @@ public final class HistoryStore: @unchecked Sendable {
         return rows
     }
 
-    private func bindText(_ statement: OpaquePointer?, _ index: Int32, _ text: String) {
+    func bindText(_ statement: OpaquePointer?, _ index: Int32, _ text: String) {
         sqlite3_bind_text(statement, index, text, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
     }
 
-    private static func text(_ s: OpaquePointer, _ column: Int32) -> String {
+    static func text(_ s: OpaquePointer, _ column: Int32) -> String {
         sqlite3_column_text(s, column).map { String(cString: $0) } ?? ""
     }
 }

@@ -5,7 +5,7 @@ enum SidebarItem: Hashable {
     case overview
     case metric(Metric)
     case battery, sensors
-    case projects, history, alerts, sound, weekly, automations, sleep, connections
+    case projects, history, alerts, sound, weekly, automations, sleep, connections, sessions
     case diagnosis, startup, storage
 
     struct Page {
@@ -27,6 +27,7 @@ enum SidebarItem: Hashable {
         Page(item: .projects, key: "projects", title: "Projects", icon: "hammer", section: "Tools"),
         Page(item: .connections, key: "connections", title: "Connections", icon: "point.3.connected.trianglepath.dotted", section: "Tools"),
         Page(item: .history, key: "history", title: "History", icon: "clock.arrow.circlepath", section: "Tools"),
+        Page(item: .sessions, key: "sessions", title: "Sessions", icon: "record.circle", section: "Tools"),
         Page(item: .weekly, key: "weekly", title: "Weekly Report", icon: "calendar", section: "Tools"),
         Page(item: .alerts, key: "alerts", title: "Alerts", icon: "bell", section: "Tools"),
         Page(item: .automations, key: "automations", title: "Automations", icon: "wand.and.stars", section: "Tools"),
@@ -147,6 +148,7 @@ struct ContentView: View {
         case .storage: StorageView()
         case .weekly: WeeklyReportView()
         case .automations: AutomationsView()
+        case .sessions: SessionsView()
         case .sleep: SleepView()
         case .connections: ConnectionsView()
         }
@@ -173,6 +175,8 @@ struct ContentView: View {
             return count > 0 ? Text("\(count)") : nil
         case .automations:
             return services.pendingAutomations.isEmpty ? nil : Text("\(services.pendingAutomations.count)")
+        case .sessions:
+            return services.recording == nil ? nil : Text("REC").foregroundStyle(.red)
         default: return nil
         }
     }

@@ -67,8 +67,10 @@ final class Monitor {
             queue.async { sampler.wantsSensorList = wanted }
         }
     }
+    /// A recording session wants every sample, also with no window open.
+    var recordingActive = false { didSet { if recordingActive != oldValue { schedule() } } }
     private var effectiveInterval: TimeInterval {
-        isVisible ? interval : max(interval, Performance.backgroundInterval)
+        isVisible || recordingActive ? interval : max(interval, Performance.backgroundInterval)
     }
 
     private func visibilityChanged() {

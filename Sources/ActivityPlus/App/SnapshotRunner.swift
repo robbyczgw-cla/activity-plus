@@ -25,6 +25,12 @@ enum SnapshotRunner {
             if pages.contains("storage") { AppServices.shared.scanStorage() }
             if pages.contains("startup") || pages.contains("diagnosis") { AppServices.shared.scanStartupItems() }
             try? await Task.sleep(for: .seconds(warmup))
+            // ACTIVITYPLUS_RECORD_SECONDS=n records a real session of n seconds first (use with ACTIVITYPLUS_HISTORY_DB).
+            if let seconds = Double(ProcessInfo.processInfo.environment["ACTIVITYPLUS_RECORD_SECONDS"] ?? "") {
+                AppServices.shared.startRecording(name: "Snapshot test")
+                try? await Task.sleep(for: .seconds(seconds))
+                AppServices.shared.stopRecording()
+            }
             try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
             for window in NSApp.windows {
                 NSLog("snapshot window: title=%@ id=%@ class=%@ visible=%d size=%@", window.title, window.identifier?.rawValue ?? "-",

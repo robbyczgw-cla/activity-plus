@@ -120,4 +120,37 @@ struct HistoryTests {
         // 8 minutes at 1 MB/s ≈ 480 MB written
         #expect(totals.diskWritten > 400_000_000 && totals.diskWritten < 560_000_000)
     }
+
+    @Test func sessionRecordsSummaryAppsAndCSV() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("activityplus-session-\(UUID()).sqlite")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let store = HistoryStore(url: url)
+        let start = Date().addingTimeInterval(-120)
+        let id = store.startSession(name: "Build", at: start)
+        #expect(id > 0)
+        // 30 samples of 2 s: the app works at 80 % for the first half, then idles at 0 %.
+        for step in 0..<30 {
+            var s = snapshot(at: start.addingTimeInterval(Double(step + 1) * 2), appCPU: step < 15 ? 80 : 0)
+            s.cpu.user = 40
+            store.recordSession(id, snapshot: s)
+        }
+        store.stopSession(id, at: start.addingTimeInterval(62))
+        let session = try #require(store.sessions().first)
+        #expect(session.name == "Build")
+        #expect(session.samples == 30)
+        #expect(abs(session.averageCPU - 40) < 0.01)
+        #expect(abs(session.duration - 62) < 0.01)
+        let app = try #require(store.sessionApps(id).first)
+        #expect(app.name == "Busy")
+        #expect(abs(app.averageCPU - 40) < 0.5)   // 80 % for half the session
+        #expect(abs(app.peakCPU - 80) < 0.01)
+        let samples = store.sessionSamples(id)
+        let csv = SessionExport.csv(samples, started: session.started)
+        let lines = csv.split(separator: "\n")
+        #expect(lines.count == 31)
+        #expect(lines[0].hasPrefix("time,elapsed_s,cpu_percent"))
+        #expect(lines[1].contains(",2.000,40.00,"))
+        store.deleteSession(id)
+        #expect(store.sessions().isEmpty)
+    }
 }

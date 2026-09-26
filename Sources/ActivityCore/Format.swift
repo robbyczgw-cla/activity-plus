@@ -47,6 +47,14 @@ public enum Format {
         value < 10 ? String(format: "%.1f W", value) : String(format: "%.0f W", value)
     }
 
+    /// Exact short durations for recordings and intervals: "2 s", "3 min 5 s", "1 h 2 min".
+    public static func elapsed(_ seconds: TimeInterval) -> String {
+        let total = Int(seconds.rounded())
+        if total < 60 { return "\(total) s" }
+        if total < 3600 { return total % 60 == 0 ? "\(total / 60) min" : "\(total / 60) min \(total % 60) s" }
+        return "\(total / 3600) h \(total % 3600 / 60) min"
+    }
+
     public static func duration(_ seconds: TimeInterval) -> String {
         let minutes = Int(seconds / 60)
         let days = minutes / 1440

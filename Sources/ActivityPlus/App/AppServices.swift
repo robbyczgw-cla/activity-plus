@@ -8,7 +8,8 @@ import UserNotifications
 final class AppServices {
     static let shared = AppServices()
 
-    let history = HistoryStore()
+    /// ACTIVITYPLUS_HISTORY_DB points tests and snapshots at a throwaway database.
+    let history = HistoryStore(url: ProcessInfo.processInfo.environment["ACTIVITYPLUS_HISTORY_DB"].map { URL(fileURLWithPath: $0) })
     private(set) var alerts: [AppAlert] = []
     private(set) var projects = ProjectScanner.Result()
     private(set) var projectsScannedAt: Date?
@@ -19,6 +20,11 @@ final class AppServices {
             if let data = try? JSONEncoder().encode(alertSettings) { UserDefaults.standard.set(data, forKey: "alertSettings") }
         }
     }
+
+    /// The recording session that is running, if any.
+    private(set) var recording: RecordingSession?
+    /// Bumped whenever sessions are added, stopped, renamed or deleted, so lists reload.
+    private(set) var sessionsRevision = 0
 
     @ObservationIgnored private let engine: AlertEngine
     @ObservationIgnored private let scanner = ProjectScanner()
@@ -50,6 +56,7 @@ final class AppServices {
                                   detail: "It froze for \(Int(hang.duration)) seconds at \(hang.started.formatted(date: .omitted, time: .shortened))."))
         }
         history.prune()
+        history.closeDanglingSessions()
         lastPrune = Date()
         monitor.observers.append { [weak self] snapshot in
             MainActor.assumeIsolated { self?.handle(snapshot) }
@@ -59,6 +66,7 @@ final class AppServices {
 
     private func handle(_ snapshot: SystemSnapshot) {
         history.record(snapshot)
+        if let recording { history.recordSession(recording.id, snapshot: snapshot) }
         // Keep the promise of 30 days also when Activity+ runs for weeks without a restart.
         if snapshot.date.timeIntervalSince(lastPrune) >= 86_400 {
             lastPrune = snapshot.date
@@ -422,5 +430,37 @@ final class AppServices {
 
     private func saveAlertLog() {
         if let data = try? JSONEncoder().encode(alerts) { try? data.write(to: Self.logURL, options: .atomic) }
+    }
+
+    // MARK: Recording sessions
+
+    func startRecording(name: String) {
+        guard recording == nil else { return }
+        let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let date = Date()
+        let finalName = title.isEmpty ? "Session \(date.formatted(date: .abbreviated, time: .shortened))" : title
+        let id = history.startSession(name: finalName, at: date)
+        guard id > 0 else { return }
+        recording = RecordingSession(id: id, name: finalName, started: date)
+        Monitor.shared.recordingActive = true
+        sessionsRevision += 1
+    }
+
+    func stopRecording() {
+        guard let recording else { return }
+        history.stopSession(recording.id)
+        self.recording = nil
+        Monitor.shared.recordingActive = false
+        sessionsRevision += 1
+    }
+
+    func renameSession(_ id: Int64, to name: String) {
+        history.renameSession(id, to: name)
+        sessionsRevision += 1
+    }
+
+    func deleteSession(_ id: Int64) {
+        history.deleteSession(id)
+        sessionsRevision += 1
     }
 }
