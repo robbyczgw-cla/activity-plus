@@ -55,6 +55,7 @@ struct MetricDetailView: View {
                     CoreGrid(cores: s.cpu.perCore, efficiencyCores: s.cpu.efficiencyCores)
                 }
             }
+            CoreTypeCard(apps: s.apps)
         case .memory:
             HStack(alignment: .top, spacing: 14) {
                 Card {
@@ -74,6 +75,7 @@ struct MetricDetailView: View {
                     .frame(height: 220)
                 }
             }
+            NeuralEngineCard(apps: s.apps)
         case .gpu:
             HStack(alignment: .top, spacing: 14) {
                 Card {

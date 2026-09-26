@@ -9,6 +9,12 @@ struct ProcessInspectorView: View {
     @State private var details: ProcessDetails?
     @State private var hosts: [String: String] = [:]
     @AppStorage("resolveHostNames") private var resolveHosts = false
+    @Environment(Monitor.self) private var monitor
+
+    /// The live sample of this process, if it is still running.
+    private var live: ProcessSample? {
+        monitor.snapshot.apps.lazy.flatMap(\.processes).first { $0.pid == pid }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -30,6 +36,16 @@ struct ProcessInspectorView: View {
                             if let cwd = d.workingDirectory { row("Folder", cwd, selectable: true) }
                             if !d.arguments.isEmpty {
                                 row("Command line", d.arguments.joined(separator: " "), selectable: true)
+                            }
+                        }
+                        if let p = live, p.hasDetails {
+                            section("Right now") {
+                                row("CPU", Format.percent(p.cpuPercent))
+                                if let share = p.pCoreShare {
+                                    row("Cores", "\(Int((share * 100).rounded())) % on performance cores, \(Int(((1 - share) * 100).rounded())) % on efficiency cores")
+                                }
+                                if let ipc = p.ipc { row("Instructions per cycle", String(format: "%.2f", ipc)) }
+                                if p.neuralMemory > 0 { row("Neural Engine memory", Format.memory(p.neuralMemory)) }
                             }
                         }
                         if let signature = d.signature {

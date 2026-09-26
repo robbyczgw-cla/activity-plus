@@ -24,6 +24,20 @@ public struct ProcessSample: Sendable, Identifiable, Hashable {
     public var cpuTime: Double = 0
     /// False when the kernel refused detailed stats (root/system processes without a helper).
     public var hasDetails: Bool = true
+    /// Memory the process holds for the Neural Engine (Core ML, local models), in bytes.
+    public var neuralMemory: UInt64 = 0
+    /// CPU nanoseconds per second spent on performance cores (the rest ran on efficiency cores).
+    public var pCoreNanosRate: Double = 0
+    /// CPU nanoseconds per second in total, for weighting the P-core share across processes.
+    public var cpuNanosRate: Double = 0
+    /// Instructions and cycles retired per second; their ratio is the IPC.
+    public var instructionRate: Double = 0
+    public var cycleRate: Double = 0
+
+    /// Share of CPU time on performance cores (0…1), nil while idle.
+    public var pCoreShare: Double? { cpuNanosRate > 1_000_000 ? min(1, pCoreNanosRate / cpuNanosRate) : nil }
+    /// Instructions per cycle, nil while idle.
+    public var ipc: Double? { cycleRate > 1_000_000 ? instructionRate / cycleRate : nil }
 
     public var id: Int32 { pid }
 
@@ -63,6 +77,11 @@ public struct AppGroup: Sendable, Identifiable, Hashable {
     public var netOutRate: Double = 0
     public var gpuPercent: Double = 0
     public var powerWatts: Double = 0
+    /// Neural Engine memory of all processes (Core ML, local models).
+    public var neuralMemory: UInt64 = 0
+    /// Share of the app's CPU time on performance cores, and its instructions per cycle (nil while idle).
+    public var pCoreShare: Double?
+    public var ipc: Double?
 
     public init(id: String, name: String, kind: Kind, bundlePath: String?, bundleID: String?, mainPID: Int32?, processes: [ProcessSample]) {
         self.id = id
@@ -84,6 +103,13 @@ public struct AppGroup: Sendable, Identifiable, Hashable {
         netOutRate = processes.reduce(0) { $0 + $1.netOutRate }
         gpuPercent = processes.reduce(0) { $0 + $1.gpuPercent }
         powerWatts = processes.reduce(0) { $0 + $1.powerWatts }
+        neuralMemory = processes.reduce(0) { $0 + $1.neuralMemory }
+        let cpuNanos = processes.reduce(0) { $0 + $1.cpuNanosRate }
+        let pNanos = processes.reduce(0) { $0 + $1.pCoreNanosRate }
+        let instructions = processes.reduce(0) { $0 + $1.instructionRate }
+        let cycles = processes.reduce(0) { $0 + $1.cycleRate }
+        pCoreShare = cpuNanos > 1_000_000 ? min(1, pNanos / cpuNanos) : nil
+        ipc = cycles > 1_000_000 ? instructions / cycles : nil
     }
 }
 

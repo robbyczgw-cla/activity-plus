@@ -60,7 +60,10 @@ if arguments.contains("--json") {
          "cpu": (app.cpuPercent * 10).rounded() / 10, "memory": app.memory,
          "gpu": (app.gpuPercent * 10).rounded() / 10, "power": (app.powerWatts * 100).rounded() / 100,
          "netIn": Int(app.netInRate), "netOut": Int(app.netOutRate),
-         "diskRead": Int(app.diskReadRate), "diskWrite": Int(app.diskWriteRate)]
+         "diskRead": Int(app.diskReadRate), "diskWrite": Int(app.diskWriteRate),
+         "neuralMemory": app.neuralMemory,
+         "pCoreShare": app.pCoreShare.map { ($0 * 1000).rounded() / 1000 } as Any? ?? NSNull(),
+         "ipc": app.ipc.map { ($0 * 100).rounded() / 100 } as Any? ?? NSNull()]
     }
     let payload: [String: Any] = [
         "cpu": ["user": snapshot.cpu.user, "system": snapshot.cpu.system, "cores": snapshot.cpu.perCore],

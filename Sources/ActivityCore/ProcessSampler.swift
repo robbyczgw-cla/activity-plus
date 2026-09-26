@@ -26,6 +26,9 @@ final class ProcessSampler {
         let diskRead: UInt64
         let diskWritten: UInt64
         let energyNJ: UInt64
+        var pCoreNanos: Double = 0
+        var instructions: UInt64 = 0
+        var cycles: UInt64 = 0
     }
 
     private var previous: [pid_t: Counters] = [:]
@@ -89,11 +92,15 @@ final class ProcessSampler {
                 startTime: start
             )
 
+            var neural: UInt64 = 0
             let exact: (counters: Counters, footprint: UInt64)? = {
                 if let usage = Self.rusage(pid) {
+                    neural = usage.ri_neural_footprint
                     return (Counters(startTime: start, cpuNanos: Double(usage.ri_user_time + usage.ri_system_time) * Sys.nanosPerTick,
                                      diskRead: usage.ri_diskio_bytesread, diskWritten: usage.ri_diskio_byteswritten,
-                                     energyNJ: usage.ri_energy_nj), usage.ri_phys_footprint)
+                                     energyNJ: usage.ri_energy_nj,
+                                     pCoreNanos: Double(usage.ri_user_ptime + usage.ri_system_ptime) * Sys.nanosPerTick,
+                                     instructions: usage.ri_instructions, cycles: usage.ri_cycles), usage.ri_phys_footprint)
                 }
                 if let helperUsage, abs(helperUsage.startTime.timeIntervalSince(start)) < 0.001 || bsd == nil {
                     return (Counters(startTime: start, cpuNanos: Double(helperUsage.cpuTicks) * Sys.nanosPerTick,
@@ -106,6 +113,7 @@ final class ProcessSampler {
                 let counters = exact.counters
                 current[pid] = counters
                 sample.memory = exact.footprint
+                sample.neuralMemory = neural
                 sample.cpuTime = counters.cpuNanos / 1_000_000_000
 
                 // Only compare against the same process: pids get reused.
@@ -115,6 +123,16 @@ final class ProcessSampler {
                     sample.diskWriteRate = Double(counters.diskWritten &- prev.diskWritten) / elapsed
                     if counters.energyNJ >= prev.energyNJ {
                         sample.powerWatts = Double(counters.energyNJ - prev.energyNJ) / 1_000_000_000 / elapsed
+                    }
+                    // Core type and IPC: only from our own kernel counters (the helper does not send them).
+                    if counters.instructions > 0 {
+                        sample.cpuNanosRate = max(0, counters.cpuNanos - prev.cpuNanos) / elapsed
+                        sample.pCoreNanosRate = max(0, counters.pCoreNanos - prev.pCoreNanos) / elapsed
+                        sample.instructionRate = Double(counters.instructions &- prev.instructions) / elapsed
+                        sample.cycleRate = Double(counters.cycles &- prev.cycles) / elapsed
+                        if counters.instructions < prev.instructions || counters.cycles < prev.cycles {
+                            sample.instructionRate = 0; sample.cycleRate = 0
+                        }
                     }
                 }
             } else {
