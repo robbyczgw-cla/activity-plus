@@ -21,6 +21,11 @@ final class AppServices {
         }
     }
 
+    /// Latest ping per target (router first), when connection quality is on.
+    private(set) var pings: [PingResult] = []
+    @ObservationIgnored private var pinging = false
+    @ObservationIgnored private var pingTimer: Timer?
+
     /// The recording session that is running, if any.
     private(set) var recording: RecordingSession?
     /// Bumped whenever sessions are added, stopped, renamed or deleted, so lists reload.
@@ -57,6 +62,7 @@ final class AppServices {
         }
         history.prune()
         history.closeDanglingSessions()
+        startConnectionQuality()
         lastPrune = Date()
         monitor.observers.append { [weak self] snapshot in
             MainActor.assumeIsolated { self?.handle(snapshot) }
@@ -462,5 +468,32 @@ final class AppServices {
     func deleteSession(_ id: Int64) {
         history.deleteSession(id)
         sessionsRevision += 1
+    }
+
+    // MARK: Connection quality
+
+    private func startConnectionQuality() {
+        pingTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.probeConnection() }
+        }
+        probeConnection()
+    }
+
+    /// Runs one round now (also when the switch was just turned on).
+    func probeConnection() {
+        guard Performance.connectionQuality, !pinging else { return }
+        pinging = true
+        let target = Performance.pingTarget
+        let history = history
+        DispatchQueue.global(qos: .utility).async {
+            var results: [PingResult] = []
+            if let gateway = NetworkInfo.primaryGateway(), let r = ConnectionProbe.ping(gateway) { results.append(r) }
+            if !target.isEmpty, let r = ConnectionProbe.ping(target) { results.append(r) }
+            results.forEach(history.record)
+            DispatchQueue.main.async { [weak self] in
+                self?.pings = results
+                self?.pinging = false
+            }
+        }
     }
 }

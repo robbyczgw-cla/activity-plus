@@ -138,6 +138,7 @@ public final class HistoryStore: @unchecked Sendable {
             let cutoff = Int(Date().timeIntervalSince1970) - days * 86_400
             exec("DELETE FROM system WHERE ts < \(cutoff)")
             exec("DELETE FROM apps WHERE ts < \(cutoff)")
+            exec("DELETE FROM pings WHERE ts < \(cutoff)")
         }
     }
 
@@ -344,6 +345,7 @@ public final class HistoryStore: @unchecked Sendable {
             """)
         exec("CREATE INDEX IF NOT EXISTS system_ts ON system(ts)")
         createSessionTables()
+        createPingTable()
         exec("""
             CREATE TABLE IF NOT EXISTS apps (
                 ts INTEGER NOT NULL, app_id TEXT NOT NULL, name TEXT, bundle TEXT,

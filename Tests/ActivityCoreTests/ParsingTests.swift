@@ -90,3 +90,28 @@ struct AccessoryTests {
         #expect(devices.first { $0.name == "Magic Mouse" }?.levels.first?.percent == 41)
     }
 }
+
+@Suite("Connection quality")
+struct ConnectionQualityTests {
+    @Test func parsesPingSummary() throws {
+        let out = """
+        --- 10.0.0.1 ping statistics ---
+        5 packets transmitted, 4 packets received, 20.0% packet loss
+        round-trip min/avg/max/stddev = 2.859/27.390/76.234/34.538 ms
+        """
+        let r = try #require(ConnectionProbe.parse(out, target: "10.0.0.1", date: Date()))
+        #expect(r.sent == 5 && r.received == 4)
+        #expect(abs(r.lossPercent - 20) < 0.001)
+        #expect(r.averageMs == 27.390 && r.jitterMs == 34.538)
+        let down = try #require(ConnectionProbe.parse("3 packets transmitted, 0 packets received, 100.0% packet loss", target: "x", date: Date()))
+        #expect(down.isOutage && down.averageMs == nil)
+    }
+
+    @Test func rejectsTargetsThatLookLikeOptions() {
+        #expect(ConnectionProbe.isValidTarget("1.1.1.1"))
+        #expect(ConnectionProbe.isValidTarget("fritz.box"))
+        #expect(ConnectionProbe.isValidTarget("2606:4700:4700::1111"))
+        for bad in ["", "-c 1000", "a b", "host;rm", "$(x)", "--flood"] { #expect(!ConnectionProbe.isValidTarget(bad)) }
+    }
+}
+

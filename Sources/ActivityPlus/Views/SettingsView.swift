@@ -404,6 +404,7 @@ private struct PerformanceSettings: View {
     @AppStorage("perf.devServers") private var devServers = true
     @AppStorage("perf.hangs") private var hangs = true
     @AppStorage("perf.insights") private var insights = true
+    @AppStorage("perf.connectionQuality") private var connectionQuality = false
     @AppStorage("perf.backgroundInterval") private var backgroundInterval = 5.0
 
     var body: some View {
@@ -430,10 +431,11 @@ private struct PerformanceSettings: View {
                 row("Dev servers and ports", "Runs lsof every 5 seconds while you look, every minute otherwise.", "medium", $devServers)
                 row("Freeze detection", "Asks WindowServer about every open app every few seconds.", "medium", $hangs)
                 row("Unusual activity and leaks", "Compares apps with their history once a minute.", "low", $insights)
+                row("Connection quality", "Pings your router every 30 seconds (and a host you choose on the Network page). Off by default.", "low", $connectionQuality)
             }
         }
         .formStyle(.grouped)
-        .onChange(of: [perAppNetwork, perAppGPU, sensors, chip, drives, networkDetails, devServers, hangs, insights]) { _, _ in Performance.notify() }
+        .onChange(of: [perAppNetwork, perAppGPU, sensors, chip, drives, networkDetails, devServers, hangs, insights, connectionQuality]) { _, _ in Performance.notify() }
         .onChange(of: backgroundInterval) { _, _ in Performance.notify() }
     }
 
