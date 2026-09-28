@@ -38,13 +38,17 @@ enum SnapshotRunner {
             }
             NSLog("snapshot statusItems: %d configured, %d NSStatusBarWindows", MenuBarItemStore.load().count,
                   NSApp.windows.filter { String(describing: type(of: $0)) == "NSStatusBarWindow" }.count)
-            // ACTIVITYPLUS_WINDOW_SIZE=1080x1700 renders long pages in full.
+            // ACTIVITYPLUS_WINDOW_SIZE=1080x1700 renders long pages in full. The dev build shares its
+            // defaults with the installed app, so the original frame is put back afterwards.
+            var resized: (window: NSWindow, frame: NSRect)?
             if let spec = ProcessInfo.processInfo.environment["ACTIVITYPLUS_WINDOW_SIZE"],
                case let parts = spec.split(separator: "x").compactMap({ Double($0) }), parts.count == 2,
                let window = NSApp.windows.first(where: { $0.title == "Activity+" || $0.identifier?.rawValue.contains("main") == true }) {
+                resized = (window, window.frame)
                 window.setContentSize(NSSize(width: parts[0], height: parts[1]))
                 try? await Task.sleep(for: .seconds(1))
             }
+            defer { if let resized { resized.window.setFrame(resized.frame, display: false) } }
             for page in pages {
                 NotificationCenter.default.post(name: selectNotification, object: page)
                 try? await Task.sleep(for: .seconds(Double(ProcessInfo.processInfo.environment["ACTIVITYPLUS_PAGE_WAIT"] ?? "2") ?? 2))
