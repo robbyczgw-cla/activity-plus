@@ -49,6 +49,18 @@ ditto -c -k --keepParent "$APP" "$ZIP"
 spctl -a -vv "$APP"
 echo "✓ $ZIP"
 
+# Sparkle shows an archive's notes in its update dialog when a .md file with the same name sits next
+# to it; docs/release-notes/v<version>.md are those notes. Embedded, so the dialog needs no network.
+add_release_notes() {
+  local zip version notes
+  for zip in "$1"/Activity+-*.zip(N); do
+    version="${${zip:t:r}#Activity+-}"
+    notes="docs/release-notes/v$version.md"
+    [[ -f "$notes" ]] && cp "$notes" "${zip:r}.md"
+  done
+}
+NOTES_FLAGS=(--embed-release-notes --full-release-notes-url "https://activityplus.xyz/changelog")
+
 # Homepage: activityplus.xyz serves the download and the update feed (works while the repo is private).
 if [[ "${1:-}" == "--site" ]]; then
   SITE="${SITE_DIR:-../activityplus-site}"
@@ -58,7 +70,8 @@ if [[ "${1:-}" == "--site" ]]; then
   rm -rf "$STAGE" && mkdir -p "$STAGE"
   # Keep older zips next to the new one so generate_appcast lists the history.
   cp "$SITE"/download/*.zip "$STAGE/"
-  .build/artifacts/sparkle/Sparkle/bin/generate_appcast --account activityplus \
+  add_release_notes "$STAGE"
+  .build/artifacts/sparkle/Sparkle/bin/generate_appcast --account activityplus "${NOTES_FLAGS[@]}" \
     --download-url-prefix "https://activityplus.xyz/download/" --link "https://activityplus.xyz" "$STAGE"
   cp "$STAGE/appcast.xml" "$SITE/appcast.xml"
   # The appcast references the delta updates generate_appcast just made: publish them too.
@@ -66,7 +79,9 @@ if [[ "${1:-}" == "--site" ]]; then
   rm -f "$SITE"/download/*.delta(N)
   for delta in "$STAGE"/*.delta(N); do cp "$delta" "$SITE/download/"; done
   shasum -a 256 "$ZIP" | awk '{print $1}' > "$SITE/download/latest.sha256"
-  echo "✓ Site updated: $SITE/download/$(basename "$ZIP") + appcast.xml"
+  python3 scripts/changelog-site.py "$SITE"
+  python3 scripts/site-download.py "$VERSION" "$ZIP" "$SITE"
+  echo "✓ Site updated: $SITE/download/$(basename "$ZIP") + appcast.xml + changelog"
 fi
 
 # Appcast for Sparkle: signed with the EdDSA key in the keychain (account "activityplus").
@@ -75,7 +90,8 @@ if [[ "${1:-}" == "--publish" ]]; then
   STAGE="dist/appcast"
   rm -rf "$STAGE" && mkdir -p "$STAGE"
   cp "$ZIP" "$STAGE/"
-  .build/artifacts/sparkle/Sparkle/bin/generate_appcast --account activityplus \
+  add_release_notes "$STAGE"
+  .build/artifacts/sparkle/Sparkle/bin/generate_appcast --account activityplus "${NOTES_FLAGS[@]}" \
     --download-url-prefix "https://github.com/robbyczgw-cla/activity-plus/releases/download/v$VERSION/" \
     --link "https://github.com/robbyczgw-cla/activity-plus" "$STAGE"
   NOTES="${RELEASE_NOTES:-docs/release-notes/v$VERSION.md}"
