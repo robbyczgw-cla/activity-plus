@@ -161,9 +161,21 @@ struct MenuBarPanel: View {
                     Text(BatteryView.stateText(b)).font(.caption).foregroundStyle(.secondary)
                 }
                 UsageBar(fraction: b.percent / 100, tint: b.percent < 20 ? .red : .green)
-                StatLine(label: "Remaining", value: b.timeRemaining.map(Format.duration) ?? (b.isPluggedIn ? "Plugged in" : "Calculating…"))
+                if b.isCharging {
+                    StatLine(label: "Charging at", value: Format.watts(abs(b.batteryPower))
+                             + (b.chargeRate.map { String(format: " · %+.0f %%/h", $0) } ?? ""))
+                    if let t = b.timeToFull, t > 0 { StatLine(label: "Full in", value: Format.duration(t)) }
+                } else if b.isPluggedIn {
+                    StatLine(label: "Battery", value: b.hold?.summary ?? "Resting, the adapter powers the Mac")
+                } else {
+                    StatLine(label: "Remaining", value: b.timeRemaining.map(Format.duration) ?? "Calculating…")
+                }
                 StatLine(label: "Mac power draw", value: b.systemPower.map(Format.watts) ?? "–")
-                StatLine(label: "Health", value: b.health.map { Format.percent($0) } ?? "–")
+                if b.isPluggedIn, let input = b.adapterInputPower {
+                    StatLine(label: "Adapter", value: Format.watts(input) + (b.adapterWatts.map { " of \($0) W" } ?? ""))
+                }
+                StatLine(label: "Health", value: (b.health.map { Format.percent($0) } ?? "–")
+                         + (b.designCycleCount.map { _ in " · \(b.cycleCount) cycles" } ?? ""))
             } else {
                 StatLine(label: "Apps power", value: Format.watts(s.apps.reduce(0) { $0 + $1.powerWatts }))
             }

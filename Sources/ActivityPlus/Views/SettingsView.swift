@@ -280,6 +280,9 @@ private struct ItemEditor: View {
                     ForEach(MenuBarItemConfig.DiskFigure.allCases) { Text($0.title).tag($0) }
                 }
             }
+            if item.module == .battery {
+                Toggle("Watts while charging or discharging", isOn: $item.batteryShowsPower)
+            }
             if item.module == .clock {
                 Toggle("Seconds", isOn: $item.clockShowsSeconds)
                 TextField("Time zones", text: Binding(

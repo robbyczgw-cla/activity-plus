@@ -86,6 +86,7 @@ if arguments.contains("--json") {
                    "swapUsed": snapshot.memory.swapUsed, "pressure": snapshot.memory.pressure.label],
         "processes": snapshot.processCount, "restricted": snapshot.restrictedProcessCount,
         "apps": apps,
+        "battery": snapshot.battery.map { $0.details as Any } ?? NSNull(),
     ]
     let data = try JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys])
     print(String(decoding: data, as: UTF8.self))
@@ -99,7 +100,12 @@ print("Disk \(Format.storage(snapshot.disk.free)) free  ·  read \(Format.rate(s
 print("Network ↓ \(Format.rate(snapshot.network.inRate)) ↑ \(Format.rate(snapshot.network.outRate))")
 if let gpu = snapshot.gpu { print("GPU \(gpu.name) \(Format.percent(gpu.utilization))  ·  \(Format.memory(gpu.memoryInUse))") }
 if let b = snapshot.battery {
-    print("Battery \(Format.percent(b.percent))\(b.isPluggedIn ? " plugged in" : "")  ·  health \(b.health.map { Format.percent($0) } ?? "–")  ·  cycles \(b.cycleCount)  ·  system \(b.systemPower.map(Format.watts) ?? "–")")
+    print("Battery \(Format.percent(b.percent))\(b.isPluggedIn ? " plugged in" : "")  ·  health \(b.health.map { Format.percent($0) } ?? "–")  ·  cycles \(b.cycleCount)\(b.designCycleCount.map { "/\($0)" } ?? "")  ·  system \(b.systemPower.map(Format.watts) ?? "–")")
+    if b.isCharging {
+        print("Charging \(Format.watts(b.batteryPower))\(b.chargeRate.map { String(format: "  ·  %+.0f %%/h", $0) } ?? "")\(b.timeToFull.map { "  ·  full in " + Format.duration($0) } ?? "")\(b.adapterInputPower.map { "  ·  adapter " + Format.watts($0) } ?? "")\(b.adapterWatts.map { " of \($0) W" } ?? "")")
+    } else if let hold = b.hold {
+        print(hold.summary)
+    }
 }
 print("\(snapshot.processCount) processes → \(snapshot.apps.count) apps  (\(snapshot.restrictedProcessCount) without details)  ·  grouping API \(SystemSampler.groupingAvailable ? "ok" : "missing")\n")
 

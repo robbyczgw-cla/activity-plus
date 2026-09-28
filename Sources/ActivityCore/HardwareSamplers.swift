@@ -418,10 +418,63 @@ final class BatterySampler {
         guard service != 0 else { return nil }
         var properties: Unmanaged<CFMutableDictionary>?
         guard IORegistryEntryCreateCFProperties(service, &properties, kCFAllocatorDefault, 0) == KERN_SUCCESS,
-              let dict = properties?.takeRetainedValue() as? [String: Any],
-              (dict["BatteryInstalled"] as? Bool) ?? true
+              var dict = properties?.takeRetainedValue() as? [String: Any]
         else { return nil }
 
+        dict["TimeRemainingEstimate"] = IOPSGetTimeRemainingEstimate()
+        // Two facts that live outside AppleSmartBattery, passed to parse() as extra keys.
+        if Self.optimizedChargingEngaged() { dict[Self.optimizedKey] = true }
+        if let limit = chargeLimit() { dict[Self.chargeLimitKey] = limit }
+        let adapter = IOPSCopyExternalPowerAdapterDetails()?.takeRetainedValue() as? [String: Any]
+        return Self.parse(dict, adapter: adapter)
+    }
+
+    static let optimizedKey = "ActivityPlusOptimizedChargingEngaged"
+    static let chargeLimitKey = "ActivityPlusChargeLimitPercent"
+
+    /// Optimized Battery Charging reports itself only through the power-source API.
+    private static func optimizedChargingEngaged() -> Bool {
+        let blob = IOPSCopyPowerSourcesInfo().takeRetainedValue()
+        let sources = IOPSCopyPowerSourcesList(blob).takeRetainedValue() as Array
+        return sources.contains { source in
+            let info = IOPSGetPowerSourceDescription(blob, source)?.takeUnretainedValue() as? [String: Any]
+            return (info?["Optimized Battery Charging Engaged"] as? NSNumber)?.boolValue == true
+        }
+    }
+
+    private var limit: (value: Int?, checked: UInt64) = (nil, 0)
+
+    /// The user-set charge limit (macOS 26+). `pmset -g battlimit` is the only reading
+    /// that needs no entitlement; it changes rarely, so ask every five minutes.
+    private func chargeLimit() -> Int? {
+        let now = DispatchTime.now().uptimeNanoseconds
+        if limit.checked != 0, now - limit.checked < 300_000_000_000 { return limit.value }
+        limit = (Self.parseChargeLimit(Self.run("/usr/bin/pmset", ["-g", "battlimit"])), now)
+        return limit.value
+    }
+
+    static func parseChargeLimit(_ output: String?) -> Int? {
+        guard let output, let range = output.range(of: #"chargeSocLimitSoc\D*(\d+)"#, options: .regularExpression) else { return nil }
+        let digits = output[range].filter(\.isNumber)
+        guard let value = Int(digits), (50..<100).contains(value) else { return nil }
+        return value
+    }
+
+    private static func run(_ path: String, _ arguments: [String]) -> String? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: path)
+        process.arguments = arguments
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+        guard (try? process.run()) != nil else { return nil }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    static func parse(_ dict: [String: Any], adapter: [String: Any]?) -> BatteryStats? {
+        guard (dict["BatteryInstalled"] as? Bool) ?? true else { return nil }
         let details = dict["BatteryData"] as? [String: Any] ?? [:]
         func number(_ key: String) -> NSNumber? { (dict[key] as? NSNumber) ?? (details[key] as? NSNumber) }
 
@@ -441,10 +494,28 @@ final class BatterySampler {
         let amperage = Double((32_768..<65_536).contains(rawAmperage) ? Int64(Int16(truncatingIfNeeded: rawAmperage)) : rawAmperage)
         let voltage = number("Voltage")?.doubleValue ?? 0
         stats.batteryPower = amperage * voltage / 1_000_000
-        if stats.isPluggedIn, let adapter = IOPSCopyExternalPowerAdapterDetails()?.takeRetainedValue() as? [String: Any] {
-            stats.adapterWatts = (adapter[kIOPSPowerAdapterWattsKey] as? NSNumber)?.intValue
-            stats.adapterVoltage = (adapter["AdapterVoltage"] as? NSNumber).map { $0.doubleValue / 1000 }
-            stats.adapterName = adapter["Name"] as? String
+        stats.amperage = amperage
+        stats.voltage = voltage / 1000
+        if stats.isPluggedIn {
+            // Registry details fill gaps in the external adapter API.
+            let info = (dict["AdapterDetails"] as? [String: Any] ?? [:]).merging(adapter ?? [:]) { _, external in external }
+            stats.adapterWatts = (info["Watts"] as? NSNumber)?.intValue
+            stats.adapterVoltage = (info["AdapterVoltage"] as? NSNumber).map { $0.doubleValue / 1000 }
+            stats.adapterName = info["Name"] as? String ?? info["Description"] as? String
+            let distribution = dict["PowerDistribution"] as? [String: Any] ?? [:]
+            stats.adapterCurrent = ((info["Current"] as? NSNumber) ?? (distribution["IPDInputCurrent"] as? NSNumber)).map { $0.doubleValue / 1000 }
+            stats.adapterIsWireless = (info["IsWireless"] as? NSNumber)?.boolValue ?? false
+            stats.adapterProfiles = (info["UsbHvcMenu"] as? [[String: Any]] ?? []).compactMap { profile in
+                guard let volts = profile["MaxVoltage"] as? NSNumber, let amps = profile["MaxCurrent"] as? NSNumber else { return nil }
+                return PowerProfile(volts: volts.doubleValue / 1000, amps: amps.doubleValue / 1000)
+            }.sorted { $0.volts < $1.volts }
+            let ports = (dict["FedDetails"] as? [[String: Any]] ?? []).enumerated().filter {
+                ($0.element["FedExternalConnected"] as? NSNumber)?.intValue == 1
+            }
+            if ports.count == 1 { stats.adapterPort = ports[0].offset + 1 }
+            let telemetry = dict["PowerTelemetryData"] as? [String: Any] ?? [:]
+            if let power = telemetry["SystemPowerIn"] as? NSNumber, power.doubleValue > 0 { stats.adapterInputPower = power.doubleValue / 1000 }
+            if let loss = telemetry["AdapterEfficiencyLoss"] as? NSNumber, loss.doubleValue > 0 { stats.adapterLoss = loss.doubleValue / 1000 }
         }
 
         if let telemetry = dict["PowerTelemetryData"] as? [String: Any],
@@ -455,18 +526,67 @@ final class BatterySampler {
             stats.systemPower = -stats.batteryPower
         }
 
-        let design = number("DesignCapacity")?.doubleValue ?? 0
-        let full = number("AppleRawMaxCapacity")?.doubleValue ?? number("NominalChargeCapacity")?.doubleValue
-        if let full, design > 0 { stats.health = min(100, full / design * 100) }
+        stats.designCapacity = ((details["DesignCapacity"] as? NSNumber) ?? (dict["DesignCapacity"] as? NSNumber))?.intValue
+        stats.fullChargeCapacity = ((dict["AppleRawMaxCapacity"] as? NSNumber)
+            ?? (details["FullChargeCapacity"] as? NSNumber) ?? number("NominalChargeCapacity"))?.intValue
+        stats.remainingCapacity = ((dict["AppleRawCurrentCapacity"] as? NSNumber) ?? (details["RemainingCapacity"] as? NSNumber))?.intValue
+        stats.designCycleCount = number("DesignCycleCount9C")?.intValue
+        if let full = stats.fullChargeCapacity, let design = stats.designCapacity, design > 0 {
+            stats.health = min(100, Double(full) / Double(design) * 100)
+        }
+        if stats.isCharging, let minutes = number("AvgTimeToFull")?.doubleValue, minutes >= 0, minutes < 65535 {
+            stats.timeToFull = minutes * 60
+        }
+        let charger = dict["ChargerData"] as? [String: Any] ?? [:]
+        stats.hold = hold(notChargingReason: (charger["NotChargingReason"] as? NSNumber)?.intValue ?? 0,
+                          percent: stats.percent, isPluggedIn: stats.isPluggedIn, isCharging: stats.isCharging,
+                          fullyCharged: stats.isFullyCharged, batteryPower: stats.batteryPower,
+                          optimizedEngaged: (dict[optimizedKey] as? Bool) ?? false,
+                          chargeLimit: dict[chargeLimitKey] as? Int)
+        stats.slowCharging = slowCharging(reason: (charger["SlowChargingReason"] as? NSNumber)?.intValue ?? 0)
+        stats.thermallyLimitedSeconds = (charger["TimeChargingThermallyLimited"] as? NSNumber)?.intValue ?? 0
 
         if let temperature = number("Temperature")?.doubleValue ?? number("VirtualTemperature")?.doubleValue, temperature > 0 {
             stats.temperature = temperature / 100
         }
 
-        let estimate = IOPSGetTimeRemainingEstimate()
+        let estimate = (dict["TimeRemainingEstimate"] as? NSNumber)?.doubleValue ?? 0
         if estimate > 0, !stats.isPluggedIn { stats.timeRemaining = estimate }
         return stats
     }
+
+    // NotChargingReason on Apple silicon is a bit mask of the SMC's charge-inhibit flags.
+    // Only bits with a documented meaning are named (Asahi Linux macsmc driver, Battman):
+    private static let notChargingFull = 1 << 0            // battery full
+    private static let notChargingTemperature = 0b1_1110   // bits 1-4: too cold / too hot to charge
+    private static let notChargingSoCLimit = 1 << 24       // firmware state-of-charge limit
+    // Harmless for the user: bit 7 = no charger input (reported briefly when plugging in),
+    // bit 23 = battery management busy, charging may continue.
+    private static let notChargingIgnored = (1 << 7) | (1 << 23)
+
+    static func hold(notChargingReason code: Int, percent: Double, isPluggedIn: Bool,
+                     isCharging: Bool, fullyCharged: Bool, batteryPower: Double,
+                     optimizedEngaged: Bool = false, chargeLimit: Int? = nil) -> ChargeHold? {
+        guard isPluggedIn else { return nil }
+        // Order matters: the explicit states macOS reports beat the raw bits.
+        if optimizedEngaged, !isCharging { return .optimized }
+        if fullyCharged || code & notChargingFull != 0 { return .full }
+        if code & notChargingTemperature != 0 { return .temperature }
+        if code & notChargingSoCLimit != 0 { return .chargeLimit(chargeLimit ?? Int(percent.rounded())) }
+        if let chargeLimit, !isCharging, percent >= Double(chargeLimit) - 1 { return .chargeLimit(chargeLimit) }
+        if !isCharging, batteryPower < -1 { return .adapterTooWeak }
+        let unexplained = code & ~notChargingIgnored
+        return unexplained == 0 ? nil : .other(code: unexplained)
+    }
+
+    static func slowCharging(reason code: Int) -> SlowCharging? {
+        // No documented nonzero codes yet; tapering above 80% alone is not a reason.
+        switch code {
+        case 0: return nil
+        default: return .other(code: code)
+        }
+    }
+
 }
 
 // MARK: - Helpers

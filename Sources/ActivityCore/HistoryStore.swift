@@ -168,6 +168,18 @@ public final class HistoryStore: @unchecked Sendable {
         }
     }
 
+    /// Per-minute battery readings; missing telemetry and pre-migration values stay nil.
+    public func batterySeries(from start: Date, to end: Date) -> [(date: Date, percent: Double?, batteryWatts: Double?, adapterWatts: Double?)] {
+        queue.sync {
+            query("SELECT ts, battery, battery_watts, adapter_watts FROM system WHERE ts >= \(start.timeIntervalSince1970) AND ts <= \(end.timeIntervalSince1970) ORDER BY ts") { s in
+                func optional(_ column: Int32) -> Double? {
+                    sqlite3_column_type(s, column) == SQLITE_NULL ? nil : sqlite3_column_double(s, column)
+                }
+                return (Date(timeIntervalSince1970: sqlite3_column_double(s, 0)), optional(1), optional(2), optional(3))
+            }
+        }
+    }
+
     public func topApps(_ range: Range, until end: Date = Date()) -> [AppTotal] {
         topApps(from: end.addingTimeInterval(-range.seconds), to: end)
     }
@@ -360,13 +372,18 @@ public final class HistoryStore: @unchecked Sendable {
         // v0.2: how many processes the app had, so growth from new processes is not mistaken for a leak.
         exec("ALTER TABLE apps ADD COLUMN procs INTEGER")
         exec("CREATE INDEX IF NOT EXISTS apps_app ON apps(app_id, ts)")
+        // v0.3: nullable additions preserve historical rows, following the existing ALTER pattern.
+        exec("ALTER TABLE system ADD COLUMN battery_watts REAL")
+        exec("ALTER TABLE system ADD COLUMN adapter_watts REAL")
+        let version = query("PRAGMA user_version") { sqlite3_column_int($0, 0) }.first ?? 0
+        if version < 3 { exec("PRAGMA user_version = 3") }
     }
 
     private func writeSystemRow(_ a: Accumulator, at date: Date) {
         guard a.count > 0, a.seconds > 0 else { return }
         let n = a.seconds   // time-weighted sums ÷ covered seconds = averages
         var statement: OpaquePointer?
-        let sql = "INSERT INTO system (ts, secs, cpu, mem, gpu, disk_r, disk_w, net_in, net_out, battery, power, on_battery) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+        let sql = "INSERT INTO system (ts, secs, cpu, mem, gpu, disk_r, disk_w, net_in, net_out, battery, power, on_battery, battery_watts, adapter_watts) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return }
         defer { sqlite3_finalize(statement) }
         sqlite3_bind_int64(statement, 1, Int64(date.timeIntervalSince1970))
@@ -381,6 +398,8 @@ public final class HistoryStore: @unchecked Sendable {
         if a.batteryCount > 0 { sqlite3_bind_double(statement, 10, a.battery / Double(a.batteryCount)) } else { sqlite3_bind_null(statement, 10) }
         if a.powerCount > 0 { sqlite3_bind_double(statement, 11, a.power / Double(a.powerCount)) } else { sqlite3_bind_null(statement, 11) }
         sqlite3_bind_int(statement, 12, a.onBattery * 2 > a.count ? 1 : 0)
+        if a.batterySeconds > 0 { sqlite3_bind_double(statement, 13, a.batteryWatts / a.batterySeconds) }
+        if a.adapterSeconds > 0 { sqlite3_bind_double(statement, 14, a.adapterWatts / a.adapterSeconds) }
         sqlite3_step(statement)
     }
 
@@ -453,6 +472,8 @@ private struct Accumulator {
     var battery = 0.0, batteryCount = 0
     var power = 0.0, powerCount = 0
     var onBattery = 0
+    var batteryWatts = 0.0, batterySeconds = 0.0
+    var adapterWatts = 0.0, adapterSeconds = 0.0
 
     /// Values are weighted by the time each sample covers: foreground (1–2 s) and background
     /// (5–15 s) samples mix within one minute, and a plain mean would count them equally.
@@ -468,6 +489,9 @@ private struct Accumulator {
         netIn += s.network.inRate * dt
         netOut += s.network.outRate * dt
         if let b = s.battery {
+            batteryWatts += b.batteryPower * dt
+            batterySeconds += dt
+            if let watts = b.adapterInputPower { adapterWatts += watts * dt; adapterSeconds += dt }
             battery += b.percent
             batteryCount += 1
             if let p = b.systemPower { power += p; powerCount += 1 }

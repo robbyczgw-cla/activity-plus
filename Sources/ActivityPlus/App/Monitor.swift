@@ -45,6 +45,10 @@ final class Monitor {
 
     private(set) var snapshot = SystemSnapshot()
     private(set) var history = LiveHistory()
+    /// The charge in progress while plugged in, and the last finished one.
+    private(set) var chargeSession: ChargeSession?
+    private(set) var lastChargeSession: ChargeSession?
+    private let chargeTracker = ChargeSessionTracker()
     private(set) var sampleCount = 0
     let launchDate = Date()
 
@@ -150,6 +154,8 @@ final class Monitor {
         sampleCount += 1
         // The first sample has no deltas (all rates 0); keep it for totals but not for charts.
         self.snapshot = snapshot
+        chargeSession = chargeTracker.update(snapshot.battery, at: snapshot.date)
+        lastChargeSession = chargeTracker.lastSession
         guard snapshot.interval > 0 else { return }
 
         history.cpu.append(snapshot.cpu.total)

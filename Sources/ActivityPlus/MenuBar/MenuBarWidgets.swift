@@ -85,6 +85,10 @@ struct ModuleReading {
         case .battery:
             if let b = s.battery {
                 r.text = Format.percent(b.percent)
+                // Like Stats: the charging speed is the more interesting figure while it changes.
+                if config.batteryShowsPower, abs(b.batteryPower) >= 1, b.isCharging || !b.isPluggedIn || b.drainsWhilePluggedIn {
+                    r.text = String(format: "%+.0f W", b.batteryPower)
+                }
                 r.level = b.percent / 100
             } else if let device = services.accessories.first {
                 r.text = "\(device.lowest)%"

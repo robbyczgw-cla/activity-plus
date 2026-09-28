@@ -202,9 +202,68 @@ public struct BatteryStats: Sendable, Hashable {
     public var adapterWatts: Int?
     public var adapterVoltage: Double?
     public var adapterName: String?
+
+    // MARK: Charging detail (all optional: older Macs and Intel models report less)
+
+    /// Battery current in mA (positive while charging) and pack voltage in volts.
+    public var amperage: Double = 0
+    public var voltage: Double = 0
+    /// Capacities in mAh: as designed, what a full charge holds today, what is in it now.
+    public var designCapacity: Int?
+    public var fullChargeCapacity: Int?
+    public var remainingCapacity: Int?
+    /// Cycles the battery is rated for (e.g. 1000).
+    public var designCycleCount: Int?
+    /// Until full while charging, from the battery controller.
+    public var timeToFull: TimeInterval?
+    /// Watts arriving from the adapter, and lost converting them.
+    public var adapterInputPower: Double?
+    public var adapterLoss: Double?
+    /// The negotiated USB-PD contract (volts, amps) and every profile the adapter offers.
+    public var adapterCurrent: Double?
+    public var adapterProfiles: [PowerProfile] = []
+    /// 1-based index of the USB-C/MagSafe port the adapter is plugged into, when known.
+    public var adapterPort: Int?
+    public var adapterIsWireless = false
+    /// Why a plugged-in battery does not charge, or charges slowly. nil = no hold.
+    public var hold: ChargeHold?
+    public var slowCharging: SlowCharging?
+    /// Seconds of the current charge the controller throttled because of heat.
+    public var thermallyLimitedSeconds: Int = 0
+    /// Percent per hour at the current current (positive = charging).
+    public var chargeRate: Double? {
+        guard let full = fullChargeCapacity, full > 0, amperage != 0 else { return nil }
+        return amperage / Double(full) * 100
+    }
     /// Plugged in but the battery still loses charge: the adapter cannot keep up with the load.
     public var drainsWhilePluggedIn: Bool { isPluggedIn && !isFullyCharged && batteryPower < -1 }
     public init() {}
+}
+
+/// One voltage/current pair a USB-PD adapter offers.
+public struct PowerProfile: Sendable, Hashable, Codable {
+    public var volts: Double
+    public var amps: Double
+    public var watts: Double { volts * amps }
+    public init(volts: Double, amps: Double) { self.volts = volts; self.amps = amps }
+}
+
+/// Why a plugged-in Mac is not charging its battery.
+public enum ChargeHold: Sendable, Hashable {
+    case full                 // at 100 % (or the limit) and topped off
+    case optimized            // Optimized Battery Charging holds at ~80 % until it expects you to unplug
+    case chargeLimit(Int)     // a user-set charge limit, percent
+    case temperature          // too hot or too cold to charge
+    case adapterTooWeak       // the adapter only covers the Mac's own load
+    case other(code: Int)     // a controller reason without a known meaning
+}
+
+/// Why charging is slower than the adapter could deliver.
+public enum SlowCharging: Sendable, Hashable {
+    case temperature
+    case adapterLimited
+    case nearFull             // constant-voltage phase above ~80 %: current tapers off by design
+    case other(code: Int)
 }
 
 public enum ThermalLevel: String, Sendable {

@@ -9,38 +9,17 @@ struct BatteryView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 if let b = monitor.snapshot.battery {
+                    BatteryHeroCard(battery: b)
                     HStack(alignment: .top, spacing: 14) {
-                        Card {
-                            CardHeader(title: "Battery", systemImage: Self.symbol(for: b), tint: .green, trailing: Self.stateText(b))
-                            BigNumber(text: Format.percent(b.percent), size: 36)
-                            UsageBar(fraction: b.percent / 100, tint: b.percent < 20 ? .red : .green)
-                            StatLine(label: "Time remaining", value: b.timeRemaining.map(Format.duration) ?? (b.isPluggedIn ? "Plugged in" : "Calculating…"))
-                            StatLine(label: "Mac power draw", value: b.systemPower.map(Format.watts) ?? "–")
-                            if let watts = b.adapterWatts {
-                                StatLine(label: "Power adapter", value: [b.adapterName, "\(watts) W", b.adapterVoltage.map { String(format: "at %.0f V", $0) }]
-                                    .compactMap { $0 }.joined(separator: " · "))
-                            }
-                            if b.drainsWhilePluggedIn {
-                                StatLine(label: "Battery", value: "Losing \(Format.watts(abs(b.batteryPower))) although plugged in")
-                                Label("The adapter cannot keep up with the load. A stronger adapter or fewer heavy apps help.", systemImage: "exclamationmark.triangle.fill")
-                                    .font(.caption).foregroundStyle(.orange)
-                            } else if b.isCharging {
-                                StatLine(label: "Charging at", value: Format.watts(abs(b.batteryPower)))
-                            } else if b.isPluggedIn {
-                                StatLine(label: "Battery", value: "Resting, the adapter powers the Mac")
-                            } else {
-                                StatLine(label: "Battery output", value: Format.watts(abs(b.batteryPower)))
-                            }
-                        }
-                        Card {
-                            CardHeader(title: "Health", systemImage: "heart", tint: .pink)
-                            BigNumber(text: b.health.map { Format.percent($0) } ?? "–", size: 36)
-                            StatLine(label: "Charge cycles", value: "\(b.cycleCount)")
-                            if let t = b.temperature { StatLine(label: "Temperature", value: Format.temperature(t, decimals: 1)) }
-                            Text("Health is the current full-charge capacity compared with the battery's design capacity.")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
+                        PowerFlowCard(battery: b)
+                        if b.isPluggedIn, b.adapterWatts != nil { ChargerCard(battery: b) }
                     }
+                    if let session = monitor.chargeSession ?? monitor.lastChargeSession {
+                        // A session that began when Activity+ launched started earlier in reality.
+                        ChargeSessionCard(session: session, live: monitor.chargeSession != nil,
+                                          sinceLaunch: session.start.timeIntervalSince(monitor.launchDate) < 10)
+                    }
+                    BatteryHealthCard(battery: b)
                     Card {
                         LiveChart(lines: [.init(name: "Power", values: monitor.history.power.values, color: .green)],
                                   format: Format.watts, interval: monitor.interval)

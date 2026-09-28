@@ -146,6 +146,8 @@ struct MenuBarItemConfig: Codable, Identifiable, Hashable {
     var hideBelowPercent: Double = 0
     /// A small symbol (cpu, memory chip, thermometer…) in front of the value.
     var showIcon = false
+    /// Battery: while charging or discharging, show watts ("+18 W") instead of the percentage.
+    var batteryShowsPower = false
 
     init(module: Module, style: Style) {
         self.module = module
@@ -173,6 +175,7 @@ struct MenuBarItemConfig: Codable, Identifiable, Hashable {
         clockShowsSeconds = (try? c.decode(Bool.self, forKey: .clockShowsSeconds)) ?? false
         hideBelowPercent = (try? c.decode(Double.self, forKey: .hideBelowPercent)) ?? 0
         showIcon = (try? c.decode(Bool.self, forKey: .showIcon)) ?? false
+        batteryShowsPower = (try? c.decode(Bool.self, forKey: .batteryShowsPower)) ?? false
     }
 
     /// A good first look when a module is switched on from the quick menu.
