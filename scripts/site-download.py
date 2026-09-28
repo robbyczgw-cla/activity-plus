@@ -15,7 +15,7 @@ import sys
 version, zip_path = sys.argv[1], pathlib.Path(sys.argv[2])
 site = pathlib.Path(sys.argv[3] if len(sys.argv) > 3 else pathlib.Path(__file__).resolve().parent.parent.parent / "activityplus-site")
 sha = hashlib.sha256(zip_path.read_bytes()).hexdigest()
-size = f"{zip_path.stat().st_size / 1_048_576:.1f} MB"
+size = f"{zip_path.stat().st_size / 1_000_000:.1f} MB"   # decimal, like Finder
 name = f"Activity+-{version}.zip"
 
 
