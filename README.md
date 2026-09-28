@@ -49,12 +49,12 @@ Requires a Mac with Apple silicon and macOS 15 Sequoia or later. Developed and t
 - **Connection quality** (off until you turn it on): latency, jitter and packet loss to your router every 30 seconds, kept in the history, so a flaky connection is told apart from a slow one.
 - **Displays**: refresh rate, resolution, HDR and ProMotion per screen, with a warning when a cable or dock holds a monitor below the rate it can do.
 - **All sensors**: several hundred temperatures, voltages, currents and power readings, plus fans.
-- Battery health, charge cycles and power draw, the power adapter's rating, and a warning when the battery drains although the Mac is plugged in. Plus AirPods, Magic Mouse, Keyboard and Trackpad batteries.
+- Battery health in mAh (now, full, new) and charge cycles against the rated number. While charging: watts and percent per hour, time to full, where the adapter's power goes (Mac, battery, conversion loss), the voltage and current the adapter negotiated, the charging curve, and why the battery is not charging (full, Optimized Charging, charge limit, temperature, adapter too weak). A warning when the battery drains although the Mac is plugged in. Plus AirPods, Magic Mouse, Keyboard and Trackpad batteries.
 
 ![Disk](docs/screenshots/metric-disk.jpg)
 
 ### A menu bar that looks the way you want
-Add as many menu bar items as you like. Each shows one thing (CPU, memory, GPU, disk, network, temperature, fans, battery, power or a clock with time zones) in one of eleven styles: value, label and value, line chart, bar chart, bar per core, ring, gauge, dot, up/down speed, battery or icon. Colors can match the menu bar, go from green to red with the load, or use a color you pick. An item can hide itself until its value is high. Right-click any item to switch modules on and off, pick a preset (minimal, balanced, everything) or put symbols next to the values; click it for a compact panel on the matching tab.
+Add as many menu bar items as you like. Each shows one thing (CPU, memory, GPU, disk, network, temperature, fans, battery, power or a clock with time zones) in one of eleven styles: value, label and value, line chart, bar chart, bar per core, ring, gauge, dot, up/down speed, battery or icon. Colors can match the menu bar, go from green to red with the load, or use a color you pick. An item can hide itself until its value is high, and a battery item can show the charging watts instead of the percentage. Right-click any item to switch modules on and off, pick a preset (minimal, balanced, everything) or put symbols next to the values; click it for a compact panel on the matching tab.
 
 <p align="center"><img src="docs/media/menubar.gif" alt="Menu bar items appearing one by one" width="720"></p>
 
