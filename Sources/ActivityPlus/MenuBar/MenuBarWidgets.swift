@@ -11,6 +11,9 @@ struct ModuleReading {
     var up: String = ""
     var down: String = ""
     var cores: [Double] = []
+    /// Battery only: charging (bolt) or on the adapter without charging (plug), like the macOS battery icon.
+    enum Power { case none, charging, pluggedIn }
+    var power: Power = .none
     /// For "hide below": the value in percent of its scale.
     var percentOfScale: Double { (level ?? 1) * 100 }
 
@@ -90,6 +93,7 @@ struct ModuleReading {
                     r.text = String(format: "%+.0f W", b.batteryPower)
                 }
                 r.level = b.percent / 100
+                r.power = b.isCharging ? .charging : (b.isPluggedIn ? .pluggedIn : .none)
             } else if let device = services.accessories.first {
                 r.text = "\(device.lowest)%"
                 r.level = Double(device.lowest) / 100
@@ -150,6 +154,12 @@ struct MenuBarWidget: View {
                 Image(systemName: config.module.systemImage)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(ink.opacity(0.85))
+            }
+            // Charging marker for battery items that do not draw a battery (value, ring, chart…).
+            if config.module == .battery, config.style != .battery, reading.power != .none {
+                Image(systemName: reading.power == .charging ? "bolt.fill" : "powerplug.portrait.fill")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(monochrome ? ink : (reading.power == .charging ? Color.green : ink.opacity(0.85)))
             }
             if config.showLabel && config.style != .labeled && !config.label.isEmpty {
                 Text(config.label).font(.system(size: 8, weight: .semibold)).foregroundStyle(ink.opacity(0.8))
@@ -216,7 +226,7 @@ struct MenuBarWidget: View {
             .foregroundStyle(ink)
         case .battery:
             HStack(spacing: 3) {
-                BatteryGlyph(level: reading.level ?? 0, color: accent, ink: ink).frame(width: 22, height: 11)
+                BatteryGlyph(level: reading.level ?? 0, color: accent, ink: ink, power: reading.power).frame(width: 22, height: 11)
                 if config.showLabel { value(reading.text, size: 10) }
             }
         }
@@ -328,17 +338,31 @@ private struct BatteryGlyph: View {
     let level: Double
     let color: Color
     let ink: Color
+    var power: ModuleReading.Power = .none
 
     var body: some View {
         HStack(spacing: 1) {
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 2.5).stroke(ink.opacity(0.6), lineWidth: 1)
-                RoundedRectangle(cornerRadius: 1.5).fill(color)
-                    .frame(width: max(1, 17 * CGFloat(min(max(level, 0), 1))))
-                    .padding(1.5)
+            ZStack {
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 2.5).stroke(ink.opacity(0.6), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 1.5).fill(color)
+                        .frame(width: max(1, 17 * CGFloat(min(max(level, 0), 1))))
+                        .padding(1.5)
+                }
+                if power != .none {
+                    // Like macOS: the symbol is cut out of the battery with a thin gap, then drawn in the ink colour,
+                    // so it stays readable over the fill and in monochrome (template) menu bars.
+                    symbol.font(.system(size: 10, weight: .black)).blendMode(.destinationOut)
+                    symbol.font(.system(size: 7.5, weight: .bold)).foregroundStyle(ink)
+                }
             }
+            .compositingGroup()
             .frame(width: 20, height: 11)
             RoundedRectangle(cornerRadius: 1).fill(ink.opacity(0.6)).frame(width: 1.5, height: 4)
         }
+    }
+
+    private var symbol: Image {
+        Image(systemName: power == .charging ? "bolt.fill" : "powerplug.portrait.fill")
     }
 }

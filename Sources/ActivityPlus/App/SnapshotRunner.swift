@@ -1,3 +1,4 @@
+import ActivityCore
 import AppKit
 import SwiftUI
 
@@ -94,6 +95,26 @@ enum SnapshotRunner {
                             return c
                         }()
                         MenuBarWidget(config: config, reading: ModuleReading.read(config, monitor: Monitor.shared, services: AppServices.shared), ink: ink)
+                    }
+                }
+            }
+            // The three battery states side by side, whatever this Mac is doing right now.
+            HStack(spacing: 14) {
+                Text("Battery states").font(.caption).frame(width: 90, alignment: .leading).foregroundStyle(ink)
+                ForEach([(ModuleReading.Power.charging, 0.45), (.pluggedIn, 0.8), (.none, 0.15)], id: \.1) { power, level in
+                    ForEach([MenuBarItemConfig.Style.battery, .text], id: \.self) { style in
+                        let config: MenuBarItemConfig = {
+                            var c = MenuBarItemConfig(module: .battery, style: style)
+                            c.showLabel = true
+                            c.colorMode = style == .battery ? .byLevel : .monochrome
+                            return c
+                        }()
+                        let reading: ModuleReading = {
+                            var r = ModuleReading()
+                            r.text = Format.percent(level * 100); r.level = level; r.power = power
+                            return r
+                        }()
+                        MenuBarWidget(config: config, reading: reading, ink: ink)
                     }
                 }
             }
