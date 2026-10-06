@@ -108,6 +108,13 @@ struct ContentView: View {
                 }
                 .help("Save a 1200 × 630 image of your Mac's state")
             }
+            // Without the Dock icon there is no app menu, so ⌘, alone is easy to miss.
+            ToolbarItem(placement: .primaryAction) {
+                Button { WindowOpener.openSettings() } label: {
+                    Label("Settings", systemImage: "gearshape")
+                }
+                .help("Settings (⌘,)")
+            }
             ToolbarItem(placement: .status) {
                 Text("\(monitor.snapshot.processCount) processes · up \(Format.duration(monitor.snapshot.uptime))")
                     .font(.caption).foregroundStyle(.secondary)
