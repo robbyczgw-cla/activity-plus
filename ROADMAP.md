@@ -28,6 +28,9 @@
 **v0.2.6 (28.09.2026)**
 - Charging detail: watts and percent per hour, time to full, power flow (adapter, Mac, battery, loss), negotiated USB-PD contract and offered voltages, charge sessions with curve, capacity in mAh, rated cycles, why the battery is not charging; menu bar watts; battery and adapter watts in the history; `aplus --json`/MCP
 
+**v0.2.7 (06.10.2026)**
+- Menu bar battery: bolt while charging, plug while on the adapter without charging
+
 ## Next
 - [ ] Universal build (arm64 + x86_64) so Intel Macs can run it
 - [ ] Privileged helper: test in daily use (exact disk, energy and memory figures of root processes)
