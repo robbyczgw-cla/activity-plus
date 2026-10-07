@@ -6,21 +6,21 @@ import {
 } from "remotion";
 import { scenes, sceneStart, SceneID } from "./script";
 
-const { fontFamily } = loadFont("normal", { weights: ["400", "500", "600", "700", "800"], subsets: ["latin"] });
-const { fontFamily: mono } = loadMono("normal", { weights: ["400", "600"], subsets: ["latin"] });
+export const { fontFamily } = loadFont("normal", { weights: ["400", "500", "600", "700", "800"], subsets: ["latin"] });
+export const { fontFamily: mono } = loadMono("normal", { weights: ["400", "600"], subsets: ["latin"] });
 
 export type TrailerProps = { voice: "none" | "xai" | "eleven"; music: boolean };
 
-const BLUE = "#4F7DFF";
-const VIOLET = "#9B5CF6";
-const INK = "#F5F6FA";
-const DIM = "rgba(245,246,250,0.58)";
-const BG = "#06070C";
-const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
+export const BLUE = "#4F7DFF";
+export const VIOLET = "#9B5CF6";
+export const INK = "#F5F6FA";
+export const DIM = "rgba(245,246,250,0.58)";
+export const BG = "#06070C";
+export const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 
 // ─── Shared pieces ──────────────────────────────────────────────────────────
 
-const Backdrop: React.FC = () => {
+export const Backdrop: React.FC = () => {
   const frame = useCurrentFrame();
   const drift = (speed: number, range: number) => Math.sin(frame / speed) * range;
   return (
@@ -43,7 +43,7 @@ const Backdrop: React.FC = () => {
 };
 
 /** Words rise and sharpen one after another. */
-const Title: React.FC<{ text: string; delay?: number; size?: number; weight?: number; color?: string; gradient?: boolean; align?: "center" | "left" }> =
+export const Title: React.FC<{ text: string; delay?: number; size?: number; weight?: number; color?: string; gradient?: boolean; align?: "center" | "left" }> =
   ({ text, delay = 0, size = 76, weight = 700, color = INK, gradient = false, align = "center" }) => {
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
@@ -66,7 +66,7 @@ const Title: React.FC<{ text: string; delay?: number; size?: number; weight?: nu
     );
   };
 
-const MacWindow: React.FC<{ src: string; width: number; style?: React.CSSProperties }> = ({ src, width, style }) => (
+export const MacWindow: React.FC<{ src: string; width: number; style?: React.CSSProperties }> = ({ src, width, style }) => (
   <div style={{
     width, borderRadius: 18, overflow: "hidden", background: "#1c1d22",
     boxShadow: "0 60px 140px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.12)", ...style,
@@ -78,7 +78,7 @@ const MacWindow: React.FC<{ src: string; width: number; style?: React.CSSPropert
   </div>
 );
 
-const Chip: React.FC<{ text: string; delay: number; style: React.CSSProperties; color?: string }> = ({ text, delay, style, color = BLUE }) => {
+export const Chip: React.FC<{ text: string; delay: number; style: React.CSSProperties; color?: string }> = ({ text, delay, style, color = BLUE }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const p = spring({ frame: frame - delay, fps, config: { damping: 14, mass: 0.7 } });
@@ -94,7 +94,7 @@ const Chip: React.FC<{ text: string; delay: number; style: React.CSSProperties; 
   );
 };
 
-const fadeOut = (frame: number, total: number, length = 12) =>
+export const fadeOut = (frame: number, total: number, length = 12) =>
   interpolate(frame, [total - length, total], [1, 0], clamp);
 
 // ─── Scene 1: hundreds of processes ─────────────────────────────────────────
