@@ -20,6 +20,8 @@ final class HangDetector {
     /// Finished hangs, newest first. Capped at 100 and written to Application Support.
     private(set) var recent: [Hang] = []
     var onHangEnded: ((Hang) -> Void)?
+    /// A freeze just began (two unresponsive polls in a row).
+    var onHangStarted: ((Hang) -> Void)?
 
     /// Consecutive unresponsive polls. A hang starts only at 2.
     private var streaks: [pid_t: Int] = [:]
@@ -32,7 +34,7 @@ final class HangDetector {
         recent = Self.load(from: storeURL)
     }
 
-    /// Called about every 2 seconds. Looks at regular GUI apps only.
+    /// Called every 3 seconds. Looks at regular GUI apps only.
     func poll() {
         let apps = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular }
         var seen = Set<pid_t>()
@@ -45,7 +47,7 @@ final class HangDetector {
                 let count = (streaks[pid] ?? 0) + 1
                 streaks[pid] = count
                 if count >= 2, current[pid] == nil {
-                    current[pid] = Hang(
+                    let hang = Hang(
                         id: UUID(),
                         pid: pid,
                         bundleID: app.bundleIdentifier,
@@ -53,6 +55,8 @@ final class HangDetector {
                         started: Date(),
                         ended: nil
                     )
+                    current[pid] = hang
+                    onHangStarted?(hang)
                 }
             } else if streaks[pid] != nil || current[pid] != nil {
                 streaks[pid] = nil

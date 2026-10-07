@@ -1,4 +1,5 @@
 import ActivityCore
+import AppKit
 import Foundation
 import Observation
 import UserNotifications
@@ -52,13 +53,46 @@ final class AppServices {
 
     var volumeController: AppVolumeController { volume }
 
+    private func recordFreeze(_ hang: HangDetector.Hang, report: FreezeSample.Report?) {
+        var detail = "It froze for \(Int(hang.duration)) seconds at \(hang.started.formatted(date: .omitted, time: .shortened))."
+        if let report, let stuck = report.mainThreadPath.last {
+            if let own = report.ownFrame, own != stuck {
+                detail += " It was stuck in \(own), waiting in \(stuck)."
+            } else {
+                detail += " It was waiting in \(stuck)."
+            }
+        }
+        var alert = AppAlert(date: Date(), kind: .hang, appID: nil, appName: hang.name,
+                             title: "\(hang.name) stopped responding", detail: detail)
+        alert.reportPath = report?.url.path
+        record(alert)
+    }
+
+    /// Call stacks being taken for freezes in progress, by hang id.
+    @ObservationIgnored private var freezeSamples: [UUID: Task<FreezeSample.Report?, Never>] = [:]
+    /// Last sample per app, so a frequently freezing app is not sampled over and over.
+    @ObservationIgnored private var lastFreezeSample: [String: Date] = [:]
+
+    /// Three seconds of call stacks while the app is still stuck, at most once per app every 10 minutes.
+    private func sampleFreeze(_ hang: HangDetector.Hang) {
+        let key = hang.bundleID ?? hang.name
+        if let last = lastFreezeSample[key], Date().timeIntervalSince(last) < 600 { return }
+        lastFreezeSample[key] = Date()
+        freezeSamples[hang.id] = Task { await FreezeSample.capture(pid: hang.pid, name: hang.name) }
+    }
+
     func attach(to monitor: Monitor) {
+        hangs.onHangStarted = { [weak self] hang in self?.sampleFreeze(hang) }
         hangs.onHangEnded = { [weak self] hang in
             // Short stutters happen all the time; only report real freezes.
+            guard let self else { return }
+            let sampling = freezeSamples.removeValue(forKey: hang.id)
             guard hang.duration >= 5 else { return }
-            self?.record(AppAlert(date: Date(), kind: .hang, appID: nil, appName: hang.name,
-                                  title: "\(hang.name) stopped responding",
-                                  detail: "It froze for \(Int(hang.duration)) seconds at \(hang.started.formatted(date: .omitted, time: .shortened))."))
+            Task { @MainActor [weak self] in
+                // A short freeze can end while its stacks are still being taken: wait for them.
+                let report = await sampling?.value
+                self?.recordFreeze(hang, report: report)
+            }
         }
         history.prune()
         history.closeDanglingSessions()
@@ -68,6 +102,31 @@ final class AppServices {
             MainActor.assumeIsolated { self?.handle(snapshot) }
         }
         NotificationHandler.shared.install()
+        // WindowServer's "not responding" flag on its own 3-second clock: tied to sampling it ran only
+        // every 10 s with the window closed, and a freeze needs two polls in a row, so only freezes
+        // longer than 20 s were caught. One flag check per open app is cheap.
+        hangTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { if Performance.hangs { self?.hangs.poll() } }
+        }
+        testFreezeIfRequested()
+    }
+
+    /// Debug aid: ACTIVITYPLUS_TEST_FREEZE=<bundle id> reports that app as frozen for 8 seconds right after
+    /// launch, so sampling and the alert can be tested without a real beachball (WindowServer sets its
+    /// "not responding" flag only after real user input).
+    private func testFreezeIfRequested() {
+        guard let bundleID = ProcessInfo.processInfo.environment["ACTIVITYPLUS_TEST_FREEZE"],
+              let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first else { return }
+        let started = Date()
+        let hang = HangDetector.Hang(id: UUID(), pid: app.processIdentifier, bundleID: bundleID,
+                                     name: app.localizedName ?? bundleID, started: started, ended: nil)
+        hangs.onHangStarted?(hang)
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(8))
+            var ended = hang
+            ended.ended = Date()
+            self?.hangs.onHangEnded?(ended)
+        }
     }
 
     private func handle(_ snapshot: SystemSnapshot) {
@@ -90,9 +149,6 @@ final class AppServices {
         let scanEvery: TimeInterval = Monitor.shared.isVisible ? 5 : 60
         if Performance.devServers, Date().timeIntervalSince(lastScan) >= scanEvery { scanProjects(snapshot) }
         runAutomations(snapshot)
-        pollCount += 1
-        // WindowServer's "not responding" flag: every other sample is plenty to catch real freezes.
-        if Performance.hangs, pollCount % 2 == 0 { hangs.poll() }
         if Date().timeIntervalSince(lastSlowRefresh) >= 60 {
             refreshSlowData()
             if Performance.insights { refreshInsights() } else { anomalies = []; leaks = [:] }
@@ -126,7 +182,7 @@ final class AppServices {
     /// A page the main window should show next (set by the menu bar panel).
     var requestedPage: String?
     @ObservationIgnored private var lastSlowRefresh = Date.distantPast
-    @ObservationIgnored private var pollCount = 0
+    @ObservationIgnored private var hangTimer: Timer?
     @ObservationIgnored private var lowBatteryWarned: [String: Date] = [:]
 
     /// Work that only needs doing about once a minute.

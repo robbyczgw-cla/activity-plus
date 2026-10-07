@@ -21,6 +21,10 @@ struct AlertsView: View {
                             Text(alert.date, format: .relative(presentation: .named)).font(.caption).foregroundStyle(.tertiary)
                         }
                         Spacer()
+                        if let path = alert.reportPath, FileManager.default.fileExists(atPath: path) {
+                            Button("Show Call Stacks") { NSWorkspace.shared.open(URL(fileURLWithPath: path)) }
+                                .help("The report Activity+ recorded while the app was frozen, stored in ~/Library/Logs/Activity+/Freezes")
+                        }
                         if let id = alert.appID {
                             Button("Ignore app") { services.ignore(appID: id) }
                                 .buttonStyle(.borderless).font(.caption)

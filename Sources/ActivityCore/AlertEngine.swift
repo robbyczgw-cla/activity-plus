@@ -27,6 +27,8 @@ public struct AppAlert: Codable, Sendable, Identifiable, Hashable {
     public let appName: String
     public let title: String
     public let detail: String
+    /// A file with more detail, such as the call stacks of a freeze (stays on this Mac).
+    public var reportPath: String? = nil
 
     public init(date: Date, kind: Kind, appID: String?, appName: String, title: String, detail: String) {
         (self.date, self.kind, self.appID, self.appName, self.title, self.detail) = (date, kind, appID, appName, title, detail)
