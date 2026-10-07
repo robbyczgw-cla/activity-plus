@@ -50,6 +50,8 @@ struct HistoryView: View {
                     }
                 }
 
+                ConditionsCard(points: points, range: range, selectedDate: selectedDate)
+
                 Card {
                     CardHeader(title: "Apps that used the most", systemImage: "list.number", tint: metric.tint, trailing: "last \(range.rawValue)")
                     let sorted = apps.sorted { value($0) > value($1) }.prefix(15)
@@ -127,10 +129,11 @@ struct HistoryView: View {
             }
         }
             .chartXSelection(value: $selectedDate)
+            .chartXScale(domain: ConditionsCard.domain(range))
             .chartYAxis {
                 AxisMarks(position: .trailing) { value in
                     AxisGridLine()
-                    AxisValueLabel { if let v = value.as(Double.self) { Text(metric.format(v)) } }
+                    AxisValueLabel { if let v = value.as(Double.self) { Text(metric.format(v)).frame(width: ConditionsCard.axisWidth, alignment: .leading) } }
                 }
             }
     }

@@ -40,6 +40,13 @@ public final class HistoryStore: @unchecked Sendable {
         public let netOut: Double
         public let battery: Double?
         public let power: Double?
+        /// Highest heat level in the bucket: 0 normal, 1 warm, 2 hot, 3 critical. nil before v0.3.
+        public var thermal: Int? = nil
+        /// Highest memory pressure: 1 normal, 2 elevated, 4 critical (MemoryPressure raw values). nil before v0.3.
+        public var pressure: Int? = nil
+        /// Wi-Fi signal and noise in dBm, averaged; nil when not on Wi-Fi.
+        public var wifiRSSI: Double? = nil
+        public var wifiNoise: Double? = nil
         public var id: Date { date }
     }
 
@@ -151,11 +158,14 @@ public final class HistoryStore: @unchecked Sendable {
             let bucket = range.bucket
             let sql = """
                 SELECT (ts / \(bucket)) * \(bucket) AS b, AVG(cpu), AVG(mem), AVG(gpu), AVG(disk_r), AVG(disk_w),
-                       AVG(net_in), AVG(net_out), AVG(battery), AVG(power)
+                       AVG(net_in), AVG(net_out), AVG(battery), AVG(power), MAX(thermal), MAX(pressure), AVG(wifi_rssi), AVG(wifi_noise)
                 FROM system WHERE ts >= \(from) GROUP BY b ORDER BY b
                 """
             return query(sql) { s in
-                SystemPoint(
+                func optional(_ column: Int32) -> Double? {
+                    sqlite3_column_type(s, column) == SQLITE_NULL ? nil : sqlite3_column_double(s, column)
+                }
+                var point = SystemPoint(
                     date: Date(timeIntervalSince1970: sqlite3_column_double(s, 0)),
                     cpu: sqlite3_column_double(s, 1), memory: sqlite3_column_double(s, 2),
                     gpu: sqlite3_column_double(s, 3), diskRead: sqlite3_column_double(s, 4),
@@ -164,6 +174,11 @@ public final class HistoryStore: @unchecked Sendable {
                     battery: sqlite3_column_type(s, 8) == SQLITE_NULL ? nil : sqlite3_column_double(s, 8),
                     power: sqlite3_column_type(s, 9) == SQLITE_NULL ? nil : sqlite3_column_double(s, 9)
                 )
+                point.thermal = optional(10).map { Int($0) }
+                point.pressure = optional(11).map { Int($0) }
+                point.wifiRSSI = optional(12)
+                point.wifiNoise = optional(13)
+                return point
             }
         }
     }
@@ -375,6 +390,11 @@ public final class HistoryStore: @unchecked Sendable {
         // v0.3: nullable additions preserve historical rows, following the existing ALTER pattern.
         exec("ALTER TABLE system ADD COLUMN battery_watts REAL")
         exec("ALTER TABLE system ADD COLUMN adapter_watts REAL")
+        // v0.3: conditions that explain a slow minute (heat, memory pressure, Wi-Fi), nullable like the rest.
+        exec("ALTER TABLE system ADD COLUMN thermal INTEGER")
+        exec("ALTER TABLE system ADD COLUMN pressure INTEGER")
+        exec("ALTER TABLE system ADD COLUMN wifi_rssi REAL")
+        exec("ALTER TABLE system ADD COLUMN wifi_noise REAL")
         let version = query("PRAGMA user_version") { sqlite3_column_int($0, 0) }.first ?? 0
         if version < 3 { exec("PRAGMA user_version = 3") }
     }
@@ -383,7 +403,7 @@ public final class HistoryStore: @unchecked Sendable {
         guard a.count > 0, a.seconds > 0 else { return }
         let n = a.seconds   // time-weighted sums ÷ covered seconds = averages
         var statement: OpaquePointer?
-        let sql = "INSERT INTO system (ts, secs, cpu, mem, gpu, disk_r, disk_w, net_in, net_out, battery, power, on_battery, battery_watts, adapter_watts) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+        let sql = "INSERT INTO system (ts, secs, cpu, mem, gpu, disk_r, disk_w, net_in, net_out, battery, power, on_battery, battery_watts, adapter_watts, thermal, pressure, wifi_rssi, wifi_noise) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return }
         defer { sqlite3_finalize(statement) }
         sqlite3_bind_int64(statement, 1, Int64(date.timeIntervalSince1970))
@@ -400,6 +420,10 @@ public final class HistoryStore: @unchecked Sendable {
         sqlite3_bind_int(statement, 12, a.onBattery * 2 > a.count ? 1 : 0)
         if a.batterySeconds > 0 { sqlite3_bind_double(statement, 13, a.batteryWatts / a.batterySeconds) }
         if a.adapterSeconds > 0 { sqlite3_bind_double(statement, 14, a.adapterWatts / a.adapterSeconds) }
+        sqlite3_bind_int(statement, 15, Int32(a.thermal))
+        sqlite3_bind_int(statement, 16, Int32(a.pressure))
+        if a.wifiCount > 0 { sqlite3_bind_double(statement, 17, a.wifiRSSI / Double(a.wifiCount)) }
+        if a.noiseCount > 0 { sqlite3_bind_double(statement, 18, a.wifiNoise / Double(a.noiseCount)) }
         sqlite3_step(statement)
     }
 
@@ -474,6 +498,9 @@ private struct Accumulator {
     var onBattery = 0
     var batteryWatts = 0.0, batterySeconds = 0.0
     var adapterWatts = 0.0, adapterSeconds = 0.0
+    var thermal = 0, pressure = 1
+    var wifiRSSI = 0.0, wifiCount = 0
+    var wifiNoise = 0.0, noiseCount = 0
 
     /// Values are weighted by the time each sample covers: foreground (1–2 s) and background
     /// (5–15 s) samples mix within one minute, and a plain mean would count them equally.
@@ -488,6 +515,11 @@ private struct Accumulator {
         diskWrite += s.disk.writeRate * dt
         netIn += s.network.inRate * dt
         netOut += s.network.outRate * dt
+        // Worst moment of the minute: a short spell of heat or pressure is what explains a stall.
+        thermal = max(thermal, s.thermal.level)
+        pressure = max(pressure, s.memory.pressure.rawValue)
+        if let rssi = s.wifi?.rssi, rssi != 0 { wifiRSSI += Double(rssi); wifiCount += 1 }
+        if let noise = s.wifi?.noise, noise != 0 { wifiNoise += Double(noise); noiseCount += 1 }
         if let b = s.battery {
             batteryWatts += b.batteryPower * dt
             batterySeconds += dt

@@ -268,6 +268,16 @@ public enum SlowCharging: Sendable, Hashable {
 
 public enum ThermalLevel: String, Sendable {
     case nominal = "Normal", fair = "Warm", serious = "Hot", critical = "Critical"
+
+    /// 0 normal … 3 critical, as stored in the history.
+    public var level: Int {
+        switch self {
+        case .nominal: 0
+        case .fair: 1
+        case .serious: 2
+        case .critical: 3
+        }
+    }
 }
 
 /// Everything the UI needs for one refresh.

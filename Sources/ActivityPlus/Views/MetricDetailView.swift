@@ -231,6 +231,11 @@ struct NetworkDetailsCard: View {
                 Divider()
                 StatLine(label: "Wi-Fi network", value: wifi.ssid ?? "Hidden by macOS (needs Location access)")
                 if let rssi = wifi.rssi { StatLine(label: "Signal", value: "\(rssi) dBm · \(quality(rssi))") }
+                if let rssi = wifi.rssi, let noise = wifi.noise, noise != 0 {
+                    // Signal minus noise: what decides whether Wi-Fi is fast, more than the signal alone.
+                    let snr = rssi - noise
+                    StatLine(label: "Noise", value: "\(noise) dBm · \(snr) dB above it, \(snr >= 40 ? "excellent" : snr >= 25 ? "good" : snr >= 15 ? "weak, slower Wi-Fi" : "poor, expect dropouts")")
+                }
                 if let channel = wifi.channel { StatLine(label: "Channel", value: "\(channel)\(wifi.band.map { " · " + $0 } ?? "")") }
                 if let rate = wifi.transmitRateMbps { StatLine(label: "Link speed", value: String(format: "%.0f Mbit/s", rate)) }
             }
