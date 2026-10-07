@@ -37,6 +37,9 @@
 **v0.2.9 (07.10.2026)**
 - GPU: find the app behind WindowServer's load (hide apps one at a time, measure, show them again); clock shown against the maximum
 
+**v0.2.9.1 (07.10.2026)**
+- Find the Cause keeps the focus on the app that had it, so apps that only redraw while active are not blamed on another app
+
 ## Next
 - [ ] Universal build (arm64 + x86_64) so Intel Macs can run it
 - [ ] Privileged helper: test in daily use (exact disk, energy and memory figures of root processes)
