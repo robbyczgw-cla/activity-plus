@@ -34,6 +34,9 @@
 **v0.2.8 (06.10.2026)**
 - Settings button in the main window toolbar
 
+**v0.2.9 (07.10.2026)**
+- GPU: find the app behind WindowServer's load (hide apps one at a time, measure, show them again); clock shown against the maximum
+
 ## Next
 - [ ] Universal build (arm64 + x86_64) so Intel Macs can run it
 - [ ] Privileged helper: test in daily use (exact disk, energy and memory figures of root processes)
