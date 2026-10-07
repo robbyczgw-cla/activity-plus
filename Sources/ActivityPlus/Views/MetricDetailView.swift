@@ -118,6 +118,7 @@ struct MetricDetailView: View {
                 }
             }
             DrivesCard(drives: s.drives)
+            SSDWearCard(drive: s.drives.first { $0.isInternal && $0.nvmeHealth != nil })
             SpeedTestCard()
         case .network:
             HStack(alignment: .top, spacing: 14) {

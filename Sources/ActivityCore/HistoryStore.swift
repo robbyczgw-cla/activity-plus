@@ -225,6 +225,47 @@ public final class HistoryStore: @unchecked Sendable {
         }
     }
 
+    public struct AppWrites: Sendable, Identifiable {
+        public let appID: String
+        public let name: String
+        public let bundlePath: String?
+        public let bytes: Double
+        public var id: String { appID }
+    }
+
+    /// Bytes each app wrote since `start`, most first, and when per-app write counting began (v0.3).
+    public func topWriters(since start: Date, limit: Int = 8) -> (apps: [AppWrites], countingSince: Date?) {
+        queue.sync {
+            let from = Int(start.timeIntervalSince1970)
+            let apps = query("""
+                SELECT app_id, MAX(name), MAX(bundle), SUM(disk_w) AS w FROM apps
+                WHERE ts >= \(from) AND disk_w IS NOT NULL GROUP BY app_id HAVING w > 0 ORDER BY w DESC LIMIT \(limit)
+                """) { s in
+                AppWrites(appID: Self.text(s, 0), name: Self.text(s, 1),
+                          bundlePath: sqlite3_column_type(s, 2) == SQLITE_NULL ? nil : Self.text(s, 2),
+                          bytes: sqlite3_column_double(s, 3))
+            }
+            let since = query("SELECT MIN(ts) FROM apps WHERE disk_w IS NOT NULL") { s in
+                sqlite3_column_type(s, 0) == SQLITE_NULL ? nil : Date(timeIntervalSince1970: sqlite3_column_double(s, 0))
+            }.first ?? nil
+            return (apps, since)
+        }
+    }
+
+    /// Average bytes written per day over the last `days`, from the per-minute system rows, and how
+    /// many days of data that average rests on.
+    public func dailyWrites(days: Int = 7) -> (bytesPerDay: Double, coveredDays: Double) {
+        queue.sync {
+            let from = Int(Date().timeIntervalSince1970) - days * 86_400
+            let row = query("SELECT SUM(disk_w * secs), MIN(ts), MAX(ts) FROM system WHERE ts >= \(from)") { s in
+                (sqlite3_column_double(s, 0), sqlite3_column_double(s, 1), sqlite3_column_double(s, 2))
+            }.first ?? (0, 0, 0)
+            let covered = max(0, row.2 - row.1) / 86_400
+            guard covered > 0.04 else { return (0, covered) }   // under an hour says nothing about a day
+            return (row.0 / max(covered, 1), covered)
+        }
+    }
+
     public struct AppPoint: Sendable, Identifiable {
         public let date: Date
         public let cpu: Double
@@ -395,6 +436,8 @@ public final class HistoryStore: @unchecked Sendable {
         exec("ALTER TABLE system ADD COLUMN pressure INTEGER")
         exec("ALTER TABLE system ADD COLUMN wifi_rssi REAL")
         exec("ALTER TABLE system ADD COLUMN wifi_noise REAL")
+        // v0.3: bytes each app wrote, apart from reads, for SSD wear.
+        exec("ALTER TABLE apps ADD COLUMN disk_w REAL")
         let version = query("PRAGMA user_version") { sqlite3_column_int($0, 0) }.first ?? 0
         if version < 3 { exec("PRAGMA user_version = 3") }
     }
@@ -429,7 +472,7 @@ public final class HistoryStore: @unchecked Sendable {
 
     private func writeAppRows(at date: Date) {
         exec("BEGIN")
-        let sql = "INSERT INTO apps (ts, app_id, name, bundle, cpu, mem, mem_peak, disk, net, energy, gpu, on_battery, procs) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
+        let sql = "INSERT INTO apps (ts, app_id, name, bundle, cpu, mem, mem_peak, disk, net, energy, gpu, on_battery, procs, disk_w) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
         let onBattery: Int32 = windowOnBattery * 2 > windowSampleCount ? 1 : 0
         var statement: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { exec("COMMIT"); return }
@@ -450,6 +493,7 @@ public final class HistoryStore: @unchecked Sendable {
             sqlite3_bind_double(statement, 11, a.gpu / windowSamples)
             sqlite3_bind_int(statement, 12, onBattery)
             sqlite3_bind_int(statement, 13, Int32(a.processCount))
+            sqlite3_bind_double(statement, 14, a.diskWriteBytes)
             sqlite3_step(statement)
         }
         for (id, a) in appWindow where !a.processes.isEmpty {
@@ -538,6 +582,7 @@ private struct AppAccumulator {
     var count = 0
     var cpu = 0.0, memory = 0.0, memoryPeak = 0.0, gpu = 0.0
     var diskBytes = 0.0, netBytes = 0.0, energyJoules = 0.0
+    var diskWriteBytes = 0.0
     var processCount = 0
     /// Per process (pid + start time), for tracing the app's numbers back to a child process.
     var processes: [String: ProcessAccumulator] = [:]
@@ -561,6 +606,7 @@ private struct AppAccumulator {
         memoryPeak = max(memoryPeak, Double(app.memory))
         gpu += app.gpuPercent
         diskBytes += (app.diskReadRate + app.diskWriteRate) * interval
+        diskWriteBytes += app.diskWriteRate * interval
         netBytes += (app.netInRate + app.netOutRate) * interval
         energyJoules += app.powerWatts * interval
     }
