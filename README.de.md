@@ -43,7 +43,7 @@ Voraussetzung ist ein Mac mit Apple silicon und macOS 15 Sequoia oder neuer. Ent
 ### Hardware
 - CPU pro Kern (Effizienz- und Leistungskerne), **Takt pro Cluster**, Last, Temperaturzustand.
 - Speicherdruck, Swap, Komprimierung.
-- GPU-Auslastung, Takt und Leistung.
+- GPU-Auslastung, Takt (im Verhältnis zum Höchsttakt) und Leistung. **Die App hinter WindowServer finden**: Die meisten Apps zeichnen über WindowServer, ihre GPU-Last erscheint deshalb unter dessen Namen. Activity+ blendet deine Apps nacheinander für ein paar Sekunden aus, misst, wie stark die GPU-Zeit von WindowServer sinkt, und blendet sie wieder ein.
 - **Alle Laufwerke** mit freiem Platz, Durchsatz, SMART-Status sowie NVMe-Verschleiß, -Temperatur, Betriebsstunden und geschriebenen Daten.
 - Netzwerk-Durchsatz, Schnittstellen, Adressen, WLAN-Signal, Kanal und Verbindungsgeschwindigkeit. Die öffentliche IP wird nur auf Klick abgefragt.
 - **Verbindungsqualität** (aus, bis Sie sie einschalten): Latenz, Jitter und Paketverlust zum Router alle 30 Sekunden, im Verlauf gespeichert – so lässt sich eine wackelige von einer langsamen Verbindung unterscheiden.
@@ -119,6 +119,7 @@ Activity+ hat kein Konto und keine Analyse. Die einzige automatische Netzwerkanf
 | CPU, Speicher, Swap, Speicherdruck | `host_processor_info`, `host_statistics64`, `sysctl` |
 | Takt, GPU-Leistung | IOReport (Leistungszustände und Energiemodell) |
 | GPU-Auslastung und GPU-Zeit pro App | IOKit `IOAccelerator` |
+| Die App hinter der GPU-Last von WindowServer | GPU-Zeit von WindowServer, während jede App ausgeblendet ist (`NSRunningApplication.hide`); Fenster von Hilfsprozessen über den verantwortlichen Prozess ihrer App zugeordnet |
 | Temperaturen, Spannungen, Ströme, Lüfter | IOHID-Ereignissystem und SMC |
 | Laufwerke und NVMe-Zustand | IOKit-Statistiken und NVMe-SMART-Log |
 | Netzwerk | `sysctl NET_RT_IFLIST2`, `nettop` pro App, SystemConfiguration, CoreWLAN |

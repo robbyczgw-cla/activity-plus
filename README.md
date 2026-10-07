@@ -43,7 +43,7 @@ Requires a Mac with Apple silicon and macOS 15 Sequoia or later. Developed and t
 ### Hardware
 - CPU per core (efficiency and performance), **clock speed per cluster**, load average, thermal state.
 - Memory pressure, swap, compression.
-- GPU load, clock and power.
+- GPU load, clock (against the maximum) and power. **Find the app behind WindowServer**: most apps draw through WindowServer, so their GPU use shows up under its name. Activity+ hides your apps one at a time for a few seconds, measures how far WindowServer's GPU time drops, and shows them again.
 - **Every drive** with free space, throughput, SMART status and NVMe wear, temperature, hours and data written.
 - Network throughput, interfaces, addresses, Wi-Fi signal, channel and link speed. Your public IP is fetched only when you click for it.
 - **Connection quality** (off until you turn it on): latency, jitter and packet loss to your router every 30 seconds, kept in the history, so a flaky connection is told apart from a slow one.
@@ -119,6 +119,7 @@ Activity+ has no account and no analytics. Its only automatic network request is
 | CPU, memory, swap, pressure | `host_processor_info`, `host_statistics64`, `sysctl` |
 | Clock speeds, GPU power | IOReport performance states and energy model |
 | GPU load and per-app GPU time | IOKit `IOAccelerator` |
+| The app behind WindowServer's GPU load | WindowServer's GPU time while each app is hidden (`NSRunningApplication.hide`), helper windows mapped to their app by the responsible process |
 | Temperatures, voltages, currents, fans | IOHID event system and the SMC |
 | Drives and NVMe health | IOKit block storage statistics and the NVMe SMART log |
 | Network | `sysctl NET_RT_IFLIST2`, `nettop` per app, SystemConfiguration, CoreWLAN |
