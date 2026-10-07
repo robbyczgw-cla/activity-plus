@@ -47,6 +47,8 @@ struct StorageView: View {
                     }
                 }
 
+                HiddenSpaceCard()
+
                 CleanupCandidatesCard()
 
                 if let result {
