@@ -5,26 +5,34 @@ import Testing
 @Suite("GPU cause")
 struct GPUCauseTests {
     @Test func ranksAppsByTheDropWhileHidden() {
-        let result = GPUCauseAnalysis(before: 52, after: 50, steps: [
-            .init(name: "Safari", bundleID: "com.apple.Safari", hiddenPercent: 49),
-            .init(name: "Steam", bundleID: "com.valvesoftware.steam", hiddenPercent: 14),
+        let result = GPUCauseAnalysis(steps: [
+            .init(name: "Safari", bundleID: "com.apple.Safari", before: 52, hidden: 50, shownAgain: 51),
+            .init(name: "Steam", bundleID: "com.valvesoftware.steam", before: 51, hidden: 14, shownAgain: 50),
         ], floor: 9)
-        #expect(result.baseline == 51)
+        #expect(result.baseline == 52)
         #expect(result.causes.map(\.name) == ["Steam", "Safari"])
         #expect(result.causes[0].contribution == 37)
         #expect(result.causes[0].isMeasurable)
+        #expect(!result.causes[1].isMeasurable)
+        #expect(!result.causes[0].quieterAfterShown)
     }
 
-    @Test func dropsWithinTheNoiseAreNotNamed() {
-        // Baseline drifted by 6 points during the run: a 4-point drop proves nothing.
-        let result = GPUCauseAnalysis(before: 30, after: 24, steps: [.init(name: "Mail", bundleID: nil, hiddenPercent: 23)], floor: nil)
-        #expect(result.noise == 6)
-        #expect(result.causes[0].contribution == 4)
-        #expect(!result.causes[0].isMeasurable)
+    /// Steam stops drawing once hidden and stays quiet when shown again: the apps measured after it
+    /// are compared with the lower load, not with the start of the run.
+    @Test func appThatStaysQuietDoesNotHideTheOthers() {
+        let result = GPUCauseAnalysis(steps: [
+            .init(name: "Steam", bundleID: nil, before: 55, hidden: 6, shownAgain: 7),
+            .init(name: "Arc", bundleID: nil, before: 7, hidden: 6, shownAgain: 7),
+            .init(name: "Claude", bundleID: nil, before: 7, hidden: 2, shownAgain: 7),
+        ], floor: 1)
+        #expect(result.causes.map(\.name) == ["Steam", "Claude", "Arc"])
+        #expect(result.causes[0].quieterAfterShown)
+        #expect(result.causes[1].isMeasurable)
+        #expect(!result.causes[2].isMeasurable)
     }
 
     @Test func busierWhileHiddenCountsAsZero() {
-        let result = GPUCauseAnalysis(before: 10, after: 10, steps: [.init(name: "Notes", bundleID: nil, hiddenPercent: 13)], floor: 8)
+        let result = GPUCauseAnalysis(steps: [.init(name: "Notes", bundleID: nil, before: 10, hidden: 13, shownAgain: 10)], floor: 8)
         #expect(result.causes[0].contribution == 0)
     }
 

@@ -7,7 +7,7 @@ import SwiftUI
 struct GPUCauseCard: View {
     private var finder = GPUCauseFinder.shared
     @State private var confirming = false
-    @State private var candidates: [NSRunningApplication] = []
+    @State private var candidates: [GPUCauseFinder.Candidate] = []
 
     var body: some View {
         Card {
@@ -17,8 +17,8 @@ struct GPUCauseCard: View {
                 intro
             case let .running(step, total, label):
                 running(step: step, total: total, label: label)
-            case let .done(result, date):
-                results(result, date: date)
+            case let .done(result, date, unmeasured):
+                results(result, date: date, unmeasured: unmeasured)
             case let .failed(message):
                 Text(message).foregroundStyle(.secondary)
                 startButton("Try Again")
@@ -66,33 +66,36 @@ struct GPUCauseCard: View {
         }
     }
 
-    private func results(_ result: GPUCauseAnalysis, date: Date) -> some View {
+    private func results(_ result: GPUCauseAnalysis, date: Date, unmeasured: [String]) -> some View {
         let measurable = result.causes.filter(\.isMeasurable)
         let scale = max(result.baseline, 1)
         return VStack(alignment: .leading, spacing: 10) {
             Text("WindowServer used \(Format.percent(result.baseline)) of the GPU with every window visible.")
             if measurable.isEmpty {
-                Text("No single app made a measurable difference (more than \(Format.percent(max(2, result.noise))) points). "
+                Text("Hiding a single app made no measurable difference. "
                     + "The load comes from the displays themselves or from several apps together.")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             ForEach(measurable) { cause in
                 row(name: cause.name, icon: icon(cause.bundleID), drop: cause.contribution, scale: scale,
-                    detail: "\(Format.percent(cause.hiddenPercent)) while hidden")
+                    detail: cause.quieterAfterShown
+                        ? "\(Format.percent(cause.hiddenPercent)) while hidden, and it stayed quiet after being shown again: it was redrawing constantly until it was hidden"
+                        : "\(Format.percent(cause.hiddenPercent)) while hidden")
             }
             if let floor = result.floor {
-                row(name: "Displays, desktop and menu bar", icon: Image(systemName: "display"), drop: floor, scale: scale,
-                    detail: "left with all apps hidden", isRemainder: true)
+                if unmeasured.isEmpty {
+                    row(name: "Displays, desktop and menu bar", icon: Image(systemName: "display"), drop: floor, scale: scale,
+                        detail: "left with all apps hidden", isRemainder: true)
+                } else {
+                    row(name: "Left with the measured apps hidden", icon: Image(systemName: "display"), drop: floor, scale: scale,
+                        detail: "still visible and not measured: \(unmeasured.joined(separator: ", "))", isRemainder: true)
+                }
             }
             let quiet = result.causes.filter { !$0.isMeasurable }.map(\.name)
             if !quiet.isEmpty {
                 Text("No measurable effect: \(quiet.joined(separator: ", ")).")
                     .font(.caption).foregroundStyle(.secondary)
-            }
-            if result.noise >= 5 {
-                Text("WindowServer's load moved by \(Format.percent(result.noise)) points between the start and the end, so small differences are not reliable.")
-                    .font(.caption).foregroundStyle(.orange)
             }
             HStack {
                 Text("Measured \(date.formatted(date: .omitted, time: .shortened))").font(.caption).foregroundStyle(.secondary)

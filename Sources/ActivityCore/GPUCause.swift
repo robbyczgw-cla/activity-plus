@@ -55,47 +55,62 @@ public enum GPUClientTime {
 
 /// Ranks apps by how much WindowServer's GPU time drops while each one is hidden.
 public struct GPUCauseAnalysis: Equatable, Sendable {
+    public struct Step: Sendable {
+        public let name: String
+        public let bundleID: String?
+        /// WindowServer GPU percent right before the app was hidden, while hidden, and right after it was shown again.
+        public let before: Double
+        public let hidden: Double
+        public let shownAgain: Double
+        public init(name: String, bundleID: String?, before: Double, hidden: Double, shownAgain: Double) {
+            self.name = name
+            self.bundleID = bundleID
+            self.before = before
+            self.hidden = hidden
+            self.shownAgain = shownAgain
+        }
+    }
+
     public struct Cause: Equatable, Sendable, Identifiable {
         public var id: String { bundleID ?? name }
         public let name: String
         public let bundleID: String?
-        /// WindowServer GPU percent while this app was hidden.
         public let hiddenPercent: Double
-        /// Baseline minus hidden, in percentage points; never negative.
+        /// Before minus hidden, in percentage points; never negative.
         public let contribution: Double
-        /// Above the run's noise, so worth naming.
+        /// Above this step's noise, so worth naming.
         public let isMeasurable: Bool
+        /// WindowServer stayed clearly lower after the app was shown again: the app had been drawing
+        /// constantly and stopped once it was hidden (Steam does this).
+        public let quieterAfterShown: Bool
     }
 
+    /// WindowServer with every window visible, at the start of the run.
     public let baseline: Double
-    /// WindowServer with every measured app hidden at once: displays, desktop, menu bar, Activity+ itself.
+    /// WindowServer with every measured app hidden at once.
     public let floor: Double?
-    /// How far the two baselines (start and end of the run) differ.
-    public let noise: Double
     public let causes: [Cause]
 
-    public struct Step: Sendable {
-        public let name: String
-        public let bundleID: String?
-        public let hiddenPercent: Double
-        public init(name: String, bundleID: String?, hiddenPercent: Double) {
-            self.name = name
-            self.bundleID = bundleID
-            self.hiddenPercent = hiddenPercent
-        }
-    }
+    /// Drops below two points, or below a tenth of the load, are measuring noise.
+    static func threshold(for load: Double) -> Double { max(2, load * 0.1) }
 
-    public init(before: Double, after: Double, steps: [Step], floor: Double?) {
-        baseline = (before + after) / 2
-        noise = abs(before - after)
+    public init(steps: [Step], floor: Double?) {
+        baseline = steps.first?.before ?? 0
         self.floor = floor
-        // Two points or the baseline drift, whichever is larger: smaller drops are measuring noise.
-        let threshold = max(2, noise)
         causes = steps.map { step in
-            let contribution = max(0, (before + after) / 2 - step.hiddenPercent)
-            return Cause(name: step.name, bundleID: step.bundleID, hiddenPercent: step.hiddenPercent,
-                         contribution: contribution, isMeasurable: contribution >= threshold)
+            let contribution = max(0, step.before - step.hidden)
+            let threshold = Self.threshold(for: step.before)
+            return Cause(name: step.name, bundleID: step.bundleID, hiddenPercent: step.hidden,
+                         contribution: contribution, isMeasurable: contribution >= threshold,
+                         quieterAfterShown: contribution >= threshold && step.before - step.shownAgain >= threshold)
         }
         .sorted { $0.contribution > $1.contribution }
+    }
+}
+
+public enum ProcessOwner {
+    /// The app macOS holds responsible for a process (Steam for "Steam Helper"), when it is known.
+    public static func responsiblePID(for pid: pid_t) -> pid_t? {
+        Responsibility.responsiblePID(for: pid)
     }
 }

@@ -11,7 +11,7 @@ final class GPUCauseFinder {
     enum State: Equatable {
         case idle
         case running(step: Int, total: Int, label: String)
-        case done(GPUCauseAnalysis, Date)
+        case done(GPUCauseAnalysis, Date, [String])
         case failed(String)
     }
 
@@ -23,31 +23,47 @@ final class GPUCauseFinder {
     private static let baselineSeconds = 3.0
     private static let stepSeconds = 2.5
     private static let settleSeconds = 0.8
-    private static let maxApps = 10
+    nonisolated private static let maxApps = 12
 
     var isRunning: Bool { if case .running = state { true } else { false } }
 
-    /// Regular apps with at least one window on the current screen, largest windows first.
-    static func candidates() -> [NSRunningApplication] {
+    /// One app as the user knows it, with every process that owns one of its windows.
+    struct Candidate {
+        let name: String
+        let bundleID: String?
+        let processes: [NSRunningApplication]
+    }
+
+    /// Apps with at least one window on the current screen, largest windows first. Windows owned by
+    /// helper processes (Steam's interface lives in "Steam Helper") count for the app responsible for them.
+    static func candidates(limit: Int = maxApps) -> [Candidate] {
         let own = ProcessInfo.processInfo.processIdentifier
         let windows = (CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]]) ?? []
         var area: [pid_t: Double] = [:]
+        var owners: [pid_t: Set<pid_t>] = [:]
         for window in windows {
             guard (window[kCGWindowLayer as String] as? Int) == 0,
                   let pid = window[kCGWindowOwnerPID as String] as? pid_t, pid != own,
                   let bounds = window[kCGWindowBounds as String] as? [String: Double]
             else { continue }
-            area[pid, default: 0] += (bounds["Width"] ?? 0) * (bounds["Height"] ?? 0)
+            let app = ProcessOwner.responsiblePID(for: pid).flatMap { $0 == own ? nil : $0 } ?? pid
+            area[app, default: 0] += (bounds["Width"] ?? 0) * (bounds["Height"] ?? 0)
+            owners[app, default: []].insert(pid)
         }
-        return area.sorted { $0.value > $1.value }
-            .compactMap { NSRunningApplication(processIdentifier: $0.key) }
-            .filter { $0.activationPolicy == .regular && !$0.isHidden }
-            .prefix(maxApps).map { $0 }
+        return area.sorted { $0.value > $1.value }.compactMap { pid, _ -> Candidate? in
+            let processes = ([pid] + (owners[pid] ?? [])).uniqued().compactMap { NSRunningApplication(processIdentifier: $0) }
+                .filter { $0.activationPolicy != .prohibited && !$0.isHidden }
+            guard !processes.isEmpty else { return nil }
+            let main = NSRunningApplication(processIdentifier: pid)
+            let name = main?.localizedName ?? processes[0].localizedName ?? "App"
+            return Candidate(name: name, bundleID: main?.bundleIdentifier ?? processes[0].bundleIdentifier, processes: processes)
+        }
+        .prefix(limit).map { $0 }
     }
 
     /// Rough length of a run, for the confirmation dialog.
     static func estimatedSeconds(apps: Int) -> Int {
-        Int(2 * baselineSeconds + Double(apps + 1) * (stepSeconds + settleSeconds * 2) + 1)
+        Int(baselineSeconds + Double(apps + 1) * 2 * (stepSeconds + settleSeconds) + 1)
     }
 
     func start() {
@@ -60,9 +76,21 @@ final class GPUCauseFinder {
     }
 
     /// Shows every app this run hid. Safe to call any time (also from applicationWillTerminate).
+    /// `hide()` and `unhide()` report failure on macOS 27 even when they work, so their results are ignored.
     func restore() {
         for app in hiddenByUs where !app.isTerminated { app.unhide() }
-        hiddenByUs = []
+    }
+
+    /// Restores, then checks: an app still hidden gets activated, which always shows it.
+    private func restoreAndVerify() async {
+        restore()
+        try? await Task.sleep(for: .seconds(0.4))
+        for app in hiddenByUs where !app.isTerminated && app.isHidden {
+            NSApp.yieldActivation(to: app)
+            app.activate()
+        }
+        try? await Task.sleep(for: .seconds(0.3))
+        hiddenByUs.removeAll { $0.isTerminated || !$0.isHidden }
     }
 
     private func run() async {
@@ -73,50 +101,62 @@ final class GPUCauseFinder {
             return
         }
         let frontmost = NSWorkspace.shared.frontmostApplication
-        let total = apps.count + 3
-        defer {
-            restore()
-            frontmost?.activate()
-            task = nil
-        }
+        let total = apps.count + 2
+        var steps: [GPUCauseAnalysis.Step] = []
+        var floor: Double?
+        var cancelled = false
 
         do {
             state = .running(step: 1, total: total, label: "Measuring with every window visible")
-            let before = try await measure(server, seconds: Self.baselineSeconds)
+            var visible = try await measure(server, seconds: Self.baselineSeconds)
 
-            var steps: [GPUCauseAnalysis.Step] = []
+            // Each app is compared with the measurement right before it, so a load that changes
+            // during the run (an app that stays quiet after being shown again) does not blur the rest.
             for (index, app) in apps.enumerated() {
-                let name = app.localizedName ?? app.bundleIdentifier ?? "App"
-                state = .running(step: index + 2, total: total, label: "Hiding \(name)")
-                guard !app.isTerminated else { continue }
-                hide([app])
-                try await Task.sleep(for: .seconds(Self.settleSeconds))
-                let hidden = try await measure(server, seconds: Self.stepSeconds)
-                restore()
-                try await Task.sleep(for: .seconds(Self.settleSeconds))
-                steps.append(.init(name: name, bundleID: app.bundleIdentifier, hiddenPercent: hidden))
+                state = .running(step: index + 2, total: total, label: "Hiding \(app.name)")
+                let hidden = try await measureHidden(app.processes, server: server)
+                let shownAgain = try await measure(server, seconds: Self.stepSeconds)
+                steps.append(.init(name: app.name, bundleID: app.bundleID, before: visible, hidden: hidden, shownAgain: shownAgain))
+                visible = shownAgain
             }
 
-            state = .running(step: total - 1, total: total, label: "Hiding all of them at once")
-            hide(apps)
-            try await Task.sleep(for: .seconds(Self.settleSeconds))
-            let floor = try await measure(server, seconds: Self.stepSeconds)
-            restore()
-            try await Task.sleep(for: .seconds(Self.settleSeconds))
-
-            state = .running(step: total, total: total, label: "Measuring again with every window visible")
-            let after = try await measure(server, seconds: Self.baselineSeconds)
-
-            state = .done(GPUCauseAnalysis(before: before, after: after, steps: steps, floor: floor), Date())
+            state = .running(step: total, total: total, label: "Hiding all of them at once")
+            floor = try await measureHidden(apps.flatMap(\.processes), server: server)
         } catch {
+            cancelled = true
+        }
+
+        await restoreAndVerify()
+        if let frontmost, !frontmost.isTerminated {
+            NSApp.yieldActivation(to: frontmost)
+            frontmost.activate()
+        }
+        task = nil
+
+        if !hiddenByUs.isEmpty {
+            let names = hiddenByUs.compactMap(\.localizedName).joined(separator: ", ")
+            hiddenByUs = []
+            state = .failed("Activity+ could not show these apps again: \(names). Click them in the Dock to bring them back.")
+        } else if cancelled {
             state = .idle
+        } else {
+            let unmeasured = Self.candidates(limit: .max).filter { c in !apps.contains { $0.name == c.name } }.map(\.name)
+            state = .done(GPUCauseAnalysis(steps: steps, floor: floor), Date(), unmeasured)
         }
     }
 
-    private func hide(_ apps: [NSRunningApplication]) {
-        for app in apps where !app.isTerminated && !app.isHidden {
-            if app.hide() { hiddenByUs.append(app) }
+    /// Hides the processes, measures WindowServer, and shows them again.
+    private func measureHidden(_ processes: [NSRunningApplication], server: pid_t) async throws -> Double {
+        for app in processes where !app.isTerminated && !app.isHidden {
+            app.hide()
+            hiddenByUs.append(app)
         }
+        defer { restore() }
+        try await Task.sleep(for: .seconds(Self.settleSeconds))
+        let hidden = try await measure(server, seconds: Self.stepSeconds)
+        restore()
+        try await Task.sleep(for: .seconds(Self.settleSeconds))
+        return hidden
     }
 
     private func measure(_ pid: pid_t, seconds: Double) async throws -> Double {
@@ -127,5 +167,12 @@ final class GPUCauseFinder {
         let end = GPUClientTime.snapshot()
         let actual = Double(elapsed.components.seconds) + Double(elapsed.components.attoseconds) / 1e18
         return GPUClientTime.percent(pid: pid, from: start, to: end, seconds: actual)
+    }
+}
+
+private extension Array where Element: Hashable {
+    func uniqued() -> [Element] {
+        var seen = Set<Element>()
+        return filter { seen.insert($0).inserted }
     }
 }
