@@ -3,7 +3,7 @@
 macOS system monitor (Vitals alternative + extras). SwiftPM, no Xcode project. Personal use first.
 
 ## Build, test, verify
-- Toolchain: `DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer` (the default CLT has an old SDK). `scripts/build-app.sh` sets it.
+- Toolchain: `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` (the default CLT has an old SDK). `scripts/build-app.sh` sets it.
 - `scripts/build-app.sh --run` → `dist/Activity+.app` (ad-hoc signed) and launch.
 - `swift test` — Swift Testing, pure logic in ActivityCore.
 - **Visual check without screen-recording permission:** `ACTIVITYPLUS_SNAPSHOTS=/tmp/shots [ACTIVITYPLUS_PAGES=overview,metric:cpu,…] [ACTIVITYPLUS_WARMUP=12] dist/Activity+.app/Contents/MacOS/ActivityPlus` renders every page, the menu bar panel and both share cards to PNG, then quits. `screencapture` does not work from the agent shell. `ACTIVITYPLUS_WINDOW_SIZE=1080x1700` renders long pages in full. Afterwards check `pgrep -fl dist/Activity+.app`: a run that stops early can leave a dev copy running, and its menu bar items then appear twice next to the installed app.

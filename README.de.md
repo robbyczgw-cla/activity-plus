@@ -137,7 +137,7 @@ Prozesse anderer Benutzer (root, `_windowserver`) zeigen CPU und belegten Speich
 
 ## Selbst bauen
 
-Benötigt Xcode 26 oder neuer. Die Skripte verwenden `/Applications/Xcode-beta.app`; mit `DEVELOPER_DIR` lässt sich ein anderes Xcode wählen.
+Benötigt Xcode 26 oder neuer. Die Skripte verwenden `/Applications/Xcode.app`; mit `DEVELOPER_DIR` lässt sich ein anderes Xcode wählen.
 
 ```bash
 scripts/build-app.sh --run      # Build in dist/ und starten

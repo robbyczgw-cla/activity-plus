@@ -1,5 +1,5 @@
 // Renders Resources/AppIcon.icns: a blue-violet squircle with a white heartbeat line and a small plus.
-// Run: DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer swift scripts/make-icon.swift
+// Run: DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift scripts/make-icon.swift
 import AppKit
 
 func render(_ size: Int) -> Data {

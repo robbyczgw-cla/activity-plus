@@ -137,7 +137,7 @@ Processes owned by other users (root, `_windowserver`) show CPU and resident mem
 
 ## Build from source
 
-Needs Xcode 26 or later. The scripts use `/Applications/Xcode-beta.app`; set `DEVELOPER_DIR` to use another Xcode.
+Needs Xcode 26 or later. The scripts use `/Applications/Xcode.app`; set `DEVELOPER_DIR` to use another Xcode.
 
 ```bash
 scripts/build-app.sh --run      # debug-signed build in dist/, then launch
