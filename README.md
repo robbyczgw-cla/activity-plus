@@ -26,6 +26,14 @@ Activity Monitor lists about 900 processes. Activity+ folds them into the 80 or 
 
 Get the latest notarized build from **[activityplus.xyz](https://activityplus.xyz/#download)**. Unzip it, move **Activity+.app** to Applications and open it. Updates arrive automatically once a day; you can turn that off in Settings.
 
+Or with [Homebrew](https://github.com/robbyczgw-cla/homebrew-tap):
+
+```sh
+brew install robbyczgw-cla/tap/activity-plus
+```
+
+This also puts the `aplus` command line tool on your path.
+
 Requires a Mac with Apple silicon and macOS 15 Sequoia or later. Developed and tested on an M1 Max.
 
 ## What it does

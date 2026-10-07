@@ -4,6 +4,8 @@
 #   scripts/release.sh             sign + notarize
 #   scripts/release.sh --site      … and put the zip + a signed appcast.xml into the homepage (../activityplus-site)
 #   scripts/release.sh --publish   … and create the GitHub release with appcast.xml (notes: docs/release-notes/v<version>.md)
+#                                  and bump the Homebrew cask in ../homebrew-tap
+#   scripts/release.sh --site --publish   both in one run (one build, one notarization)
 #
 # One-time setup — stores the App Store Connect API key as a keychain profile:
 #   xcrun notarytool store-credentials activityplus \
@@ -62,7 +64,7 @@ add_release_notes() {
 NOTES_FLAGS=(--embed-release-notes --full-release-notes-url "https://activityplus.xyz/changelog")
 
 # Homepage: activityplus.xyz serves the download and the update feed (works while the repo is private).
-if [[ "${1:-}" == "--site" ]]; then
+if [[ " $* " == *" --site "* ]]; then
   SITE="${SITE_DIR:-../activityplus-site}"
   mkdir -p "$SITE/download"
   cp "$ZIP" "$SITE/download/"
@@ -86,7 +88,7 @@ fi
 
 # Appcast for Sparkle: signed with the EdDSA key in the keychain (account "activityplus").
 # Every GitHub release carries appcast.xml, so .../releases/latest/download/appcast.xml always points at the newest.
-if [[ "${1:-}" == "--publish" ]]; then
+if [[ " $* " == *" --publish "* ]]; then
   STAGE="dist/appcast"
   rm -rf "$STAGE" && mkdir -p "$STAGE"
   cp "$ZIP" "$STAGE/"
@@ -98,4 +100,12 @@ if [[ "${1:-}" == "--publish" ]]; then
   gh release create "v$VERSION" "$ZIP" "$STAGE/appcast.xml" --repo robbyczgw-cla/activity-plus \
     --title "Activity+ $VERSION" --notes-file "$NOTES"
   echo "✓ Published v$VERSION"
+  # Homebrew tap (../homebrew-tap, github.com/robbyczgw-cla/homebrew-tap): the cask follows the release.
+  TAP="${TAP_DIR:-../homebrew-tap}"
+  if [[ -f "$TAP/Casks/activity-plus.rb" ]]; then
+    SHA=$(shasum -a 256 "$ZIP" | awk '{print $1}')
+    sed -i '' -e "s/^  version \".*\"/  version \"$VERSION\"/" -e "s/^  sha256 \".*\"/  sha256 \"$SHA\"/" "$TAP/Casks/activity-plus.rb"
+    git -C "$TAP" commit -qam "activity-plus $VERSION" && git -C "$TAP" push -q origin main
+    echo "✓ Homebrew cask $VERSION"
+  fi
 fi

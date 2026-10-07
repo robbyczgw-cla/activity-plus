@@ -26,6 +26,14 @@ Die Aktivitätsanzeige listet rund 900 Prozesse. Activity+ fasst sie zu den rund
 
 Die aktuelle notarisierte Version gibt es auf **[activityplus.xyz](https://activityplus.xyz/#download)**. Entpacken, **Activity+.app** in den Programme-Ordner ziehen und öffnen. Updates kommen einmal am Tag automatisch; das lässt sich in den Einstellungen abschalten.
 
+Oder mit [Homebrew](https://github.com/robbyczgw-cla/homebrew-tap):
+
+```sh
+brew install robbyczgw-cla/tap/activity-plus
+```
+
+Damit liegt auch das Kommandozeilen-Tool `aplus` im Pfad.
+
 Voraussetzung ist ein Mac mit Apple silicon und macOS 15 Sequoia oder neuer. Entwickelt und getestet auf einem M1 Max.
 
 ## Was es kann
