@@ -97,6 +97,10 @@ struct GPUCauseCard: View {
                 Text("No measurable effect: \(quiet.joined(separator: ", ")).")
                     .font(.caption).foregroundStyle(.secondary)
             }
+            if result.noise >= 3 {
+                Text("WindowServer's load wandered by about \(Format.percent(result.noise)) points on its own during the run, so smaller drops are not named.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             HStack {
                 Text("Measured \(date.formatted(date: .omitted, time: .shortened))").font(.caption).foregroundStyle(.secondary)
                 Spacer()

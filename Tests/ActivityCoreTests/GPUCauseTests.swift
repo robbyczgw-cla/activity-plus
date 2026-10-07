@@ -31,6 +31,19 @@ struct GPUCauseTests {
         #expect(!result.causes[2].isMeasurable)
     }
 
+    /// A wandering load (gaps of 4–6 points between neighbouring measurements) must not name apps
+    /// whose drop is within that wobble, while the real cause still stands out.
+    @Test func dropsWithinTheRunsOwnNoiseAreNotNamed() {
+        let result = GPUCauseAnalysis(steps: [
+            .init(name: "Steam", bundleID: nil, before: 55, hidden: 4, shownAgain: 20),
+            .init(name: "App Store", bundleID: nil, before: 20, hidden: 12, shownAgain: 15),
+            .init(name: "Arc", bundleID: nil, before: 15, hidden: 14, shownAgain: 19),
+            .init(name: "Mail", bundleID: nil, before: 19, hidden: 17, shownAgain: 14),
+        ], floor: 3)
+        #expect(result.noise == 5)
+        #expect(result.causes.filter(\.isMeasurable).map(\.name) == ["Steam"])
+    }
+
     @Test func busierWhileHiddenCountsAsZero() {
         let result = GPUCauseAnalysis(steps: [.init(name: "Notes", bundleID: nil, before: 10, hidden: 13, shownAgain: 10)], floor: 8)
         #expect(result.causes[0].contribution == 0)

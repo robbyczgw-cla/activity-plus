@@ -91,15 +91,22 @@ public struct GPUCauseAnalysis: Equatable, Sendable {
     public let floor: Double?
     public let causes: [Cause]
 
-    /// Drops below two points, or below a tenth of the load, are measuring noise.
-    static func threshold(for load: Double) -> Double { max(2, load * 0.1) }
+    /// How much WindowServer's load wanders on its own: the median gap between the measurements
+    /// right before and right after each app. The median ignores the one app that really changed it.
+    public let noise: Double
+
+    /// A drop has to clear two points, a tenth of the load, and three times the run's own noise.
+    static func threshold(for load: Double, noise: Double) -> Double { max(2, load * 0.1, noise * 3) }
 
     public init(steps: [Step], floor: Double?) {
         baseline = steps.first?.before ?? 0
         self.floor = floor
+        let gaps = steps.map { abs($0.before - $0.shownAgain) }.sorted()
+        let noise = gaps.isEmpty ? 0 : gaps.count % 2 == 1 ? gaps[gaps.count / 2] : (gaps[gaps.count / 2 - 1] + gaps[gaps.count / 2]) / 2
+        self.noise = noise
         causes = steps.map { step in
             let contribution = max(0, step.before - step.hidden)
-            let threshold = Self.threshold(for: step.before)
+            let threshold = Self.threshold(for: step.before, noise: noise)
             return Cause(name: step.name, bundleID: step.bundleID, hiddenPercent: step.hidden,
                          contribution: contribution, isMeasurable: contribution >= threshold,
                          quieterAfterShown: contribution >= threshold && step.before - step.shownAgain >= threshold)
