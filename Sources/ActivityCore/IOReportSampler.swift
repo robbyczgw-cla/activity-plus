@@ -15,6 +15,8 @@ public struct ChipPower: Sendable, Hashable {
     public var efficiencyMHz: Double?
     public var performanceMHz: Double?
     public var gpuMHz: Double?
+    /// Highest GPU clock in the chip's frequency table, so "50 % busy" can be read against what the GPU can do.
+    public var gpuMaxMHz: Double?
     public init() {}
 }
 
@@ -134,6 +136,7 @@ public final class IOReportSampler {
                 }
             case "GPU Stats" where subgroup == "GPU Performance States" && name == "GPUPH":
                 output.gpuMHz = averageFrequency(record, table: frequencies.gpu)?.mhz
+                output.gpuMaxMHz = frequencies.gpu.max()
             default:
                 break
             }

@@ -49,6 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         MainActor.assumeIsolated {
             AppServices.shared.history.flush()
             AppServices.shared.volumeController.stopAll()
+            GPUCauseFinder.shared.restore()
         }
     }
 

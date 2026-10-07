@@ -82,7 +82,7 @@ struct MetricDetailView: View {
                     CardHeader(title: "GPU", systemImage: "square.stack.3d.up", tint: metric.tint, trailing: s.gpu?.name)
                     BigNumber(text: Format.percent(s.gpu?.utilization ?? 0), size: 36)
                     StatLine(label: "Memory in use", value: Format.memory(s.gpu?.memoryInUse ?? 0))
-                    if let mhz = s.chip.gpuMHz { StatLine(label: "Clock", value: Self.clock(mhz)) }
+                    if let mhz = s.chip.gpuMHz { StatLine(label: "Clock", value: s.chip.gpuMaxMHz.map { "\(Self.clock(mhz)) of \(Self.clock($0))" } ?? Self.clock(mhz)) }
                     if let w = s.chip.gpuWatts { StatLine(label: "Power", value: Format.watts(w)) }
                     if let t = s.sensors.gpuTemperature { StatLine(label: "Temperature", value: Format.temperature(t)) }
                     StatLine(label: "Average", value: Format.percent(h.gpu.average))
@@ -95,6 +95,7 @@ struct MetricDetailView: View {
                     .frame(height: 150)
                 }
             }
+            GPUCauseCard()
             DisplaysCard()
         case .disk:
             HStack(alignment: .top, spacing: 14) {
