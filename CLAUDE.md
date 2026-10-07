@@ -17,7 +17,7 @@ macOS system monitor (Vitals alternative + extras). SwiftPM, no Xcode project. P
 - `ImageRenderer` on XDR Macs produces 16-bit PQ HDR images; always redraw into 8-bit sRGB before saving PNGs (see `ShareCard.pngData`).
 
 ## Release
-- `scripts/release.sh` signs with "Developer ID Application: Robert Czesany (P35939S43T)" (hardened runtime, `Resources/ActivityPlus.entitlements`), notarizes with the keychain profile `activityplus` (App Store Connect API key "hifiteam"), staples. `--publish` also builds the Sparkle appcast (EdDSA key in the login keychain, account `activityplus`) and creates the GitHub release on robbyczgw-cla/activity-plus with `docs/release-notes/v<version>.md`. It also bumps the Homebrew cask in `../homebrew-tap` (github.com/robbyczgw-cla/homebrew-tap). `--site` updates the homepage; `--site --publish` does both with one build and one notarization.
+- `scripts/release.sh` signs with "Developer ID Application: Robert Czesany (P35939S43T)" (hardened runtime, `Resources/ActivityPlus.entitlements`), notarizes with an App Store Connect API key stored as the keychain profile `activityplus`, staples. `--publish` also builds the Sparkle appcast (EdDSA key in the login keychain, account `activityplus`) and creates the GitHub release on robbyczgw-cla/activity-plus with `docs/release-notes/v<version>.md`. It also bumps the Homebrew cask in `../homebrew-tap` (github.com/robbyczgw-cla/homebrew-tap). `--site` updates the homepage; `--site --publish` does both with one build and one notarization.
 - Bump `CFBundleShortVersionString` in `Resources/Info.plist` before a release; the build number is the commit count.
 
 ## Gotchas
