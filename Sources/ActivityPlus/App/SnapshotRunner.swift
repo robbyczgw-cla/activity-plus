@@ -50,6 +50,13 @@ enum SnapshotRunner {
                 try? await Task.sleep(for: .seconds(1))
             }
             defer { if let resized { resized.window.setFrame(resized.frame, display: false) } }
+            // ACTIVITYPLUS_FILM=1 films a real "Find the Cause" run on the GPU page as numbered PNG frames
+            // (15 per second) for the demo video, instead of the page snapshots.
+            if ProcessInfo.processInfo.environment["ACTIVITYPLUS_FILM"] != nil {
+                await film(to: dir)
+                NSApp.terminate(nil)
+                return
+            }
             for page in pages {
                 NotificationCenter.default.post(name: selectNotification, object: page)
                 try? await Task.sleep(for: .seconds(Double(ProcessInfo.processInfo.environment["ACTIVITYPLUS_PAGE_WAIT"] ?? "2") ?? 2))
@@ -78,6 +85,32 @@ enum SnapshotRunner {
             }
             NSApp.terminate(nil)
         }
+    }
+
+    private static func film(to dir: String) async {
+        NotificationCenter.default.post(name: selectNotification, object: "metric:gpu")
+        // Like a real click on the button: Activity+ is the active app during the run.
+        NSApp.activate()
+        try? await Task.sleep(for: .seconds(2))
+        guard let window = NSApp.windows.first(where: { $0.title == "Activity+" || $0.identifier?.rawValue.contains("main") == true }),
+              let view = window.contentView else { return }
+        let interval = 1.0 / 15
+        var frame = 0
+        func shoot() {
+            save(view, to: String(format: "%@/frame-%05d.png", dir, frame))
+            frame += 1
+        }
+        // A few seconds of the busy GPU before the run, then the run, then the result.
+        let lead = Double(ProcessInfo.processInfo.environment["ACTIVITYPLUS_FILM_LEAD"] ?? "4") ?? 4
+        let start = Date()
+        while Date().timeIntervalSince(start) < lead { shoot(); try? await Task.sleep(for: .seconds(interval)) }
+        NSLog("film: run starts at frame %d", frame)
+        GPUCauseFinder.shared.start()
+        try? await Task.sleep(for: .seconds(0.2))
+        while GPUCauseFinder.shared.isRunning { shoot(); try? await Task.sleep(for: .seconds(interval)) }
+        NSLog("film: result at frame %d", frame)
+        let end = Date()
+        while Date().timeIntervalSince(end) < 5 { shoot(); try? await Task.sleep(for: .seconds(interval)) }
     }
 
     /// Every module in every style it supports, as the menu bar would draw it.

@@ -19,6 +19,9 @@ final class GPUCauseFinder {
     @ObservationIgnored private var task: Task<Void, Never>?
     /// Apps this run hid; shown again whatever happens (cancel, error, quit).
     @ObservationIgnored private var hiddenByUs: [NSRunningApplication] = []
+    /// The app that was active when the run started. Some apps draw constantly only while they are
+    /// active, so the run keeps the focus where it was instead of letting macOS move it.
+    @ObservationIgnored private var focus: NSRunningApplication?
 
     private static let baselineSeconds = 3.0
     private static let stepSeconds = 2.5
@@ -101,6 +104,7 @@ final class GPUCauseFinder {
             return
         }
         let frontmost = NSWorkspace.shared.frontmostApplication
+        focus = frontmost
         let total = apps.count + 2
         var steps: [GPUCauseAnalysis.Step] = []
         var floor: Double?
@@ -155,8 +159,17 @@ final class GPUCauseFinder {
         try await Task.sleep(for: .seconds(Self.settleSeconds))
         let hidden = try await measure(server, seconds: Self.stepSeconds)
         restore()
+        keepFocus()
         try await Task.sleep(for: .seconds(Self.settleSeconds))
         return hidden
+    }
+
+    /// Hiding or showing apps can move the focus; give it back to the app that had it.
+    private func keepFocus() {
+        guard let focus, !focus.isTerminated, !focus.isHidden,
+              NSWorkspace.shared.frontmostApplication?.processIdentifier != focus.processIdentifier else { return }
+        if focus.processIdentifier != ProcessInfo.processInfo.processIdentifier { NSApp.yieldActivation(to: focus) }
+        focus.activate()
     }
 
     private func measure(_ pid: pid_t, seconds: Double) async throws -> Double {
