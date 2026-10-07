@@ -168,6 +168,19 @@ private struct MenuBarSettings: View {
     @State private var selection: UUID?
     @AppStorage("menuBarWarnWhenStrained") private var warn = true
     @AppStorage("hiddenPanelTabs") private var hiddenTabs = ""
+    @AppStorage("menuBarLayout") private var layout = MenuBarLayout.automatic.rawValue
+    private var status = MenuBarLayoutStatus.shared
+
+    private var layoutNote: String? {
+        if let showing = status.combinedShowing {
+            return "Even as one item they don't fit next to the notch, so the menu bar shows the first \(showing). The panel has them all."
+        }
+        if status.autoCombined { return "Not every item fit next to the notch, so they are shown as one. Click a value to open its tab." }
+        if status.hidden > 0 {
+            return "\(status.hidden) \(status.hidden == 1 ? "item is" : "items are") hidden, most likely behind the notch. Choose Combined, or Combine when they don't fit."
+        }
+        return nil
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -175,6 +188,17 @@ private struct MenuBarSettings: View {
                 Label("The menu bar is off (General → Show Activity+ in → Dock only). These items appear once you turn it back on.",
                       systemImage: "info.circle")
                     .font(.callout).foregroundStyle(.secondary)
+            }
+            HStack {
+                Picker("Items", selection: $layout) {
+                    ForEach(MenuBarLayout.allCases) { Text($0.title).tag($0.rawValue) }
+                }
+                .frame(width: 330)
+                .onChange(of: layout) { _, _ in NotificationCenter.default.post(name: MenuBarItemStore.changed, object: nil) }
+                Spacer()
+            }
+            if let note = layoutNote {
+                Label(note, systemImage: "info.circle").font(.callout).foregroundStyle(.secondary)
             }
             // Live preview of the whole menu bar, in the order it appears (left to right).
             HStack(spacing: 10) {
