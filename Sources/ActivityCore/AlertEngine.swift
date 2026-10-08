@@ -99,8 +99,8 @@ public final class AlertEngine: @unchecked Sendable {
                 let busyMinutes = cpuWindow.filter { $0.averageCPU >= settings.cpuPercent }.count
                 if average >= settings.cpuPercent, Double(busyMinutes) >= Double(cpuWindow.count) * 0.8 {
                     fire(&alerts, .cpu, id, name, now,
-                         title: "\(name) is keeping the CPU busy",
-                         detail: "\(Format.percent(average)) on average for \(settings.cpuMinutes) minutes." + culprit(id) { $0.cpuPercent })
+                         title: String(localized: "\(name) is keeping the CPU busy"),
+                         detail: String(localized: "\(Format.percent(average)) on average for \(settings.cpuMinutes) minutes.") + culprit(id) { $0.cpuPercent })
                 }
             }
 
@@ -111,8 +111,8 @@ public final class AlertEngine: @unchecked Sendable {
                 // Steady growth, not a single jump: most minutes must go up.
                 if growth >= settings.memoryGrowthGB * 1_073_741_824, Double(rising) >= Double(memoryWindow.count - 1) * 0.6 {
                     fire(&alerts, .memoryGrowth, id, name, now,
-                         title: "\(name) keeps using more memory",
-                         detail: "Up \(Format.memory(UInt64(growth))) in \(Self.minutesText(settings.memoryWindowMinutes)), now \(Format.memory(UInt64(last.averageMemory)))." + culprit(id) { Double($0.memory) })
+                         title: String(localized: "\(name) keeps using more memory"),
+                         detail: String(localized: "Up \(Format.memory(UInt64(growth))) in \(Self.minutesText(settings.memoryWindowMinutes)), now \(Format.memory(UInt64(last.averageMemory))).") + culprit(id) { Double($0.memory) })
                 }
             }
 
@@ -121,14 +121,14 @@ public final class AlertEngine: @unchecked Sendable {
                 let disk = ioWindow.reduce(0) { $0 + $1.averageDisk } / Double(ioWindow.count)
                 if disk >= settings.diskMBps * 1_000_000 {
                     fire(&alerts, .disk, id, name, now,
-                         title: "\(name) is hammering the disk",
-                         detail: "\(Format.rate(disk)) for \(settings.ioMinutes) minutes, \(Format.storage(UInt64(disk * Double(settings.ioMinutes) * 60))) in total." + culprit(id) { $0.diskReadRate + $0.diskWriteRate })
+                         title: String(localized: "\(name) is hammering the disk"),
+                         detail: String(localized: "\(Format.rate(disk)) for \(settings.ioMinutes) minutes, \(Format.storage(UInt64(disk * Double(settings.ioMinutes) * 60))) in total.") + culprit(id) { $0.diskReadRate + $0.diskWriteRate })
                 }
                 let network = ioWindow.reduce(0) { $0 + $1.averageNetwork } / Double(ioWindow.count)
                 if network >= settings.networkMBps * 1_000_000 {
                     fire(&alerts, .network, id, name, now,
-                         title: "\(name) is using a lot of network",
-                         detail: "\(Format.rate(network)) for \(settings.ioMinutes) minutes." + culprit(id) { $0.netInRate + $0.netOutRate })
+                         title: String(localized: "\(name) is using a lot of network"),
+                         detail: String(localized: "\(Format.rate(network)) for \(settings.ioMinutes) minutes.") + culprit(id) { $0.netInRate + $0.netOutRate })
                 }
             }
         }
@@ -138,35 +138,35 @@ public final class AlertEngine: @unchecked Sendable {
                 pressureSince = pressureSince ?? now
                 if now.timeIntervalSince(pressureSince!) >= 120 {
                     let top = snapshot.apps.filter { $0.kind != .system }.max { $0.memory < $1.memory }
-                    fire(&alerts, .memoryPressure, nil, "Memory", now,
-                         title: "Your Mac is running out of memory",
-                         detail: top.map { "\($0.name) uses the most: \(Format.memory($0.memory))." } ?? "Quit apps you are not using.")
+                    fire(&alerts, .memoryPressure, nil, String(localized: "Memory"), now,
+                         title: String(localized: "Your Mac is running out of memory"),
+                         detail: top.map { String(localized: "\($0.name) uses the most: \(Format.memory($0.memory)).") } ?? "Quit apps you are not using.")
                 }
             } else {
                 pressureSince = nil
             }
             let disk = snapshot.disk
             if disk.total > 0, disk.free < 10_000_000_000 || Double(disk.free) / Double(disk.total) < 0.05 {
-                fire(&alerts, .diskFull, nil, "Disk", now,
-                     title: "The disk is almost full",
-                     detail: "Only \(Format.storage(disk.free)) free on \(disk.volumeName).")
+                fire(&alerts, .diskFull, nil, String(localized: "Disk"), now,
+                     title: String(localized: "The disk is almost full"),
+                     detail: String(localized: "Only \(Format.storage(disk.free)) free on \(disk.volumeName)."))
             }
             if let battery = snapshot.battery, battery.drainsWhilePluggedIn {
                 drainSince = drainSince ?? now
                 if now.timeIntervalSince(drainSince!) >= 180 {
-                    let adapter = battery.adapterWatts.map { "The \($0) W adapter" } ?? "The adapter"
-                    let draw = battery.systemPower.map { "the Mac draws \(Format.watts($0))" } ?? "the Mac draws more than it delivers"
-                    fire(&alerts, .power, nil, "Power", now,
-                         title: "The battery drains while plugged in",
-                         detail: "\(adapter) cannot keep up: \(draw). Use a stronger adapter or close heavy apps.")
+                    let adapter = battery.adapterWatts.map { String(localized: "The \($0) W adapter") } ?? "The adapter"
+                    let draw = battery.systemPower.map { String(localized: "the Mac draws \(Format.watts($0))") } ?? "the Mac draws more than it delivers"
+                    fire(&alerts, .power, nil, String(localized: "Power"), now,
+                         title: String(localized: "The battery drains while plugged in"),
+                         detail: String(localized: "\(adapter) cannot keep up: \(draw). Use a stronger adapter or close heavy apps."))
                 }
             } else {
                 drainSince = nil
             }
             if snapshot.thermal == .serious || snapshot.thermal == .critical {
-                fire(&alerts, .thermal, nil, "Temperature", now,
-                     title: "Your Mac is running hot",
-                     detail: "macOS is slowing the processor down to cool it.")
+                fire(&alerts, .thermal, nil, String(localized: "Temperature"), now,
+                     title: String(localized: "Your Mac is running hot"),
+                     detail: String(localized: "macOS is slowing the processor down to cool it."))
             }
         }
         return alerts
@@ -191,10 +191,10 @@ public final class AlertEngine: @unchecked Sendable {
         let total = app.processes.reduce(0) { $0 + value($1) }
         guard total > 0, value(top) / total >= 0.4 else { return "" }
         let command = top.hasDetails ? ProcessCommand.short(pid: top.pid, fallback: top.name) : top.name
-        return " Mostly \(command) (pid \(top.pid))."
+        return String(localized: " Mostly \(command) (pid \(top.pid)).")
     }
 
     private static func minutesText(_ minutes: Int) -> String {
-        minutes % 60 == 0 ? (minutes == 60 ? "an hour" : "\(minutes / 60) hours") : "\(minutes) minutes"
+        minutes % 60 == 0 ? (minutes == 60 ? String(localized: "an hour") : String(localized: "\(minutes / 60) hours")) : String(localized: "\(minutes) minutes")
     }
 }

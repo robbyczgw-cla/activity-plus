@@ -35,8 +35,8 @@ public enum AnomalyDetector {
             if memory > 500_000_000, memoryFactor >= 2.5, memory > base.typicalPeakMemory * 1.5 {
                 result.append(Anomaly(
                     appID: app.id, appName: app.name, kind: .memory,
-                    title: "\(app.name) uses \(String(format: "%.1f", memoryFactor))× its usual memory",
-                    detail: "\(Format.memory(app.memory)) now; normally about \(Format.memory(UInt64(usualMemory))).",
+                    title: { let factor = String(format: "%.1f", memoryFactor); return String(localized: "\(app.name) uses \(factor)× its usual memory") }(),
+                    detail: String(localized: "\(Format.memory(app.memory)) now; normally about \(Format.memory(UInt64(usualMemory)))."),
                     factor: memoryFactor))
             }
 
@@ -48,8 +48,8 @@ public enum AnomalyDetector {
                 if average > 30, cpuFactor >= 3 {
                     result.append(Anomaly(
                         appID: app.id, appName: app.name, kind: .cpu,
-                        title: "\(app.name) is much busier than usual",
-                        detail: "\(Format.percent(average)) CPU for the last minutes; it usually averages \(Format.percent(usualCPU)).",
+                        title: String(localized: "\(app.name) is much busier than usual"),
+                        detail: String(localized: "\(Format.percent(average)) CPU for the last minutes; it usually averages \(Format.percent(usualCPU))."),
                         factor: cpuFactor))
                 }
             }
@@ -166,10 +166,16 @@ public struct WeeklyReport: Sendable {
 
     /// One line for the Monday notification.
     public var headline: String {
-        guard let top = topEnergy.first else { return "Not enough history for a weekly report yet." }
-        var text = "\(top.name) used the most energy last week"
-        if totals.energyWh > 0 { text += " (\(String(format: "%.0f", top.energyWh)) of \(String(format: "%.0f", totals.energyWh)) Wh)" }
-        if let increase = biggestIncreases.first { text += ". \(increase.name) needed \(String(format: "%.1f", increase.factor))× more than the week before" }
+        guard let top = topEnergy.first else { return String(localized: "Not enough history for a weekly report yet.") }
+        var text = String(localized: "\(top.name) used the most energy last week")
+        if totals.energyWh > 0 {
+            let part = String(format: "%.0f", top.energyWh), whole = String(format: "%.0f", totals.energyWh)
+            text += String(localized: " (\(part) of \(whole) Wh)")
+        }
+        if let increase = biggestIncreases.first {
+            let factor = String(format: "%.1f", increase.factor)
+            text += String(localized: ". \(increase.name) needed \(factor)× more than the week before")
+        }
         return text + "."
     }
 }

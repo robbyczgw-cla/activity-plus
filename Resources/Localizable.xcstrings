@@ -1,0 +1,1245 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "": {},
+    " %@ is doing most of it.": {},
+    " %@ uses the most GPU time.": {},
+    " %@ uses the most.": {},
+    " %lld more things need attention.": {},
+    " (%@ of %@ Wh)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": " (%1$@ of %2$@ Wh)"
+          }
+        }
+      }
+    },
+    " 1 more thing needs attention.": {},
+    " Most of it is %@.": {},
+    " Mostly %@ (pid %d).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": " Mostly %1$@ (pid %2$d)."
+          }
+        }
+      }
+    },
+    "%@ (%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ (%2$@)"
+          }
+        }
+      }
+    },
+    "%@ (port %@) has done nothing for %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ (port %2$@) has done nothing for %3$@."
+          }
+        }
+      }
+    },
+    "%@ CPU for the last minutes; it usually averages %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ CPU for the last minutes; it usually averages %2$@."
+          }
+        }
+      }
+    },
+    "%@ CPU · %lld %% on performance cores": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ CPU · %2$lld %% on performance cores"
+          }
+        }
+      }
+    },
+    "%@ can do USB 3 but is connected at USB 2 speed, up to ten times slower. Usually the cable is a USB 2 or charging cable, or a hub or port in between only does USB 2. Try another cable or plug it straight into the Mac.": {},
+    "%@ cannot keep up: %@. Use a stronger adapter or close heavy apps.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ cannot keep up: %2$@. Use a stronger adapter or close heavy apps."
+          }
+        }
+      }
+    },
+    "%@ cleanable": {},
+    "%@ for %lld minutes, %@ in total.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ for %2$lld minutes, %3$@ in total."
+          }
+        }
+      }
+    },
+    "%@ for %lld minutes.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ for %2$lld minutes."
+          }
+        }
+      }
+    },
+    "%@ free of %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ free of %2$@"
+          }
+        }
+      }
+    },
+    "%@ h": {},
+    "%@ has been above %lld %% CPU for %lld minutes.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ has been above %2$lld %% CPU for %3$lld minutes."
+          }
+        }
+      }
+    },
+    "%@ holds a lot of memory": {},
+    "%@ is hammering the disk": {},
+    "%@ is keeping the CPU busy": {},
+    "%@ is much busier than usual": {},
+    "%@ is pinged every 30 seconds and sees your IP address.": {},
+    "%@ is running flat out": {},
+    "%@ is using a lot of network": {},
+    "%@ keeps using more memory": {},
+    "%@ mAh": {},
+    "%@ moves to the Trash. Quit the apps first so they do not recreate their caches right away. Empty the Trash to actually free the space.": {},
+    "%@ moves to the Trash. You can put everything back from the Trash until you empty it.": {},
+    "%@ now; normally about %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ now; normally about %2$@."
+          }
+        }
+      }
+    },
+    "%@ on average for %lld minutes.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ on average for %2$lld minutes."
+          }
+        }
+      }
+    },
+    "%@ runs at USB 2 speed": {},
+    "%@ stays above %lld %% CPU for %lld min": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ stays above %2$lld %% CPU for %3$lld min"
+          }
+        }
+      }
+    },
+    "%@ turn into heat converting the adapter's voltage.": {},
+    "%@ used the most energy last week": {},
+    "%@ uses %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ uses %2$@."
+          }
+        }
+      }
+    },
+    "%@ uses %@× its usual memory": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ uses %2$@× its usual memory"
+          }
+        }
+      }
+    },
+    "%@ uses more than %@ GB of memory": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ uses more than %2$@ GB of memory"
+          }
+        }
+      }
+    },
+    "%@ uses the most: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ uses the most: %2$@."
+          }
+        }
+      }
+    },
+    "%@ will be asked to stop. Port %@ will be freed.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ will be asked to stop. Port %2$@ will be freed."
+          }
+        }
+      }
+    },
+    "%@ · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%@ – %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ – %2$@"
+          }
+        }
+      }
+    },
+    "%@%lld %%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@%2$lld %%"
+          }
+        }
+      }
+    },
+    "%@: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@: %2$@"
+          }
+        }
+      }
+    },
+    "%@: %@ of one core": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@: %2$@ of one core"
+          }
+        }
+      }
+    },
+    "%@: supports %@, connected at %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@: supports %2$@, connected at %3$@"
+          }
+        }
+      }
+    },
+    "%@…": {},
+    "%lld": {},
+    "%lld %%": {},
+    "%lld W": {},
+    "%lld are running now. Turning one off stops it and keeps it from starting at login.": {},
+    "%lld dBm": {},
+    "%lld days": {},
+    "%lld destinations · %lld connections": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld destinations · %2$lld connections"
+          }
+        }
+      }
+    },
+    "%lld dev servers": {},
+    "%lld dev servers have not done anything for a while.": {},
+    "%lld drives run at USB 2 speed": {},
+    "%lld h powered on": {},
+    "%lld hours": {},
+    "%lld idle for a while — they still hold memory and ports.": {},
+    "%lld items start automatically": {},
+    "%lld local Time Machine snapshots": {},
+    "%lld locations": {},
+    "%lld macOS update snapshots": {},
+    "%lld minutes": {},
+    "%lld of %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld of %2$lld"
+          }
+        }
+      }
+    },
+    "%lld other snapshots": {},
+    "%lld outage(s) and %lld round(s) with packet loss in this period (red and orange points).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld outage(s) and %2$lld round(s) with packet loss in this period (red and orange points)."
+          }
+        }
+      }
+    },
+    "%lld processes": {},
+    "%lld processes will close. The app can ask you to save first.": {},
+    "%lld processes · up %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld processes · up %2$@"
+          }
+        }
+      }
+    },
+    "%lld rpm": {},
+    "%lld system processes show only CPU and memory.": {},
+    "%lld things start with your Mac": {},
+    "%lld × %lld pixels": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld × %2$lld pixels"
+          }
+        }
+      }
+    },
+    "%lldm": {},
+    "%llds": {},
+    "%lld×": {},
+    ". %@ needed %@× more than the week before": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": ". %1$@ needed %2$@× more than the week before"
+          }
+        }
+      }
+    },
+    ". Made by a backup app or by hand.": {
+      "extractionState": "manual"
+    },
+    "1 day": {},
+    "1 dev server": {},
+    "1 dev server has not done anything for a while.": {},
+    "1 h": {},
+    "1 minute": {},
+    "1 process": {},
+    "1 second": {},
+    "10 seconds": {},
+    "2 seconds": {},
+    "24 h": {},
+    "25 %": {},
+    "3": {},
+    "3 seconds": {},
+    "30 seconds": {},
+    "5": {},
+    "5 seconds": {},
+    "50 %": {},
+    "6 h": {},
+    "7 d": {},
+    "75 %": {},
+    "8": {},
+    "A USB device or USB activity woke the Mac.": {},
+    "A restart clears swap, leaked memory and stuck background processes. It is the cheapest fix there is.": {},
+    "A small helper that runs with administrator rights and only reads process counters (memory footprint, disk and energy) that macOS hides from apps for system processes. It cannot quit or change anything. macOS asks you to allow it once.": {},
+    "Above %lld %%": {},
+    "Accent color": {},
+    "Accessories": {
+      "extractionState": "manual"
+    },
+    "Activity+": {},
+    "Activity+ keeps everything on this Mac. It has no account and no analytics. Its only network request is the daily update check, which you can turn off above.": {},
+    "Adapter": {
+      "extractionState": "manual"
+    },
+    "Adapter too weak for the current load": {},
+    "Add Rule": {},
+    "Add Tile": {},
+    "Admin": {},
+    "Alerts": {},
+    "All": {},
+    "All of them are doing something.": {},
+    "All sensors": {
+      "extractionState": "manual"
+    },
+    "Allow “Activity+” in Login Items": {},
+    "Also ping a host (optional, e.g. 1.1.1.1)": {},
+    "Also show SMC keys without a known name": {},
+    "Always show": {},
+    "Animations and video may stutter.": {},
+    "App": {},
+    "App data or settings — not removed by Activity+": {},
+    "App memory": {
+      "extractionState": "manual"
+    },
+    "Apps": {},
+    "Apps and their data use %@. %@ of it is caches and logs that apps rebuild on their own.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Apps and their data use %1$@. %2$@ of it is caches and logs that apps rebuild on their own."
+          }
+        }
+      }
+    },
+    "Apps appear here while they play sound.": {},
+    "Apps are asked to quit first, so you can save open documents.": {},
+    "Apps during this session": {
+      "extractionState": "manual"
+    },
+    "Apps need more memory than this Mac has, so macOS compresses memory and moves it to the disk (swap). Switching apps and tabs gets slow.": {},
+    "Apps now": {},
+    "Apps power": {
+      "extractionState": "manual"
+    },
+    "Apps that open at login are managed in System Settings": {},
+    "Apps that used the most": {
+      "extractionState": "manual"
+    },
+    "Apps that used the most energy on battery": {},
+    "Apps using the most energy": {},
+    "Around %@ (5-minute window)": {},
+    "Ask first": {},
+    "Asking…": {},
+    "Asks api.ipify.org once. Activity+ never does this on its own.": {},
+    "At this pace": {
+      "extractionState": "manual"
+    },
+    "Automatically": {},
+    "Automation ran": {
+      "extractionState": "manual"
+    },
+    "Automations": {},
+    "Average": {
+      "extractionState": "manual"
+    },
+    "Average (10 min)": {
+      "extractionState": "manual"
+    },
+    "Background features": {},
+    "Backup": {},
+    "Battery": {},
+    "Battery at %@.": {},
+    "Battery states": {},
+    "Battery use while unplugged": {
+      "extractionState": "manual"
+    },
+    "Below %lld %%": {},
+    "Below the tiles": {},
+    "Bits (Mbit/s), like internet plans": {},
+    "Bluetooth activity, often a paired input device, woke the Mac.": {},
+    "Busiest apps": {},
+    "Busiest right now": {},
+    "Bytes (MB/s)": {},
+    "CPU": {},
+    "CPU power": {
+      "extractionState": "manual"
+    },
+    "CPU temperature": {
+      "extractionState": "manual"
+    },
+    "Cached files": {
+      "extractionState": "manual"
+    },
+    "Cancel": {},
+    "Celsius (°C)": {},
+    "Channel": {
+      "extractionState": "manual"
+    },
+    "Charge": {},
+    "Charge cycles": {
+      "extractionState": "manual"
+    },
+    "Charged": {},
+    "Charging at": {
+      "extractionState": "manual"
+    },
+    "Charging paused by the battery controller (reason %lld)": {},
+    "Check again": {},
+    "Check for Updates…": {},
+    "Check for updates automatically": {},
+    "Checked %@": {},
+    "Clear": {},
+    "Click a session to see it; tick a second one to compare.": {},
+    "Clock": {
+      "extractionState": "manual"
+    },
+    "Color": {},
+    "Compare with the selected session": {},
+    "Compressed": {
+      "extractionState": "manual"
+    },
+    "Compressed: %@": {},
+    "Conditions": {
+      "extractionState": "manual"
+    },
+    "Connection": {
+      "extractionState": "manual"
+    },
+    "Connection quality": {
+      "extractionState": "manual"
+    },
+    "Connections": {},
+    "Copy Dashboard": {},
+    "Copy Name": {},
+    "Copy Path": {},
+    "Copy Terminal command to turn off": {},
+    "Copy Terminal command to turn off (needs admin)": {},
+    "Core %lld: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Core %1$lld: %2$@"
+          }
+        }
+      }
+    },
+    "Cores": {},
+    "Could not change it": {},
+    "Could not quit": {},
+    "Counted since %@.": {},
+    "Customize Menu Bar…": {
+      "extractionState": "manual"
+    },
+    "Decimals": {},
+    "Delete \"%@\"?": {},
+    "Delete Session": {},
+    "Delete…": {},
+    "Disk": {},
+    "Disk above %lld MB/s": {},
+    "Disk and network": {},
+    "Display": {
+      "extractionState": "manual"
+    },
+    "Displays": {
+      "extractionState": "manual"
+    },
+    "Displays, desktop and menu bar": {
+      "extractionState": "manual"
+    },
+    "Do it": {},
+    "Done": {},
+    "Downloading": {
+      "extractionState": "manual"
+    },
+    "Drawing now": {
+      "extractionState": "manual"
+    },
+    "Drives": {
+      "extractionState": "manual"
+    },
+    "E": {},
+    "E-cores clock": {
+      "extractionState": "manual"
+    },
+    "Each one runs in the background and starts at login. Turn off the ones you do not need.": {},
+    "Efficiency cores": {},
+    "Energy": {},
+    "Enter a host name or an IP address.": {},
+    "Every open tab keeps its own process. Closing tabs you do not need frees memory right away.": {},
+    "Exact figures for system processes": {},
+    "Export": {},
+    "Export CSV…": {},
+    "Export JSON…": {},
+    "Export Settings…": {},
+    "Fahrenheit (°F)": {},
+    "Fans": {
+      "extractionState": "manual"
+    },
+    "Figure": {},
+    "Find Large Files": {},
+    "Finds how much space each app takes with everything it stores in your Library, plus developer caches. Nothing is removed without asking; removed files go to the Trash.": {},
+    "First measurement in a moment…": {},
+    "For %lld minutes": {},
+    "Force Quit": {},
+    "Force Quit %@…": {},
+    "Force Quit Process…": {},
+    "From": {},
+    "Full in": {
+      "extractionState": "manual"
+    },
+    "GB": {
+      "extractionState": "manual"
+    },
+    "GPU": {},
+    "General": {},
+    "HDR": {},
+    "Health": {
+      "extractionState": "manual"
+    },
+    "Health is what a full charge holds today compared with the battery when new.": {},
+    "Heat": {
+      "extractionState": "manual"
+    },
+    "Heat, memory pressure and Wi-Fi signal are kept from version 0.3 on. Come back in a few minutes.": {},
+    "Helper installed": {},
+    "Hidden": {},
+    "Hide apps for a moment?": {},
+    "High": {},
+    "History": {},
+    "History fills up while Activity+ runs. Come back in a few minutes.": {},
+    "Holding at 80 % (Optimized Charging)": {},
+    "Holding at the %lld %% charge limit": {},
+    "Host names": {},
+    "Idle": {
+      "extractionState": "manual"
+    },
+    "Idle dev servers still hold memory": {},
+    "Idle for %@": {},
+    "Ignore app": {},
+    "Ignored apps": {},
+    "Import Settings…": {},
+    "Include macOS": {},
+    "Inspect…": {},
+    "Install Helper…": {},
+    "It has been off for over a minute. Traffic now goes out without the VPN.": {
+      "extractionState": "manual"
+    },
+    "It has used about %@ cores without a break. If you are not waiting for it to finish something, it may be stuck.": {},
+    "It holds %@ of its original charge. Apple recommends service below 80 %%.": {},
+    "It saves battery by running the processor slower.": {},
+    "It starts now and at every login. Its program: %@": {},
+    "It stops now and does not start at login. %@ may lose a background feature (updates, sync, helpers). You can turn it back on here.": {},
+    "Items": {},
+    "Its measurements are removed from Activity+'s history. Export it first if you want to keep a copy.": {},
+    "Keep at least one item so Activity+ stays reachable": {},
+    "Keeping your Mac awake right now": {
+      "extractionState": "manual"
+    },
+    "Keeps the display on": {},
+    "Keeps the menu bar clean: the item appears only while the value is high.": {},
+    "Label": {},
+    "Large and old files": {
+      "extractionState": "manual"
+    },
+    "Last 24 hours": {},
+    "Last 3 days": {},
+    "Last 7 days": {},
+    "Last charge": {
+      "extractionState": "manual"
+    },
+    "Last week": {},
+    "Left with the measured apps hidden": {
+      "extractionState": "manual"
+    },
+    "Let this rule act without asking?": {},
+    "Line": {},
+    "Link speed": {
+      "extractionState": "manual"
+    },
+    "Load average": {
+      "extractionState": "manual"
+    },
+    "Login Items…": {},
+    "Look": {},
+    "Look up": {},
+    "Look up host names (sends DNS queries)": {},
+    "Looking at your Mac…": {},
+    "Looking…": {},
+    "Looks through Downloads, Desktop, Documents and Movies for installers you already used, downloads you never opened again and very large files. Nothing is selected or removed unless you choose it.": {},
+    "Looks up names for the addresses (sends DNS queries). Off by default.": {},
+    "Low": {},
+    "Low Power Mode is on": {},
+    "Low memory, full disk, overheating": {},
+    "Mac power draw": {
+      "extractionState": "manual"
+    },
+    "Measure": {},
+    "Measured %@": {},
+    "Measured by the kernel's per-process energy counters, not estimated. Processes owned by macOS are not included.": {},
+    "Measurements": {},
+    "Measures every %@ until you stop it. You can also start and stop from the menu bar (right-click).": {},
+    "Measures how fast your SSD writes and reads large files. Takes a few seconds and writes 1 GB, which is removed afterwards.": {},
+    "Measuring": {},
+    "Memory": {},
+    "Memory in use": {},
+    "Memory is getting tight": {},
+    "Memory pressure": {
+      "extractionState": "manual"
+    },
+    "Memory pressure has been critical for %lld minutes.": {},
+    "Memory pressure: %@": {},
+    "Memory, processor, disk and temperature all look healthy.": {},
+    "Menu Bar": {},
+    "Menu bar, panel, alert rules, automations and performance switches in one file, for another Mac or a fresh start. History stays on this Mac.": {},
+    "Metric": {},
+    "Monday notification": {},
+    "Most common reasons it woke up": {},
+    "Move %@ to Trash…": {},
+    "Move %lld items to the Trash?": {},
+    "Move to Trash": {},
+    "Moves %@ and everything it keeps in your Library to the Trash": {},
+    "Name": {},
+    "Name, e.g. \"Xcode clean build\"": {},
+    "Needed a lot more energy than the week before": {
+      "extractionState": "manual"
+    },
+    "Negotiated": {
+      "extractionState": "manual"
+    },
+    "Network": {},
+    "Network above %lld MB/s": {},
+    "Network activity or a network wake request woke the Mac.": {},
+    "Network speed": {},
+    "Neural Engine": {
+      "extractionState": "manual"
+    },
+    "No alerts": {},
+    "No answer": {},
+    "No app data yet for this period.": {},
+    "No app holds Neural Engine memory right now. Apps that run Core ML or local models show up here.": {},
+    "No app is busy right now.": {},
+    "No battery": {},
+    "No dev servers running": {},
+    "No dev servers running.": {},
+    "No lost packets in this period.": {},
+    "No measurable effect: %@.": {},
+    "No open connections": {},
+    "No process details for this moment. They are kept for apps with several processes, from version 0.2.5 on.": {},
+    "No process details for this period (they are kept from version 0.2.5 on, for apps with several processes).": {},
+    "No rules yet. Add one to let Activity+ take care of the usual suspects.": {},
+    "No sleep or wake in this period.": {},
+    "No snapshots on this volume.": {},
+    "Noise": {
+      "extractionState": "manual"
+    },
+    "None right now.": {},
+    "None visible (other users' processes hide this).": {},
+    "Not charging: battery temperature": {},
+    "Not enough history for a weekly report yet.": {},
+    "Not enough history yet": {},
+    "Not enough memory": {},
+    "Not now": {},
+    "Not running": {},
+    "Not slowing down yet, but it is close.": {},
+    "Nothing is playing": {},
+    "Nothing is slowing it down right now. A few things are worth knowing.": {},
+    "Nothing large or forgotten found.": {},
+    "Nothing. Your Mac can sleep when idle.": {},
+    "Now": {
+      "extractionState": "manual"
+    },
+    "OK": {},
+    "Offers": {},
+    "Only %@ free on %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Only %1$@ free on %2$@."
+          }
+        }
+      }
+    },
+    "Only show when above": {},
+    "Only your own processes; system processes need the helper.": {},
+    "Only your router is pinged.": {},
+    "Open Activity+": {},
+    "Open System Settings": {},
+    "Open at login": {},
+    "Open connections to other computers, grouped by app. Local traffic is left out.": {},
+    "Open http://localhost:%lld": {},
+    "Open the window at launch": {},
+    "Opening files and apps waits for the disk right now.": {},
+    "Other open ports (%lld)": {},
+    "Overview": {},
+    "Overview cards (drag to reorder)": {},
+    "Overview tiles (drag to reorder)": {},
+    "P": {},
+    "P %lld %%": {},
+    "P-cores clock": {
+      "extractionState": "manual"
+    },
+    "Panel": {},
+    "Peak": {
+      "extractionState": "manual"
+    },
+    "Peak CPU": {},
+    "Peak memory": {},
+    "Per-app writes are counted from version 0.3 on. The list fills up while Activity+ runs.": {},
+    "Percent": {},
+    "Performance": {},
+    "Performance and efficiency cores": {
+      "extractionState": "manual"
+    },
+    "Performance cores": {},
+    "Performance cores are fast and draw more power; efficiency cores are slower and frugal. IPC is how many instructions an app gets through per clock cycle.": {},
+    "Pings your router every 30 seconds and keeps latency, jitter and packet loss in the history, so you can tell a slow connection from a dropping one. Nothing leaves your network unless you add a host below.": {},
+    "Point at the chart to see which processes were behind a spike.": {},
+    "Power": {},
+    "Power adapter": {
+      "extractionState": "manual"
+    },
+    "Power draw": {
+      "extractionState": "manual"
+    },
+    "Power flow": {
+      "extractionState": "manual"
+    },
+    "Presets": {},
+    "Prevents sleep": {},
+    "Privacy": {},
+    "ProMotion / variable refresh": {},
+    "Projects": {},
+    "Public IP": {},
+    "Purgeable": {
+      "extractionState": "manual"
+    },
+    "Quit": {},
+    "Quit %@?": {},
+    "Quit %@…": {},
+    "Quit Activity+": {
+      "extractionState": "manual"
+    },
+    "Quit Process…": {},
+    "Quit an app that stays busy": {},
+    "Quit an app that uses too much memory": {},
+    "R %@  W %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "R %1$@  W %2$@"
+          }
+        }
+      }
+    },
+    "REC": {},
+    "Range": {},
+    "Read since launch": {
+      "extractionState": "manual"
+    },
+    "Reading": {
+      "extractionState": "manual"
+    },
+    "Reading the power log…": {},
+    "Received since launch": {
+      "extractionState": "manual"
+    },
+    "Recently": {
+      "extractionState": "manual"
+    },
+    "Recorded sessions": {
+      "extractionState": "manual"
+    },
+    "Recording · %@ · CPU %@ · memory %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Recording · %1$@ · CPU %2$@ · memory %3$@"
+          }
+        }
+      }
+    },
+    "Refresh every": {},
+    "Remaining": {
+      "extractionState": "manual"
+    },
+    "Remove": {},
+    "Remove item": {},
+    "Rename": {},
+    "Rename session": {},
+    "Rename…": {},
+    "Repeat at most every %lld min": {},
+    "Rescan": {},
+    "Reset": {},
+    "Reset order": {},
+    "Restart": {},
+    "Restart your Mac?": {},
+    "Router": {
+      "extractionState": "manual"
+    },
+    "Rules": {},
+    "Rules that act for you. Each rule either asks first with a notification button, or — only if you switch it to automatic — acts on its own.": {},
+    "Run Automatically": {},
+    "Run Test": {},
+    "Running (pid %d)": {},
+    "Save": {},
+    "Save Share Card (Dark)": {},
+    "Save Share Card (Light)": {},
+    "Save a 1200 × 630 image of your Mac's state": {},
+    "Scan Again": {},
+    "Scan again": {},
+    "Scan apps": {},
+    "Search": {},
+    "Search apps and processes": {},
+    "Search startup items": {},
+    "Seconds": {},
+    "Seconds ago": {},
+    "Select all caches": {},
+    "Select an item to change how it looks.": {},
+    "Select none": {},
+    "Selected": {},
+    "Sent since launch": {
+      "extractionState": "manual"
+    },
+    "Series": {},
+    "Servers you start from a project folder (node, python, go, rails…) appear here with their ports.": {},
+    "Session": {},
+    "Sessions": {},
+    "Settings": {},
+    "Settings (⌘,)": {},
+    "Show Activity+ in": {},
+    "Show Apple items": {},
+    "Show Call Stacks": {},
+    "Show in Finder": {},
+    "Show in Menu Bar": {
+      "extractionState": "manual"
+    },
+    "Show label": {},
+    "Show the value next to it": {},
+    "Shows": {},
+    "Sidebar": {},
+    "Signal": {
+      "extractionState": "manual"
+    },
+    "Sleep": {},
+    "Sleep & Battery Drain": {},
+    "Sleep and wake": {
+      "extractionState": "manual"
+    },
+    "Slowed by heat": {
+      "extractionState": "manual"
+    },
+    "Slower than it could be": {
+      "extractionState": "manual"
+    },
+    "Sound": {},
+    "Space macOS frees by itself as soon as something needs it: caches, iCloud files that are also in the cloud, older snapshots. It counts as used in some places and as free in others, which is why numbers disagree.": {},
+    "Space you can't see in Finder": {
+      "extractionState": "manual"
+    },
+    "Speed test": {
+      "extractionState": "manual"
+    },
+    "Spotlight is indexing": {},
+    "Spotlight is reading new or changed files so search can find them. It finishes on its own.": {},
+    "Start": {},
+    "Start Recording": {},
+    "Start a recording before a build, a render, an export or whatever makes your Mac slow. Activity+ measures every second while it runs, even with this window closed, and keeps the result so you can compare it with the next one or export it as CSV or JSON.": {},
+    "Startup": {},
+    "Startup Items": {},
+    "Stop": {},
+    "Stop %@?": {},
+    "Stop Recording": {},
+    "Stop dev servers idle for a day": {},
+    "Stop…": {},
+    "Storage": {},
+    "Stored on this Mac in %@ (%@).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Stored on this Mac in %1$@ (%2$@)."
+          }
+        }
+      }
+    },
+    "Style": {},
+    "Swap": {
+      "extractionState": "manual"
+    },
+    "Swap used": {
+      "extractionState": "manual"
+    },
+    "Swap used: %@": {},
+    "Symbol in front": {},
+    "Symbols Next to Values": {
+      "extractionState": "manual"
+    },
+    "System": {},
+    "System-wide items need an administrator. Copy the command and run it in Terminal.": {},
+    "Tabs": {},
+    "Target": {},
+    "Teal is the signal, gray the noise. The gap between them matters more than the signal alone: under 25 dB Wi-Fi slows down, under 15 dB it drops out.": {},
+    "Temperature": {},
+    "Temperatures": {},
+    "The %lld W adapter": {},
+    "The CPU averaged %@ over the last minutes. Everything else has to wait for it.": {},
+    "The Mac was plugged in the whole time.": {},
+    "The Mac woke for a scheduled timer or maintenance task.": {},
+    "The battery drains while plugged in": {},
+    "The battery is worn": {},
+    "The disk is almost full": {},
+    "The disk is very busy": {},
+    "The drive can do USB 3 but is connected at USB 2 speed. Usually the cable only does USB 2 (charging cables often do), or a hub or port in between does. Try another cable or plug it straight into the Mac.": {},
+    "The drive reports less than 1 % of its rated endurance used, too little to project from.": {},
+    "The drive says %lld %% of its rated endurance is used after %@ TB written. Reaching 100 %% does not mean it fails that day; it is the point the maker rates it for.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "The drive says %1$lld %% of its rated endurance is used after %2$@ TB written. Reaching 100 %% does not mean it fails that day; it is the point the maker rates it for."
+          }
+        }
+      }
+    },
+    "The embedded controller reported the wake reason: %@.": {},
+    "The graphics processor is maxed out": {},
+    "The lid was opened.": {},
+    "The menu bar is off (General → Show Activity+ in → Dock only). These items appear once you turn it back on.": {},
+    "The power button was pressed.": {},
+    "The processor is busy": {},
+    "The report Activity+ recorded while the app was frozen, stored in ~/Library/Logs/Activity+/Freezes": {},
+    "The report fills up while Activity+ runs. Check back after a few days.": {},
+    "Theme": {},
+    "Thermal state": {
+      "extractionState": "manual"
+    },
+    "Thermal state: %@": {},
+    "This Mac has no fans, or does not report them.": {},
+    "This Mac runs on mains power.": {},
+    "This charge": {
+      "extractionState": "manual"
+    },
+    "This is what slows your Mac down the most right now; details and a fix are below.": {},
+    "This session": {
+      "extractionState": "manual"
+    },
+    "This week so far": {},
+    "Time": {},
+    "Time zones": {},
+    "To": {},
+    "To find the app behind it, Activity+ hides your apps one at a time for a few seconds and measures how much WindowServer's GPU time drops.": {},
+    "Today": {
+      "extractionState": "manual"
+    },
+    "Turn Off": {},
+    "Turn On": {},
+    "Turn off %@?": {},
+    "Turn on %@?": {},
+    "Turn the first item into a warning sign while the Mac is under strain": {},
+    "Turn the meeting up and the music down. Audio is adjusted as it plays; nothing is recorded.": {},
+    "Type": {
+      "extractionState": "manual"
+    },
+    "Uninstall %@?": {},
+    "Uninstall…": {},
+    "Units": {},
+    "Unnamed": {},
+    "Unusual activity": {
+      "extractionState": "manual"
+    },
+    "Up %@": {},
+    "Up %@ in %@, now %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Up %1$@ in %2$@, now %3$@."
+          }
+        }
+      }
+    },
+    "Updates": {},
+    "Uploading": {
+      "extractionState": "manual"
+    },
+    "User": {
+      "extractionState": "manual"
+    },
+    "User input woke the Mac.": {},
+    "Using the most energy": {},
+    "Using the most memory": {},
+    "Voltage · current": {
+      "extractionState": "manual"
+    },
+    "Waiting for your OK": {
+      "extractionState": "manual"
+    },
+    "Warn when memory stays critical": {},
+    "Warn when the battery drops below 20 %": {},
+    "Watts": {},
+    "Watts into the battery": {},
+    "Watts while charging or discharging": {},
+    "Wear %lld %%": {},
+    "Weekly Report": {},
+    "What keeps WindowServer busy": {
+      "extractionState": "manual"
+    },
+    "What wears your SSD": {
+      "extractionState": "manual"
+    },
+    "When %@, %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "When %1$@, %2$@"
+          }
+        }
+      }
+    },
+    "While only the menu bar is shown, clocks, drives, network details and (unless a menu bar item shows them) temperatures are not read at all.": {},
+    "Whole Mac": {},
+    "Why Is It Slow?": {
+      "extractionState": "manual"
+    },
+    "Why is my Mac slow?": {},
+    "Wi-Fi network": {
+      "extractionState": "manual"
+    },
+    "Wi-Fi signal": {},
+    "Window": {},
+    "WindowServer used %@ of the GPU with every window visible.": {},
+    "WindowServer's load wandered by about %@ points on its own during the run, so smaller drops are not named.": {},
+    "Wired": {
+      "extractionState": "manual"
+    },
+    "With no window open, measure every": {},
+    "With no window or panel open, Activity+ measures at most every 5 seconds to save energy.": {},
+    "Within %lld minutes": {},
+    "Woke briefly (screen off)": {},
+    "Woke up": {},
+    "Writes and reads one 1 GB file in your caches folder, then removes it.": {},
+    "Writing": {
+      "extractionState": "manual"
+    },
+    "Written per day so far": {
+      "extractionState": "manual"
+    },
+    "Written per day, last 7 days": {
+      "extractionState": "manual"
+    },
+    "Written since launch": {
+      "extractionState": "manual"
+    },
+    "Written today": {
+      "extractionState": "manual"
+    },
+    "You get a notification when an app hogs the CPU, keeps growing in memory, or hammers the disk or network.": {},
+    "Your Mac has not restarted in %lld days": {},
+    "Your Mac is running fine": {},
+    "Your Mac is running hot": {},
+    "Your Mac is running out of memory": {},
+    "Your Mac is too hot and slows itself down": {},
+    "Your Mac is warm": {},
+    "Your Mac last week": {
+      "extractionState": "manual"
+    },
+    "a dev server has been idle for %@": {},
+    "an hour": {},
+    "compared with the last 7 days": {
+      "extractionState": "manual"
+    },
+    "dBm": {},
+    "e.g. America/New_York, Asia/Tokyo": {},
+    "floor": {},
+    "for %lld min": {},
+    "idle · %@": {},
+    "jitter %@ · loss %lld %%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "jitter %1$@ · loss %2$lld %%"
+          }
+        }
+      }
+    },
+    "kernel_task uses CPU time on purpose to keep the processor cool, which usually means the Mac is hot or charging with a weak adapter.": {},
+    "last 30 days": {
+      "extractionState": "manual"
+    },
+    "left with all apps hidden": {
+      "extractionState": "manual"
+    },
+    "looks like %lld × %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "looks like %1$lld × %2$lld"
+          }
+        }
+      }
+    },
+    "macOS does not reveal how much each snapshot takes.": {},
+    "macOS is compressing memory. It still copes, but quitting unused apps gives it room.": {},
+    "macOS is holding the CPU back": {},
+    "macOS is not slowing anything down.": {},
+    "macOS is reducing performance to cool down.": {},
+    "macOS is slowing the processor down to cool it.": {},
+    "macOS lowers the processor speed to cool down. Give the vents room, remove it from soft surfaces, and quit heavy apps.": {},
+    "macOS needs free space for swap, updates and caches. Below about 10 % everything gets slower and updates can fail.": {},
+    "measured since Activity+ started, ": {
+      "extractionState": "manual"
+    },
+    "memory pressure is critical for %lld min": {},
+    "mostly %@": {},
+    "ms": {},
+    "notify me": {},
+    "now": {},
+    "quit %@": {},
+    "quit it": {},
+    "reading…": {
+      "extractionState": "manual"
+    },
+    "seconds since start": {},
+    "since ": {
+      "extractionState": "manual"
+    },
+    "since %@": {},
+    "stop the server": {},
+    "t": {},
+    "the Mac draws %@": {},
+    "the battery drops below %lld %%": {},
+    "v": {},
+    "working · %@": {},
+    "–": {},
+    "“%@” will then happen without a confirmation. Apps are asked to quit normally, so they can still ask you to save. You get a notification every time it runs.": {},
+    "⌀ %@": {},
+    "⌀ CPU": {}
+  },
+  "version": "1.0"
+}

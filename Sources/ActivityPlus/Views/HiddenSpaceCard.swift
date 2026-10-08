@@ -36,21 +36,21 @@ struct HiddenSpaceCard: View {
         }
         if !timeMachine.isEmpty {
             let dates = timeMachine.compactMap(\.date).sorted()
-            row(icon: "clock.arrow.circlepath", title: "\(timeMachine.count) local Time Machine \(timeMachine.count == 1 ? "snapshot" : "snapshots")",
+            row(icon: "clock.arrow.circlepath", title: String(localized: "\(timeMachine.count) local Time Machine snapshots"),
                 detail: (dates.first.map { "Oldest from \($0.formatted(date: .abbreviated, time: .shortened)). " } ?? "")
                     + "Time Machine keeps them while the backup disk is away and removes them after 24 hours or when space runs low.",
                 button: "Time Machine Settings", url: "x-apple.systempreferences:com.apple.Time-Machine-Settings.extension")
         }
         if !updates.isEmpty {
             let prepared = updates.contains { $0.name.contains("MSUPrepareUpdate") }
-            row(icon: "arrow.down.circle", title: "\(updates.count) macOS update \(updates.count == 1 ? "snapshot" : "snapshots")",
+            row(icon: "arrow.down.circle", title: String(localized: "\(updates.count) macOS update snapshots"),
                 detail: prepared
                     ? "One belongs to an update that is downloaded and prepared but not installed yet. It can take several GB until you install the update."
                     : "Left by macOS updates so the system can be restored. macOS removes them on its own.",
                 button: "Software Update", url: "x-apple.systempreferences:com.apple.Software-Update-Settings.extension")
         }
         if !other.isEmpty {
-            row(icon: "camera.on.rectangle", title: "\(other.count) other \(other.count == 1 ? "snapshot" : "snapshots")",
+            row(icon: "camera.on.rectangle", title: String(localized: "\(other.count) other snapshots"),
                 detail: other.map(\.name).prefix(3).joined(separator: ", ") + ". Made by a backup app or by hand.", button: nil, url: nil)
         }
         Text("macOS does not reveal how much each snapshot takes.").font(.caption).foregroundStyle(.tertiary)

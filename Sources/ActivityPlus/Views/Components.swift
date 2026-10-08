@@ -84,7 +84,8 @@ struct StatLine: View {
     var body: some View {
         HStack {
             if let tint { Circle().fill(tint).frame(width: 7, height: 7) }
-            Text(label).foregroundStyle(.secondary)
+            // Labels are written as English literals and looked up in the string catalog at runtime.
+            Text(LocalizedStringKey(label)).foregroundStyle(.secondary)
             Spacer()
             Text(value).monospacedDigit().fontWeight(.medium)
         }
@@ -112,12 +113,12 @@ struct CardHeader: View {
 
     var body: some View {
         HStack {
-            Label(title, systemImage: systemImage)
+            Label(LocalizedStringKey(title), systemImage: systemImage)
                 .font(.headline)
                 .foregroundStyle(tint)
             Spacer()
             if let trailing {
-                Text(trailing).font(.caption).foregroundStyle(.secondary)
+                Text(LocalizedStringKey(trailing)).font(.caption).foregroundStyle(.secondary)
             }
         }
     }

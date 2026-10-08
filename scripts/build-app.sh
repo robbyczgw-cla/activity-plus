@@ -22,6 +22,8 @@ mkdir -p "$APP/Contents/Library/LaunchDaemons"
 cp Resources/LaunchDaemons/at.hifiteam.activityplus.helper.plist "$APP/Contents/Library/LaunchDaemons/"
 cp Resources/Info.plist "$APP/Contents/"
 [[ -f Resources/AppIcon.icns ]] && cp Resources/AppIcon.icns "$APP/Contents/Resources/"
+# Translations: the string catalog compiles to <lang>.lproj/Localizable.strings(dict) next to the app's resources.
+[[ -f Resources/Localizable.xcstrings ]] && xcrun xcstringstool compile Resources/Localizable.xcstrings --output-directory "$APP/Contents/Resources" >/dev/null
 # Sparkle ships as a binary framework; the executable finds it through @executable_path/../Frameworks.
 mkdir -p "$APP/Contents/Frameworks"
 ditto .build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework "$APP/Contents/Frameworks/Sparkle.framework"

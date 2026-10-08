@@ -36,19 +36,19 @@ public struct AutomationRule: Codable, Sendable, Identifiable, Hashable {
 
     public var summary: String {
         let when: String = switch trigger {
-        case .devServerIdle(let hours): "a dev server has been idle for \(Self.hours(hours))"
-        case .batteryBelow(let percent): "the battery drops below \(Int(percent)) %"
-        case .appMemoryAbove(_, let name, let gb): "\(name) uses more than \(String(format: "%g", gb)) GB of memory"
-        case .appCPUAbove(_, let name, let percent, let minutes): "\(name) stays above \(Int(percent)) % CPU for \(minutes) min"
-        case .memoryPressureCritical(let minutes): "memory pressure is critical for \(minutes) min"
+        case .devServerIdle(let hours): String(localized: "a dev server has been idle for \(Self.hours(hours))")
+        case .batteryBelow(let percent): String(localized: "the battery drops below \(Int(percent)) %")
+        case .appMemoryAbove(_, let name, let gb): { let amount = String(format: "%g", gb); return String(localized: "\(name) uses more than \(amount) GB of memory") }()
+        case .appCPUAbove(_, let name, let percent, let minutes): String(localized: "\(name) stays above \(Int(percent)) % CPU for \(minutes) min")
+        case .memoryPressureCritical(let minutes): String(localized: "memory pressure is critical for \(minutes) min")
         }
         let then: String = switch action {
-        case .notify: "notify me"
-        case .quitTriggeringApp: "quit it"
-        case .quitApp(_, let name): "quit \(name)"
-        case .stopDevServer: "stop the server"
+        case .notify: String(localized: "notify me")
+        case .quitTriggeringApp: String(localized: "quit it")
+        case .quitApp(_, let name): String(localized: "quit \(name)")
+        case .stopDevServer: String(localized: "stop the server")
         }
-        return "When \(when), \(then)"
+        return String(localized: "When \(when), \(then)")
     }
 
     /// Which actions make sense for a trigger.
@@ -61,7 +61,9 @@ public struct AutomationRule: Codable, Sendable, Identifiable, Hashable {
     }
 
     static func hours(_ hours: Double) -> String {
-        hours >= 24 && hours.truncatingRemainder(dividingBy: 24) == 0 ? "\(Int(hours / 24)) day\(hours == 24 ? "" : "s")" : "\(String(format: "%g", hours)) h"
+        hours >= 24 && hours.truncatingRemainder(dividingBy: 24) == 0
+            ? (hours == 24 ? String(localized: "1 day") : String(localized: "\(Int(hours / 24)) days"))
+            : String(localized: "\(String(format: "%g", hours)) h")
     }
 }
 
@@ -123,32 +125,32 @@ public final class AutomationEngine: @unchecked Sendable {
                     if idleFor >= hours * 3600 {
                         let project = server.directory.map { ($0 as NSString).lastPathComponent } ?? server.name
                         matches.append(AutomationMatch(rule: rule, target: .server(server),
-                            reason: "\(project) (port \(server.ports.map(String.init).joined(separator: ", "))) has done nothing for \(Format.duration(idleFor)).", date: now))
+                            reason: { let ports = server.ports.map(String.init).joined(separator: ", "); return String(localized: "\(project) (port \(ports)) has done nothing for \(Format.duration(idleFor)).") }(), date: now))
                     }
                 }
                 if !servers.isEmpty { firstSeen = firstSeen.filter { current.contains($0.key) } }
             case .batteryBelow(let percent):
                 if let battery = snapshot.battery, !battery.isPluggedIn, battery.percent < percent {
                     matches.append(AutomationMatch(rule: rule, target: .none,
-                        reason: "Battery at \(Format.percent(battery.percent)).", date: now))
+                        reason: String(localized: "Battery at \(Format.percent(battery.percent))."), date: now))
                 }
             case .appMemoryAbove(let appID, _, let gb):
                 if let app = snapshot.apps.first(where: { $0.id == appID }), Double(app.memory) > gb * 1_073_741_824 {
                     matches.append(AutomationMatch(rule: rule, target: .app(app),
-                        reason: "\(app.name) uses \(Format.memory(app.memory)).", date: now))
+                        reason: String(localized: "\(app.name) uses \(Format.memory(app.memory))."), date: now))
                 }
             case .appCPUAbove(let appID, _, let percent, let minutes):
                 let key = "\(rule.id):cpu"
                 if let app = snapshot.apps.first(where: { $0.id == appID }), app.cpuPercent > percent {
                     if sustained(key, minutes: minutes) {
                         matches.append(AutomationMatch(rule: rule, target: .app(app),
-                            reason: "\(app.name) has been above \(Int(percent)) % CPU for \(minutes) minutes.", date: now))
+                            reason: String(localized: "\(app.name) has been above \(Int(percent)) % CPU for \(minutes) minutes."), date: now))
                     }
                 }
             case .memoryPressureCritical(let minutes):
                 if snapshot.memory.pressure == .critical, sustained("\(rule.id):pressure", minutes: minutes) {
                     matches.append(AutomationMatch(rule: rule, target: .none,
-                        reason: "Memory pressure has been critical for \(minutes) minutes.", date: now))
+                        reason: String(localized: "Memory pressure has been critical for \(minutes) minutes."), date: now))
                 }
             }
         }

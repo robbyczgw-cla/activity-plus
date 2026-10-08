@@ -4,12 +4,12 @@ public extension ChargeHold {
     /// One line for lists, the CLI and AI agents.
     var summary: String {
         switch self {
-        case .full: "Charged"
-        case .optimized: "Holding at 80 % (Optimized Charging)"
-        case .chargeLimit(let percent): "Holding at the \(percent) % charge limit"
-        case .temperature: "Not charging: battery temperature"
-        case .adapterTooWeak: "Adapter too weak for the current load"
-        case .other(let code): "Charging paused by the battery controller (reason \(code))"
+        case .full: String(localized: "Charged")
+        case .optimized: String(localized: "Holding at 80 % (Optimized Charging)")
+        case .chargeLimit(let percent): String(localized: "Holding at the \(percent) % charge limit")
+        case .temperature: String(localized: "Not charging: battery temperature")
+        case .adapterTooWeak: String(localized: "Adapter too weak for the current load")
+        case .other(let code): String(localized: "Charging paused by the battery controller (reason \(code))")
         }
     }
 }

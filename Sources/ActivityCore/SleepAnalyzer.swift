@@ -78,7 +78,7 @@ public enum SleepAnalyzer {
                     .components(separatedBy: "Using ").first?.trimmingCharacters(in: .whitespaces) ?? "Unknown"
             } else if line.contains(" Wake ") || line.contains(" DarkWake ") {
                 reason = line.components(separatedBy: "\t").dropFirst().joined(separator: " ").trimmingCharacters(in: .whitespaces)
-            } else { reason = "Sleep" }
+            } else { reason = String(localized: "Sleep") }
             let ns = NSRange(line.startIndex..., in: line)
             let percent = batteryRE?.firstMatch(in: line, range: ns).flatMap { match -> Int? in
                 guard let r = Range(match.range(at: 1), in: line) else { return nil }
@@ -93,14 +93,14 @@ public enum SleepAnalyzer {
     public static func explain(_ reason: String) -> String {
         let value = reason.trimmingCharacters(in: .whitespacesAndNewlines)
         let lower = value.lowercased()
-        if lower.contains("lidopen") || lower.contains("lid open") { return "The lid was opened." }
-        if lower.contains("powerbutton") || lower.contains("power button") { return "The power button was pressed." }
-        if lower.contains("rtc") || lower.contains("maintenance") || lower.contains("alarm") { return "The Mac woke for a scheduled timer or maintenance task." }
-        if lower.contains("network") || lower.contains("tcpkeepalive") || lower.contains("magic packet") { return "Network activity or a network wake request woke the Mac." }
-        if lower.contains("usb") { return "A USB device or USB activity woke the Mac." }
-        if lower.contains("bluetooth") || lower.contains("btstack") { return "Bluetooth activity, often a paired input device, woke the Mac." }
-        if lower.hasPrefix("ec.") || lower.contains("ec.") { return "The embedded controller reported the wake reason: \(value)." }
-        if lower.contains("user") || lower.contains("keyboard") || lower.contains("trackpad") { return "User input woke the Mac." }
+        if lower.contains("lidopen") || lower.contains("lid open") { return String(localized: "The lid was opened.") }
+        if lower.contains("powerbutton") || lower.contains("power button") { return String(localized: "The power button was pressed.") }
+        if lower.contains("rtc") || lower.contains("maintenance") || lower.contains("alarm") { return String(localized: "The Mac woke for a scheduled timer or maintenance task.") }
+        if lower.contains("network") || lower.contains("tcpkeepalive") || lower.contains("magic packet") { return String(localized: "Network activity or a network wake request woke the Mac.") }
+        if lower.contains("usb") { return String(localized: "A USB device or USB activity woke the Mac.") }
+        if lower.contains("bluetooth") || lower.contains("btstack") { return String(localized: "Bluetooth activity, often a paired input device, woke the Mac.") }
+        if lower.hasPrefix("ec.") || lower.contains("ec.") { return String(localized: "The embedded controller reported the wake reason: \(value).") }
+        if lower.contains("user") || lower.contains("keyboard") || lower.contains("trackpad") { return String(localized: "User input woke the Mac.") }
         return value
     }
 

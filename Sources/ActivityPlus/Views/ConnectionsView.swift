@@ -34,7 +34,7 @@ struct ConnectionsView: View {
                             AppIconView(app: entry.app, size: 22)
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(entry.app.name).fontWeight(.medium)
-                                Text("\(remotes.count) destination\(remotes.count == 1 ? "" : "s") · \(entry.connections.count) connection\(entry.connections.count == 1 ? "" : "s")")
+                                Text("\(remotes.count) destinations · \(entry.connections.count) connections")
                                     .font(.caption).foregroundStyle(.secondary)
                             }
                             Spacer()
