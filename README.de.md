@@ -51,9 +51,9 @@ Voraussetzung ist ein Mac mit Apple silicon und macOS 15 Sequoia oder neuer. Ent
 ### Hardware
 - CPU pro Kern (Effizienz- und Leistungskerne), **Takt pro Cluster**, Last, Temperaturzustand.
 - Speicherdruck, Swap, Komprimierung.
-- GPU-Auslastung, Takt (im Verhältnis zum Höchsttakt) und Leistung. **Die App hinter WindowServer finden**: Die meisten Apps zeichnen über WindowServer, ihre GPU-Last erscheint deshalb unter dessen Namen. Activity+ blendet deine Apps nacheinander für ein paar Sekunden aus, misst, wie stark die GPU-Zeit von WindowServer sinkt, und blendet sie wieder ein.
-- **Alle Laufwerke** mit freiem Platz, Durchsatz, SMART-Status sowie NVMe-Verschleiß, -Temperatur, Betriebsstunden und geschriebenen Daten.
-- Netzwerk-Durchsatz, Schnittstellen, Adressen, WLAN-Signal, Kanal und Verbindungsgeschwindigkeit. Die öffentliche IP wird nur auf Klick abgefragt.
+- GPU-Auslastung, Takt (im Verhältnis zum Höchsttakt) und Leistung. **Die App hinter WindowServer finden**: Die meisten Apps zeichnen über WindowServer, ihre GPU-Last erscheint deshalb unter dessen Namen. Activity+ blendet Ihre Apps nacheinander für ein paar Sekunden aus, misst, wie stark die GPU-Zeit von WindowServer sinkt, und blendet sie wieder ein.
+- **Alle Laufwerke** mit freiem Platz, Durchsatz, SMART-Status sowie NVMe-Verschleiß, -Temperatur, Betriebsstunden und geschriebenen Daten. Welche Apps am meisten auf die SSD schreiben und wie viele Jahre sie bei diesem Tempo hält, nach dem Verschleißzähler des Laufwerks selbst. Eine Warnung, wenn ein USB-Laufwerk USB 3 kann, aber nur mit USB-2-Tempo läuft (meist liegt es am Kabel).
+- Netzwerk-Durchsatz, Schnittstellen, Adressen, WLAN-Signal, Rauschen, Kanal und Verbindungsgeschwindigkeit. Die öffentliche IP wird nur auf Klick abgefragt.
 - **Verbindungsqualität** (aus, bis Sie sie einschalten): Latenz, Jitter und Paketverlust zum Router alle 30 Sekunden, im Verlauf gespeichert – so lässt sich eine wackelige von einer langsamen Verbindung unterscheiden.
 - **Bildschirme**: Bildrate, Auflösung, HDR und ProMotion pro Bildschirm, mit Warnung, wenn ein Kabel oder Dock einen Monitor unter seiner möglichen Bildrate hält.
 - **Alle Sensoren**: mehrere hundert Temperaturen, Spannungen, Ströme und Leistungswerte, dazu die Lüfter.
@@ -62,7 +62,7 @@ Voraussetzung ist ein Mac mit Apple silicon und macOS 15 Sequoia oder neuer. Ent
 ![Festplatte](docs/screenshots/metric-disk.jpg)
 
 ### Eine Menüleiste, wie Sie sie wollen
-Beliebig viele Menüleisten-Einträge. Jeder zeigt eine Sache (CPU, Speicher, GPU, Festplatte, Netzwerk, Temperatur, Lüfter, Akku, Leistung oder eine Uhr mit Zeitzonen) in einem von elf Stilen: Wert, Beschriftung und Wert, Liniendiagramm, Balkendiagramm, Balken pro Kern, Ring, Tacho, Punkt, Up/Down-Geschwindigkeit, Akku oder Symbol. Farben passen sich der Menüleiste an, gehen mit der Last von Grün nach Rot oder folgen einer selbst gewählten Farbe. Ein Eintrag kann sich ausblenden, bis sein Wert hoch ist, und ein Akku-Eintrag kann statt der Prozent die Ladeleistung in Watt zeigen. Lädt der Mac, erscheint ein Blitz im Akku-Symbol; ein Stecker zeigt, dass er am Netzteil hängt, ohne zu laden. Ein Rechtsklick auf einen Eintrag schaltet Module ein und aus, wählt eine Voreinstellung (minimal, ausgewogen, alles) oder setzt Symbole vor die Werte; ein Klick öffnet ein kompaktes Panel auf dem passenden Reiter.
+Beliebig viele Menüleisten-Einträge. Jeder zeigt eine Sache (CPU, Speicher, GPU, Festplatte, Netzwerk, Temperatur, Lüfter, Akku, Leistung oder eine Uhr mit Zeitzonen) in einem von elf Stilen: Wert, Beschriftung und Wert, Liniendiagramm, Balkendiagramm, Balken pro Kern, Ring, Tacho, Punkt, Up/Down-Geschwindigkeit, Akku oder Symbol. Farben passen sich der Menüleiste an, gehen mit der Last von Grün nach Rot oder folgen einer selbst gewählten Farbe. Ein Eintrag kann sich ausblenden, bis sein Wert hoch ist, und ein Akku-Eintrag kann statt der Prozent die Ladeleistung in Watt zeigen. Lädt der Mac, erscheint ein Blitz im Akku-Symbol; ein Stecker zeigt, dass er am Netzteil hängt, ohne zu laden. Ein Rechtsklick auf einen Eintrag schaltet Module ein und aus, wählt eine Voreinstellung (minimal, ausgewogen, alles) oder setzt Symbole vor die Werte; ein Klick öffnet ein kompaktes Panel auf dem passenden Reiter. Passen die Einträge nicht neben die Notch, werden sie zu einem zusammengefasst (oder immer, wenn Sie das möchten); ein Klick auf einen Wert öffnet weiterhin seinen Reiter.
 
 <p align="center"><img src="docs/media/menubar.gif" alt="Menüleisten-Einträge erscheinen nacheinander" width="720"></p>
 
@@ -78,13 +78,14 @@ Alles, was spürbar CPU kostet, hat einen eigenen Schalter unter **Einstellungen
 Auch der Rest lässt sich einstellen: welche Seiten die Seitenleiste zeigt, welche Übersichtskarten in welcher Reihenfolge erscheinen, die Akzentfarbe, °C oder °F, Bytes oder Bits für Netzwerk-Geschwindigkeiten, das Aktualisierungsintervall und die Reiter des Menüleisten-Panels.
 
 ### Warum ist mein Mac langsam?
-Ein Klick liefert eine Antwort in klaren Worten: zu wenig Speicher, eine App unter Volllast, Drosselung wegen Hitze, fast volle Festplatte, Spotlight-Indizierung, untätige Dev-Server, lange Laufzeit mit viel Swap, verschlissener Akku. Jeder Befund zeigt seine Belege und bietet die passende Abhilfe an.
+Ein Klick liefert eine Antwort in klaren Worten: zu wenig Speicher, eine App unter Volllast, Drosselung wegen Hitze, fast volle Festplatte, Spotlight-Indizierung, untätige Dev-Server, lange Laufzeit mit viel Swap, verschlissener Akku, ein USB-Laufwerk mit USB-2-Tempo. Jeder Befund zeigt seine Belege und bietet die passende Abhilfe an.
 
 ![Diagnose](docs/screenshots/diagnosis.jpg)
 
 ### Verlauf, Warnungen und Auffälligkeiten
 - **30 Tage Verlauf** in einer kleinen SQLite-Datei: Diagramme von 12 Stunden bis 30 Tage, welche Apps am meisten verbraucht haben, heute und diese Woche geschriebene und geladene Daten. Auf einen Ausschlag zeigen verrät die Prozesse dahinter: aus „Terminal“ wird `node vite` (Befehlszeilen werden gekürzt, alles, was nach Token oder Passwort aussieht, wird geschwärzt).
-- **Warnungen**, wenn eine App die CPU dauerhaft belastet, ständig mehr Speicher braucht oder Festplatte bzw. Netzwerk stark beansprucht – und wenn der Speicher knapp wird, die Festplatte vollläuft, der Mac überhitzt oder eine App hängt.
+- **Bedingungen** unter dem Verlaufsdiagramm: Hitze, Speicherdruck sowie WLAN-Signal und -Rauschen für jede Minute. So lässt sich ein langsamer Nachmittag erklären, auch wenn keine einzelne App auffällt.
+- **Warnungen**, wenn eine App die CPU dauerhaft belastet, ständig mehr Speicher braucht oder Festplatte bzw. Netzwerk stark beansprucht – und wenn der Speicher knapp wird, die Festplatte vollläuft, der Mac überhitzt, ein VPN abbricht oder eine App hängt. Bei einem Hänger nimmt Activity+ drei Sekunden lang die Aufrufstapel der App auf und nennt die Stelle, an der sie feststeckte.
 - **Ungewöhnlich für diese App.** Activity+ lernt, was für jede App normal ist, und meldet deutliche Abweichungen („Slack braucht 3,2 × so viel Speicher wie sonst“). Gleichmäßiges Wachstum bei gleichbleibenden Prozessen wird als wahrscheinliches Speicherleck gemeldet, mit Prognose.
 - **Mess-Sessions.** Vor einem Build, einem Rendering oder allem, was den Mac langsam macht, eine Aufnahme starten: Activity+ misst jede Sekunde, merkt sich die aktivsten Apps, vergleicht zwei Sessions und exportiert CSV oder JSON.
 - **Wochenbericht** jeden Montag: die Apps mit dem meisten Energie-, Speicher-, CPU- und Netzwerkverbrauch, im Vergleich zur Vorwoche.
@@ -95,6 +96,7 @@ Ein Klick liefert eine Antwort in klaren Worten: zu wenig Speicher, eine App unt
 - **Dev-Server nach Projekt**, mit Ports und Angabe, ob sie arbeiten, ruhen oder kaum genutzt werden. Einen vergessenen Server mit einem bestätigten Klick stoppen.
 - **Startobjekte** nach App gruppiert, mit Schaltern für die Einträge im eigenen Benutzerkonto.
 - **Speicherplatz pro App**, inklusive allem, was die App in der Library ablegt, dazu Entwickler-Caches. Caches und Logs lassen sich in den Papierkorb legen. **Deinstallieren** samt Resten (gemeinsame Daten anderer Apps bleiben).
+- **Platz, den der Finder nicht zeigt**: löschbarer Speicher und APFS-Snapshots (lokale Time-Machine-Backups, ein vorbereitetes macOS-Update), erklärt, mit der Einstellung, die sich darum kümmert.
 - **Große und alte Dateien**: benutzte Installer, nie wieder geöffnete Downloads, Riesendateien. Ausgewählt wird nur, was Sie wählen.
 - **Festplatten-Speedtest**: sequenzielle Schreib- und Leserate der SSD.
 - **Panel-Editor**: Kacheln des Menüleisten-Panels auswählen und sortieren, Anzahl der aktivsten Apps, Theme.
@@ -128,6 +130,10 @@ Activity+ hat kein Konto und keine Analyse. Die einzige automatische Netzwerkanf
 | Takt, GPU-Leistung | IOReport (Leistungszustände und Energiemodell) |
 | GPU-Auslastung und GPU-Zeit pro App | IOKit `IOAccelerator` |
 | Die App hinter der GPU-Last von WindowServer | GPU-Zeit von WindowServer, während jede App ausgeblendet ist (`NSRunningApplication.hide`); Fenster von Hilfsprozessen über den verantwortlichen Prozess ihrer App zugeordnet |
+| Aufrufstapel einer hängenden App | `/usr/bin/sample`, drei Sekunden, abgelegt in `~/Library/Logs/Activity+/Freezes` |
+| Snapshots und löschbarer Speicher | `diskutil apfs listSnapshots`, `volumeAvailableCapacityForImportantUsage` |
+| USB-Laufwerke unter ihrem Tempo | IOKit `IOUSBHostDevice` (`bcdUSB` gegen `Device Speed`) |
+| VPN-Abbrüche | die lokale VPN-Liste (`scutil --nc list`), nichts wird gesendet |
 | Temperaturen, Spannungen, Ströme, Lüfter | IOHID-Ereignissystem und SMC |
 | Laufwerke und NVMe-Zustand | IOKit-Statistiken und NVMe-SMART-Log |
 | Netzwerk | `sysctl NET_RT_IFLIST2`, `nettop` pro App, SystemConfiguration, CoreWLAN |
