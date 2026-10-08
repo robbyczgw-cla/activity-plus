@@ -10,8 +10,8 @@ macOS system monitor (Vitals alternative + extras). SwiftPM, no Xcode project. P
 - `.build/debug/aplus [--memory|--json|--bench|--hardware [--verbose]]` to sanity-check numbers, per-sampler timings, and IOReport/network/sensor readers. `aplus mcp` runs the MCP server.
 
 ## Localization
-- English source strings, German translation in `Resources/Localizable.xcstrings`; `build-app.sh` compiles it into the app's `<lang>.lproj`.
-- `scripts/l10n-extract.sh` collects new strings (compiler extraction plus the literals passed to `CardHeader`, `StatLine`, `.help`, menu items); `--check` fails on untranslated ones and runs in `release.sh`. `scripts/l10n-apply.py <lang> file.json` writes translations, plurals as `{"one","other"}`.
+- English source strings in `Resources/Localizable.xcstrings`, translated into the languages listed in `Info.plist` `CFBundleLocalizations`; `build-app.sh` compiles them into the app's `<lang>.lproj`.
+- `scripts/l10n-extract.sh` collects new strings (compiler extraction plus the literals passed to `CardHeader`, `StatLine`, `.help`, menu items); `--check` fails on untranslated ones and runs in `release.sh`. `scripts/l10n-apply.py <lang> file.json` writes translations, plurals as `{"one","other"}`; run `scripts/l10n-validate.py <lang> file.json` first (keys, placeholders, plural forms). A `%` followed by a space and a letter reads as a format specifier, so avoid it in translations.
 - UI text in ActivityCore goes through `String(localized:)`; never localize identifiers, process names, pmset/IORegistry keys or dictionary keys. Count phrases use catalog plurals, not `? "" : "s"`.
 - `Format.locale` stays nil for the CLI and MCP (machine-readable "25.7"); the app sets the user's locale.
 - German follows macOS: "du", "Batterie" (not "Akku"), Activity Monitor's terms.

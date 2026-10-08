@@ -34,7 +34,7 @@ brew install robbyczgw-cla/tap/activity-plus
 
 Damit liegt auch das Kommandozeilen-Tool `aplus` im Pfad.
 
-Voraussetzung ist ein Mac mit Apple silicon und macOS 15 Sequoia oder neuer. Entwickelt und getestet auf einem M1 Max.
+Voraussetzung ist ein Mac mit Apple silicon und macOS 15 Sequoia oder neuer. Entwickelt und getestet auf einem M1 Max. Die App folgt der Sprache Ihres Macs: Deutsch, Englisch, Französisch, Spanisch, Italienisch, Portugiesisch (Brasilien), Japanisch oder vereinfachtes Chinesisch.
 
 ## Was es kann
 
