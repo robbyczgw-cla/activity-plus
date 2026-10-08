@@ -40,7 +40,7 @@
 **v0.2.9.1 (07.10.2026)**
 - Find the Cause keeps the focus on the app that had it, so apps that only redraw while active are not blamed on another app
 
-**v0.3.0**
+**v0.3.0 (08.10.2026)**
 - Why it was slow: heat, memory pressure and Wi-Fi (signal and noise) per minute in the history; call stacks of frozen apps (and freezes caught after ~6 s instead of 20 s with the window closed)
 - Storage: purgeable space and APFS snapshots explained; Disk: SSD writes per app and years left at this pace; USB drives running at USB 2 speed
 - Menu bar: combined item, automatically when items don't fit next to the notch
