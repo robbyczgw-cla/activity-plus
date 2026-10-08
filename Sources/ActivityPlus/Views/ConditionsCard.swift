@@ -14,7 +14,7 @@ struct ConditionsCard: View {
 
     var body: some View {
         Card {
-            CardHeader(title: "Conditions", systemImage: "thermometer.medium", tint: .orange, trailing: "last \(range.rawValue)")
+            CardHeader(title: "Conditions", systemImage: "thermometer.medium", tint: .orange, trailing: String(localized: "last \(range.rawValue)"))
             if recorded.count < 2 {
                 Text("Heat, memory pressure and Wi-Fi signal are kept from version 0.3 on. Come back in a few minutes.")
                     .font(.callout).foregroundStyle(.secondary)
@@ -43,7 +43,7 @@ struct ConditionsCard: View {
     private func band(title: String, summary: String, color: @escaping (HistoryStore.SystemPoint) -> Color) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(title).font(.callout.weight(.medium))
+                Text(LocalizedStringKey(title)).font(.callout.weight(.medium))
                 Spacer()
                 Text(summary).font(.caption).foregroundStyle(.secondary)
             }
@@ -121,7 +121,7 @@ struct ConditionsCard: View {
         let warm = recorded.filter { ($0.thermal ?? 0) == 1 }.count
         if hot > 0 { return "hot for about \(duration(hot))" }
         if warm > 0 { return "warm for about \(duration(warm)), never hot" }
-        return "normal the whole time"
+        return String(localized: "normal the whole time")
     }
 
     private var pressureSummary: String {
@@ -129,13 +129,13 @@ struct ConditionsCard: View {
         let elevated = recorded.filter { ($0.pressure ?? 1) == 2 }.count
         if critical > 0 { return "critical for about \(duration(critical))" }
         if elevated > 0 { return "elevated for about \(duration(elevated))" }
-        return "normal the whole time"
+        return String(localized: "normal the whole time")
     }
 
     private var wifiSummary: String {
         let values = wifi.compactMap(\.wifiRSSI)
         guard let worst = values.min() else { return "" }
         let average = values.reduce(0, +) / Double(values.count)
-        return String(format: "average %.0f dBm, weakest %.0f dBm", average, worst)
+        return String(format: String(localized: "average %.0f dBm, weakest %.0f dBm"), average, worst)
     }
 }

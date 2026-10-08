@@ -24,7 +24,7 @@ struct AppListView: View {
             }
         }
         var title: String {
-            let verb = force ? "Force quit" : "Quit"
+            let verb = force ? String(localized: "Force quit") : "Quit"
             switch target {
             case .app(let app): return "\(verb) \(app.name)?"
             case .process(let process): return "\(verb) \(process.name)?"
@@ -34,10 +34,10 @@ struct AppListView: View {
             switch target {
             case .app(let app):
                 let count = app.processes.count
-                let base = count == 1 ? "1 process will close." : "\(count) processes will close."
-                return force ? base + " Unsaved changes will be lost." : base
+                let base = count == 1 ? String(localized: "1 process will close.") : "\(count) processes will close."
+                return force ? base + String(localized: " Unsaved changes will be lost.") : base
             case .process(let process):
-                return "Process \(process.pid) will close." + (force ? " Unsaved changes will be lost." : "")
+                return "Process \(process.pid) will close." + (force ? String(localized: " Unsaved changes will be lost.") : "")
             }
         }
     }
@@ -129,7 +129,7 @@ private struct AppRow: View {
                 Button { onQuit(false) } label: { Image(systemName: "xmark.circle.fill") }
                     .buttonStyle(.borderless)
                     .foregroundStyle(.secondary)
-                    .help("Quit \(app.name)…")
+                    .help(String(localized: "Quit \(app.name)…"))
             }
             UsageBar(fraction: metric.value(app) / scale, tint: metric.tint)
                 .frame(width: 90)
@@ -170,7 +170,7 @@ private struct ProcessRow: View {
             Spacer().frame(width: 46)
             VStack(alignment: .leading, spacing: 1) {
                 Text(process.name).lineLimit(1).truncationMode(.middle)
-                Text("pid \(process.pid)" + (process.hasDetails ? "" : " · limited details"))
+                Text("pid \(process.pid)" + (process.hasDetails ? "" : String(localized: " · limited details")))
                     .font(.caption2).foregroundStyle(.tertiary)
             }
             Spacer(minLength: 12)

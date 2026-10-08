@@ -63,7 +63,7 @@ final class AppServices {
             }
         }
         var alert = AppAlert(date: Date(), kind: .hang, appID: nil, appName: hang.name,
-                             title: "\(hang.name) stopped responding", detail: detail)
+                             title: String(localized: "\(hang.name) stopped responding"), detail: detail)
         alert.reportPath = report?.url.path
         record(alert)
     }
@@ -230,7 +230,7 @@ final class AppServices {
             if let last = lowBatteryWarned[device.name], Date().timeIntervalSince(last) < 6 * 3600 { continue }
             lowBatteryWarned[device.name] = Date()
             record(AppAlert(date: Date(), kind: .accessory, appID: nil, appName: device.name,
-                            title: "\(device.name) is almost empty", detail: "\(device.lowest) % battery left."))
+                            title: String(localized: "\(device.name) is almost empty"), detail: String(localized: "\(device.lowest) % battery left.")))
         }
     }
 
@@ -283,8 +283,8 @@ final class AppServices {
                 let perHour = Format.memory(UInt64(forecast.growthPerHour))
                 let inTwoHours = Format.memory(UInt64(forecast.projected(hours: 2)))
                 found.append(Anomaly(appID: app.id, appName: app.name, kind: .leak,
-                                     title: "\(app.name) looks like it is leaking memory",
-                                     detail: "It grows by about \(perHour) per hour and will be at \(inTwoHours) in 2 hours. Restarting it frees the memory.",
+                                     title: String(localized: "\(app.name) looks like it is leaking memory"),
+                                     detail: String(localized: "It grows by about \(perHour) per hour and will be at \(inTwoHours) in 2 hours. Restarting it frees the memory."),
                                      factor: forecast.growthPerHour / 1e8))
             }
         }

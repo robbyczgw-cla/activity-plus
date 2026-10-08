@@ -118,7 +118,7 @@ private struct SessionRow: View {
             Group {
                 Text("⌀ \(Format.percent(session.averageCPU))").frame(width: 80, alignment: .trailing)
                 Text(Format.memory(UInt64(session.peakMemory))).frame(width: 80, alignment: .trailing)
-                Text(session.energyWh > 0 ? String(format: "%.1f Wh", session.energyWh) : "–").frame(width: 70, alignment: .trailing)
+                Text(session.energyWh > 0 ? String(format: String(localized: "%.1f Wh"), session.energyWh) : "–").frame(width: 70, alignment: .trailing)
             }
             .font(.callout).monospacedDigit().foregroundStyle(.secondary)
         }
@@ -188,7 +188,7 @@ private struct SessionDetail: View {
                             Text(Format.percent(app.averageCPU)).frame(width: 70, alignment: .trailing)
                             Text(Format.percent(app.peakCPU)).frame(width: 80, alignment: .trailing)
                             Text(Format.memory(UInt64(app.peakMemory))).frame(width: 100, alignment: .trailing)
-                            Text(app.energyWh > 0.005 ? String(format: "%.2f Wh", app.energyWh) : "–").frame(width: 70, alignment: .trailing)
+                            Text(app.energyWh > 0.005 ? String(format: String(localized: "%.2f Wh"), app.energyWh) : "–").frame(width: 70, alignment: .trailing)
                         }
                         .font(.callout).monospacedDigit()
                     }
@@ -215,12 +215,12 @@ private struct SessionDetail: View {
 
     private func summary(_ s: RecordingSession, title: String?, reference: RecordingSession? = nil) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            if let title { Text(title).font(.caption.weight(.semibold)).foregroundStyle(.secondary) }
-            line("Duration", Format.elapsed(s.duration), reference.map { delta(s.duration, $0.duration, format: Format.duration) })
-            line("Average CPU", Format.percent(s.averageCPU), reference.map { delta(s.averageCPU, $0.averageCPU) { Format.percent($0) } })
+            if let title { Text(LocalizedStringKey(title)).font(.caption.weight(.semibold)).foregroundStyle(.secondary) }
+            line(String(localized: "Duration"), Format.elapsed(s.duration), reference.map { delta(s.duration, $0.duration, format: Format.duration) })
+            line(String(localized: "Average CPU"), Format.percent(s.averageCPU), reference.map { delta(s.averageCPU, $0.averageCPU) { Format.percent($0) } })
             line("Peak CPU", Format.percent(s.peakCPU), nil)
             line("Peak memory", Format.memory(UInt64(s.peakMemory)), reference.map { delta(s.peakMemory, $0.peakMemory) { Format.memory(UInt64($0)) } })
-            if s.energyWh > 0 { line("Energy", String(format: "%.1f Wh", s.energyWh), reference.map { delta(s.energyWh, $0.energyWh) { String(format: "%.1f Wh", $0) } }) }
+            if s.energyWh > 0 { line("Energy", String(format: String(localized: "%.1f Wh"), s.energyWh), reference.map { delta(s.energyWh, $0.energyWh) { String(format: String(localized: "%.1f Wh"), $0) } }) }
             line("Disk", Format.storage(UInt64(s.diskBytes)), nil)
             line("Network", Format.storage(UInt64(s.networkBytes)), nil)
         }
@@ -229,7 +229,7 @@ private struct SessionDetail: View {
 
     private func line(_ label: String, _ value: String, _ change: Text?) -> some View {
         HStack {
-            Text(label).foregroundStyle(.secondary)
+            Text(LocalizedStringKey(label)).foregroundStyle(.secondary)
             Spacer()
             Text(value).monospacedDigit()
             if let change { change.font(.caption).monospacedDigit() }

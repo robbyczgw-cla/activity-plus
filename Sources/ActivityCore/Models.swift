@@ -135,9 +135,9 @@ public enum MemoryPressure: Int, Sendable, Comparable {
     public static func < (a: Self, b: Self) -> Bool { a.rawValue < b.rawValue }
     public var label: String {
         switch self {
-        case .normal: "Normal"
-        case .warning: "Elevated"
-        case .critical: "Critical"
+        case .normal: String(localized: "Normal")
+        case .warning: String(localized: "Elevated")
+        case .critical: String(localized: "Critical")
         }
     }
 }

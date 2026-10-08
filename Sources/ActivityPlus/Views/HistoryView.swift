@@ -33,14 +33,14 @@ struct HistoryView: View {
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 12)], spacing: 12) {
                     total("Written today", Format.storage(UInt64(today.diskWritten)), .orange)
-                    total("Downloaded today", Format.storage(UInt64(today.received)), .teal)
-                    total("Downloaded, 7 days", Format.storage(UInt64(week.received)), .teal)
-                    total("Uploaded, 7 days", Format.storage(UInt64(week.sent)), .indigo)
-                    if today.energyWh > 0 { total("Energy today", String(format: "%.0f Wh", today.energyWh), .green) }
+                    total(String(localized: "Downloaded today"), Format.storage(UInt64(today.received)), .teal)
+                    total(String(localized: "Downloaded, 7 days"), Format.storage(UInt64(week.received)), .teal)
+                    total(String(localized: "Uploaded, 7 days"), Format.storage(UInt64(week.sent)), .indigo)
+                    if today.energyWh > 0 { total(String(localized: "Energy today"), String(format: String(localized: "%.0f Wh"), today.energyWh), .green) }
                 }
 
                 Card {
-                    CardHeader(title: metric.title, systemImage: metric.systemImage, tint: metric.tint, trailing: "last \(range.rawValue)")
+                    CardHeader(title: metric.title, systemImage: metric.systemImage, tint: metric.tint, trailing: String(localized: "last \(range.rawValue)"))
                     if points.count < 2 {
                         Text("History fills up while Activity+ runs. Come back in a few minutes.")
                             .foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 180)
@@ -53,7 +53,7 @@ struct HistoryView: View {
                 ConditionsCard(points: points, range: range, selectedDate: selectedDate)
 
                 Card {
-                    CardHeader(title: "Apps that used the most", systemImage: "list.number", tint: metric.tint, trailing: "last \(range.rawValue)")
+                    CardHeader(title: "Apps that used the most", systemImage: "list.number", tint: metric.tint, trailing: String(localized: "last \(range.rawValue)"))
                     let sorted = apps.sorted { value($0) > value($1) }.prefix(15)
                     let top = sorted.first.map(value) ?? 1
                     if sorted.isEmpty {
@@ -164,7 +164,7 @@ struct HistoryView: View {
                 .foregroundStyle(showApp ? .secondary : .primary)
             Text(verbatim: "pid \(p.pid)").font(.caption2).foregroundStyle(.tertiary)
             Spacer()
-            Text(metric == .memory ? Format.memory(UInt64(p.peakMemory)) + " peak"
+            Text(metric == .memory ? Format.memory(UInt64(p.peakMemory)) + String(localized: " peak")
                  : metric == .disk ? Format.storage(UInt64(p.diskBytes))
                  : metric == .network ? Format.storage(UInt64(p.networkBytes))
                  : Format.percent(p.averageCPU, decimals: 1))
@@ -195,7 +195,7 @@ struct HistoryView: View {
 
     private func total(_ title: String, _ value: String, _ tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.caption).foregroundStyle(tint)
+            Text(LocalizedStringKey(title)).font(.caption).foregroundStyle(tint)
             BigNumber(text: value, size: 22)
         }
         .padding(12)
@@ -216,10 +216,10 @@ struct HistoryView: View {
 
     private func format(_ app: HistoryStore.AppTotal) -> String {
         switch metric {
-        case .cpu, .gpu: Format.percent(value(app), decimals: 1) + " avg"
-        case .memory: Format.memory(UInt64(app.averageMemory)) + " avg"
+        case .cpu, .gpu: Format.percent(value(app), decimals: 1) + String(localized: " avg")
+        case .memory: Format.memory(UInt64(app.averageMemory)) + String(localized: " avg")
         case .disk, .network: Format.storage(UInt64(value(app)))
-        case .energy: String(format: "%.1f Wh", app.energyWh)
+        case .energy: String(format: String(localized: "%.1f Wh"), app.energyWh)
         }
     }
 

@@ -107,8 +107,8 @@ private struct StartupRow: View {
                 Text(item.program ?? item.plistPath ?? "").font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                 HStack(spacing: 6) {
                     badge(scopeText)
-                    if item.runAtLoad { badge("At login") }
-                    if item.keepAlive { badge("Restarts itself") }
+                    if item.runAtLoad { badge(String(localized: "At login")) }
+                    if item.keepAlive { badge(String(localized: "Restarts itself")) }
                 }
             }
             Spacer()
@@ -133,10 +133,10 @@ private struct StartupRow: View {
 
     private var scopeText: String {
         switch item.scope {
-        case .userAgent: "Your account"
-        case .globalAgent: "All users"
-        case .globalDaemon: "System daemon"
-        case .loginItem: "Login item"
+        case .userAgent: String(localized: "Your account")
+        case .globalAgent: String(localized: "All users")
+        case .globalDaemon: String(localized: "System daemon")
+        case .loginItem: String(localized: "Login item")
         }
     }
 

@@ -38,9 +38,9 @@ struct MenuBarPanel: View {
         }
         var title: String {
             switch self {
-            case .overview: "Overview"
-            case .battery: "Battery"
-            case .projects: "Projects"
+            case .overview: String(localized: "Overview")
+            case .battery: String(localized: "Battery")
+            case .projects: String(localized: "Projects")
             default: metric?.title ?? ""
             }
         }
@@ -166,9 +166,9 @@ struct MenuBarPanel: View {
                              + (b.chargeRate.map { String(format: " · %+.0f %%/h", $0) } ?? ""))
                     if let t = b.timeToFull, t > 0 { StatLine(label: "Full in", value: Format.duration(t)) }
                 } else if b.isPluggedIn {
-                    StatLine(label: "Battery", value: b.hold?.summary ?? "Resting, the adapter powers the Mac")
+                    StatLine(label: "Battery", value: b.hold?.summary ?? String(localized: "Resting, the adapter powers the Mac"))
                 } else {
-                    StatLine(label: "Remaining", value: b.timeRemaining.map(Format.duration) ?? "Calculating…")
+                    StatLine(label: "Remaining", value: b.timeRemaining.map(Format.duration) ?? String(localized: "Calculating…"))
                 }
                 StatLine(label: "Mac power draw", value: b.systemPower.map(Format.watts) ?? "–")
                 if b.isPluggedIn, let input = b.adapterInputPower {
@@ -242,7 +242,7 @@ struct MenuBarPanel: View {
                 Sparkline(values: h.gpu.values, tint: metric.tint, maxValue: 100).frame(height: 44)
                 if let t = s.sensors.gpuTemperature { StatLine(label: "Temperature", value: Format.temperature(t)) }
             case .disk:
-                BigNumber(text: Format.storage(s.disk.free) + " free", size: 22)
+                BigNumber(text: Format.storage(s.disk.free) + String(localized: " free"), size: 22)
                 StatLine(label: "Reading", value: Format.rate(s.disk.readRate))
                 StatLine(label: "Writing", value: Format.rate(s.disk.writeRate))
                 StatLine(label: "Written today", value: Format.storage(UInt64(services.today.diskWritten)))
@@ -273,7 +273,7 @@ private struct BusyRow: View {
                 Button { quit() } label: { Image(systemName: "xmark.circle.fill") }
                     .buttonStyle(.borderless)
                     .foregroundStyle(.secondary)
-                    .help("Quit \(app.name)…")
+                    .help(String(localized: "Quit \(app.name)…"))
             }
             Text(metric.format(metric.value(app))).monospacedDigit().foregroundStyle(.secondary)
         }
@@ -289,8 +289,8 @@ private struct BusyRow: View {
     private func quit(force: Bool = false) {
         let count = app.processes.count
         guard Confirm.ask("\(force ? "Force quit" : "Quit") \(app.name)?",
-                          (count == 1 ? "1 process will close." : "\(count) processes will close.")
-                            + (force ? " Unsaved changes will be lost." : ""),
+                          (count == 1 ? String(localized: "1 process will close.") : "\(count) processes will close.")
+                            + (force ? String(localized: " Unsaved changes will be lost.") : ""),
                           button: force ? "Force Quit" : "Quit") else { return }
         if case .denied(let message) = ProcessActions.quit(app, force: force) {
             _ = Confirm.ask("Could not quit", message, button: "OK", cancel: false)

@@ -9,6 +9,13 @@ macOS system monitor (Vitals alternative + extras). SwiftPM, no Xcode project. P
 - **Visual check without screen-recording permission:** `ACTIVITYPLUS_SNAPSHOTS=/tmp/shots [ACTIVITYPLUS_PAGES=overview,metric:cpu,…] [ACTIVITYPLUS_WARMUP=12] dist/Activity+.app/Contents/MacOS/ActivityPlus` renders every page, the menu bar panel and both share cards to PNG, then quits. `screencapture` does not work from the agent shell. `ACTIVITYPLUS_WINDOW_SIZE=1080x1700` renders long pages in full. Afterwards check `pgrep -fl dist/Activity+.app`: a run that stops early can leave a dev copy running, and its menu bar items then appear twice next to the installed app.
 - `.build/debug/aplus [--memory|--json|--bench|--hardware [--verbose]]` to sanity-check numbers, per-sampler timings, and IOReport/network/sensor readers. `aplus mcp` runs the MCP server.
 
+## Localization
+- English source strings, German translation in `Resources/Localizable.xcstrings`; `build-app.sh` compiles it into the app's `<lang>.lproj`.
+- `scripts/l10n-extract.sh` collects new strings (compiler extraction plus the literals passed to `CardHeader`, `StatLine`, `.help`, menu items); `--check` fails on untranslated ones and runs in `release.sh`. `scripts/l10n-apply.py <lang> file.json` writes translations, plurals as `{"one","other"}`.
+- UI text in ActivityCore goes through `String(localized:)`; never localize identifiers, process names, pmset/IORegistry keys or dictionary keys. Count phrases use catalog plurals, not `? "" : "s"`.
+- `Format.locale` stays nil for the CLI and MCP (machine-readable "25.7"); the app sets the user's locale.
+- German follows macOS: "du", "Batterie" (not "Akku"), Activity Monitor's terms.
+
 ## Architecture
 - `ActivityCore/SystemSampler` builds one `SystemSnapshot` per tick from the samplers; all samplers keep previous counters, so call only from one serial queue (`Monitor`).
 - Process list comes from `/bin/ps` (setuid) so root processes are visible; `proc_pid_rusage` refines own processes. Mach tick → ns conversion via `Sys.nanosPerTick` (Apple silicon: 125/3).

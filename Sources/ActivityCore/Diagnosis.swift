@@ -91,7 +91,7 @@ public enum Diagnostician {
         } else if memory.pressure == .warning {
             findings.append(.init(id: "memory", severity: .info, title: String(localized: "Memory is getting tight"),
                                   detail: String(localized: "macOS is compressing memory. It still copes, but quitting unused apps gives it room."),
-                                  evidence: ["Swap used: \(Format.memory(memory.swapUsed))"], action: nil))
+                                  evidence: [String(localized: "Swap used: \(Format.memory(memory.swapUsed))")], action: nil))
         }
 
         // CPU
@@ -121,7 +121,7 @@ public enum Diagnostician {
                 severity: average >= cores * 50 ? .critical : .warning,
                 title: String(localized: "\(app.name) is running flat out"),
                 detail: { let coresUsed = String(format: "%.1f", average / 100); return String(localized: "It has used about \(coresUsed) cores without a break. If you are not waiting for it to finish something, it may be stuck.") }(),
-                evidence: ["\(Format.percent(average)) average", String(localized: "\(app.processes.count) processes")],
+                evidence: [String(localized: "\(Format.percent(average)) average"), String(localized: "\(app.processes.count) processes")],
                 action: .quitApp(id: app.id, name: app.name)
             ))
         }
@@ -150,7 +150,7 @@ public enum Diagnostician {
                     id: "disk-space", severity: s.disk.free < 5_000_000_000 ? .critical : .warning,
                     title: String(localized: "The disk is almost full"),
                     detail: String(localized: "macOS needs free space for swap, updates and caches. Below about 10 % everything gets slower and updates can fail."),
-                    evidence: ["\(Format.storage(s.disk.free)) free of \(Format.storage(s.disk.total))"],
+                    evidence: [String(localized: "\(Format.storage(s.disk.free)) free of \(Format.storage(s.disk.total))")],
                     action: .openStorage))
             }
         }
@@ -161,7 +161,7 @@ public enum Diagnostician {
             let top = s.apps.max { ($0.diskReadRate + $0.diskWriteRate) < ($1.diskReadRate + $1.diskWriteRate) }
             findings.append(.init(id: "disk-io", severity: .info, title: String(localized: "The disk is very busy"),
                                   detail: String(localized: "Opening files and apps waits for the disk right now.") + (top.map { String(localized: " \($0.name) is doing most of it.") } ?? ""),
-                                  evidence: ["\(Format.rate(io)) read and written"], action: nil))
+                                  evidence: [String(localized: "\(Format.rate(io)) read and written")], action: nil))
         }
 
         // Spotlight and kernel_task tell their own stories.
@@ -170,12 +170,12 @@ public enum Diagnostician {
         if spotlight > 40 {
             findings.append(.init(id: "spotlight", severity: .info, title: String(localized: "Spotlight is indexing"),
                                   detail: String(localized: "Spotlight is reading new or changed files so search can find them. It finishes on its own."),
-                                  evidence: ["Spotlight processes: \(Format.percent(spotlight))"], action: nil))
+                                  evidence: [String(localized: "Spotlight processes: \(Format.percent(spotlight))")], action: nil))
         }
         if let kernel = processes.first(where: { $0.name == "kernel_task" }), kernel.cpuPercent > 150 {
             findings.append(.init(id: "kernel-task", severity: .warning, title: String(localized: "macOS is holding the CPU back"),
                                   detail: String(localized: "kernel_task uses CPU time on purpose to keep the processor cool, which usually means the Mac is hot or charging with a weak adapter."),
-                                  evidence: ["kernel_task: \(Format.percent(kernel.cpuPercent))"], action: nil))
+                                  evidence: [String(localized: "kernel_task: \(Format.percent(kernel.cpuPercent))")], action: nil))
         }
 
         // GPU
@@ -183,7 +183,7 @@ public enum Diagnostician {
             let top = s.apps.max { $0.gpuPercent < $1.gpuPercent }
             findings.append(.init(id: "gpu", severity: .info, title: String(localized: "The graphics processor is maxed out"),
                                   detail: String(localized: "Animations and video may stutter.") + (top.map { String(localized: " \($0.name) uses the most GPU time.") } ?? ""),
-                                  evidence: ["GPU \(Format.percent(gpu.utilization))"], action: nil))
+                                  evidence: [String(localized: "GPU \(Format.percent(gpu.utilization))")], action: nil))
         }
 
         // Browsers with a lot of tabs
@@ -191,7 +191,7 @@ public enum Diagnostician {
         for app in userApps where browsers.contains(app.name) && app.memory > 6 * 1_073_741_824 {
             findings.append(.init(id: "browser-\(app.id)", severity: .info, title: String(localized: "\(app.name) holds a lot of memory"),
                                   detail: String(localized: "Every open tab keeps its own process. Closing tabs you do not need frees memory right away."),
-                                  evidence: ["\(Format.memory(app.memory)) in \(app.processes.count) processes"], action: nil))
+                                  evidence: [String(localized: "\(Format.memory(app.memory)) in \(app.processes.count) processes")], action: nil))
         }
 
         // Idle dev servers
@@ -200,14 +200,14 @@ public enum Diagnostician {
                                   detail: input.idleServers.count == 1
                                       ? String(localized: "1 dev server has not done anything for a while.")
                                       : String(localized: "\(input.idleServers.count) dev servers have not done anything for a while."),
-                                  evidence: ["\(Format.memory(input.idleServers.memory)) held"], action: .openProjects))
+                                  evidence: [String(localized: "\(Format.memory(input.idleServers.memory)) held")], action: .openProjects))
         }
 
         // Long uptime together with swap
         if s.uptime > 14 * 86_400 {
             findings.append(.init(id: "uptime", severity: swapHeavy ? .warning : .info, title: String(localized: "Your Mac has not restarted in \(Int(s.uptime / 86_400)) days"),
                                   detail: String(localized: "A restart clears swap, leaked memory and stuck background processes. It is the cheapest fix there is."),
-                                  evidence: ["Up \(Format.duration(s.uptime))"], action: .restartMac))
+                                  evidence: [String(localized: "Up \(Format.duration(s.uptime))")], action: .restartMac))
         }
 
         if let count = input.startupItemCount, count > 15 {
@@ -223,7 +223,7 @@ public enum Diagnostician {
         if let health = s.battery?.health, health < 80 {
             findings.append(.init(id: "battery", severity: .info, title: String(localized: "The battery is worn"),
                                   detail: String(localized: "It holds \(Format.percent(health)) of its original charge. Apple recommends service below 80 %."),
-                                  evidence: ["\(s.battery?.cycleCount ?? 0) charge cycles"], action: .openBatterySettings))
+                                  evidence: [String(localized: "\(s.battery?.cycleCount ?? 0) charge cycles")], action: .openBatterySettings))
         }
 
         findings.sort { $0.severity > $1.severity }

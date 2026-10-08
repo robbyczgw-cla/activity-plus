@@ -100,9 +100,9 @@ public enum NetworkInfo {
         let channel = wlanChannel?.channelNumber
         let band: String? = wlanChannel.flatMap {
             switch $0.channelBand {
-            case .band2GHz: "2.4 GHz"
-            case .band5GHz: "5 GHz"
-            case .band6GHz: "6 GHz"
+            case .band2GHz: String(localized: "2.4 GHz")
+            case .band5GHz: String(localized: "5 GHz")
+            case .band6GHz: String(localized: "6 GHz")
             case .bandUnknown: Optional<String>.none
             @unknown default: Optional<String>.none
             }

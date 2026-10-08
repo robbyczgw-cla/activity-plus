@@ -31,11 +31,11 @@ struct CoreTypeCard: View {
                     }
                     .frame(height: 8)
                     Text("P \(Int((share * 100).rounded())) %").monospacedDigit().frame(width: 56, alignment: .trailing)
-                    Text(app.ipc.map { String(format: "IPC %.2f", $0) } ?? "–").monospacedDigit().foregroundStyle(.secondary)
+                    Text(app.ipc.map { String(format: String(localized: "IPC %.2f"), $0) } ?? "–").monospacedDigit().foregroundStyle(.secondary)
                         .frame(width: 70, alignment: .trailing)
                 }
                 .font(.callout)
-                .help("\(Format.percent(app.cpuPercent)) CPU · \(Int((share * 100).rounded())) % on performance cores")
+                .help(String(localized: "\(Format.percent(app.cpuPercent)) CPU · \(Int((share * 100).rounded())) % on performance cores"))
             }
             HStack(spacing: 14) {
                 Label("Performance cores", systemImage: "square.fill").foregroundStyle(.blue)

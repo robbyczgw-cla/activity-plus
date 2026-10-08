@@ -123,7 +123,7 @@ struct SensorListCard: View {
         case .voltage: String(format: "%.3f V", reading.value)
         case .current: String(format: "%.3f A", reading.value)
         case .power: String(format: "%.2f W", reading.value)
-        case .fan: "\(Int(reading.value)) rpm"
+        case .fan: String(localized: "\(Int(reading.value)) rpm")
         }
     }
 }

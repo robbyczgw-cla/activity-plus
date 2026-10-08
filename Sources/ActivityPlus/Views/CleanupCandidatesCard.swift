@@ -90,12 +90,12 @@ struct CleanupCandidatesCard: View {
 
     static func title(_ kind: CleanupCandidate.Kind) -> String {
         switch kind {
-        case .installer: "Installers (.dmg, .pkg)"
-        case .oldDownload: "Downloads not opened for 90 days"
-        case .largeFile: "Large files"
-        case .xcodeArchive: "Xcode archives"
-        case .iosBackup: "iPhone and iPad backups"
-        case .oldDiskImageMount: "Mounted disk images"
+        case .installer: String(localized: "Installers (.dmg, .pkg)")
+        case .oldDownload: String(localized: "Downloads not opened for 90 days")
+        case .largeFile: String(localized: "Large files")
+        case .xcodeArchive: String(localized: "Xcode archives")
+        case .iosBackup: String(localized: "iPhone and iPad backups")
+        case .oldDiskImageMount: String(localized: "Mounted disk images")
         }
     }
 

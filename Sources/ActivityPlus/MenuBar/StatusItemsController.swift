@@ -8,9 +8,9 @@ enum MenuBarLayout: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .separate: "Separate"
-        case .combined: "Combined"
-        case .automatic: "Combine when they don't fit"
+        case .separate: String(localized: "Separate")
+        case .combined: String(localized: "Combined")
+        case .automatic: String(localized: "Combine when they don't fit")
         }
     }
     static var current: MenuBarLayout {
@@ -205,7 +205,7 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
             // The first item warns while the Mac struggles: an icon becomes the warning sign, others get one in front.
             let warn = strained && index == 0
             if warn && entry.config.style == .icon {
-                button.image = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: "Your Mac is under strain")
+                button.image = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: String(localized: "Your Mac is under strain"))
                 button.image?.isTemplate = true
             } else {
                 let image = Self.render(MenuBarWidget(config: entry.config, reading: reading, ink: ink, showWarning: warn))

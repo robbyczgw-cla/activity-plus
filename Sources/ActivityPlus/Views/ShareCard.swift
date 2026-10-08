@@ -62,7 +62,7 @@ struct ShareCard: View {
 
     private func figure(_ title: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 18)).foregroundStyle(.secondary)
+            Text(LocalizedStringKey(title)).font(.system(size: 18)).foregroundStyle(.secondary)
             Text(value).font(.system(size: 34, weight: .semibold, design: .rounded)).monospacedDigit()
         }
     }

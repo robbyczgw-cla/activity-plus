@@ -195,7 +195,7 @@ final class AppVolumeController {
 
         guard let outputUID = defaultOutputUID() else {
             AudioHardwareDestroyProcessTap(tapID)
-            setError("No default output device is available.")
+            setError(String(localized: "No default output device is available."))
             return
         }
         let tapEntry: [String: Any] = ["uid": description.uuid.uuidString,

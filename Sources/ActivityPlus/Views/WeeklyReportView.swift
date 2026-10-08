@@ -29,10 +29,10 @@ struct WeeklyReportView: View {
                         totals(report)
                         if !report.biggestIncreases.isEmpty { increases(report) }
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 14)], spacing: 14) {
-                            ranking("Most energy", "bolt", .green, report.topEnergy) { String(format: "%.1f Wh", $0.energyWh) }
-                            ranking("Most memory (average)", "memorychip", .purple, report.topMemory) { Format.memory(UInt64($0.averageMemory)) }
-                            ranking("Most CPU (average)", "cpu", .blue, report.topCPU) { Format.percent($0.averageCPU, decimals: 1) }
-                            ranking("Most network", "network", .teal, report.topNetwork) { Format.storage(UInt64($0.networkBytes)) }
+                            ranking(String(localized: "Most energy"), "bolt", .green, report.topEnergy) { String(format: String(localized: "%.1f Wh"), $0.energyWh) }
+                            ranking(String(localized: "Most memory (average)"), "memorychip", .purple, report.topMemory) { Format.memory(UInt64($0.averageMemory)) }
+                            ranking(String(localized: "Most CPU (average)"), "cpu", .blue, report.topCPU) { Format.percent($0.averageCPU, decimals: 1) }
+                            ranking(String(localized: "Most network"), "network", .teal, report.topNetwork) { Format.storage(UInt64($0.networkBytes)) }
                         }
                     }
                 } else {
@@ -47,20 +47,20 @@ struct WeeklyReportView: View {
 
     private func totals(_ r: WeeklyReport) -> some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 12)], spacing: 12) {
-            comparison("Energy", String(format: "%.0f Wh", r.totals.energyWh), r.totals.energyWh, r.previousTotals.energyWh, r.hasPreviousWeek)
-            comparison("Written to disk", Format.storage(UInt64(r.totals.diskWritten)), r.totals.diskWritten, r.previousTotals.diskWritten, r.hasPreviousWeek)
-            comparison("Downloaded", Format.storage(UInt64(r.totals.received)), r.totals.received, r.previousTotals.received, r.hasPreviousWeek)
-            comparison("Average CPU", Format.percent(r.totals.averageCPU), r.totals.averageCPU, r.previousTotals.averageCPU, r.hasPreviousWeek)
+            comparison("Energy", String(format: String(localized: "%.0f Wh"), r.totals.energyWh), r.totals.energyWh, r.previousTotals.energyWh, r.hasPreviousWeek)
+            comparison(String(localized: "Written to disk"), Format.storage(UInt64(r.totals.diskWritten)), r.totals.diskWritten, r.previousTotals.diskWritten, r.hasPreviousWeek)
+            comparison(String(localized: "Downloaded"), Format.storage(UInt64(r.totals.received)), r.totals.received, r.previousTotals.received, r.hasPreviousWeek)
+            comparison(String(localized: "Average CPU"), Format.percent(r.totals.averageCPU), r.totals.averageCPU, r.previousTotals.averageCPU, r.hasPreviousWeek)
         }
     }
 
     private func comparison(_ title: String, _ value: String, _ now: Double, _ before: Double, _ hasBefore: Bool) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
+            Text(LocalizedStringKey(title)).font(.caption).foregroundStyle(.secondary)
             BigNumber(text: value, size: 22)
             if hasBefore, before > 0 {
                 let change = (now - before) / before * 100
-                Text((change >= 0 ? "▲ " : "▼ ") + Format.percent(abs(change)) + " vs. week before")
+                Text((change >= 0 ? "▲ " : "▼ ") + Format.percent(abs(change)) + String(localized: " vs. week before"))
                     .font(.caption).foregroundStyle(change > 10 ? .orange : .secondary)
             }
         }
@@ -77,7 +77,7 @@ struct WeeklyReportView: View {
                     icon(change.bundlePath)
                     Text(change.name)
                     Spacer()
-                    Text(String(format: "%.1f → %.1f Wh (%.1f×)", change.before, change.now, change.factor)).monospacedDigit().foregroundStyle(.secondary)
+                    Text(String(format: String(localized: "%.1f → %.1f Wh (%.1f×)"), change.before, change.now, change.factor)).monospacedDigit().foregroundStyle(.secondary)
                 }
             }
         }

@@ -21,7 +21,8 @@ struct SSDWearCard: View {
                 if let projection = SSDWear.projection(percentUsed: health.percentageUsed, dataWrittenTB: health.dataWrittenTB,
                                                        bytesPerDay: daily.bytesPerDay) {
                     StatLine(label: "At this pace", value: years(projection.yearsLeft))
-                    Text("The drive says \(health.percentageUsed ?? 0) % of its rated endurance is used after \(String(format: "%.0f", health.dataWrittenTB ?? 0)) TB written. Reaching 100 % does not mean it fails that day; it is the point the maker rates it for.")
+                    let written = String(format: "%.0f", locale: .current, health.dataWrittenTB ?? 0)
+                    Text("The drive says \(health.percentageUsed ?? 0) % of its rated endurance is used after \(written) TB written. Reaching 100 % does not mean it fails that day; it is the point the maker rates it for.")
                         .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 } else if health.percentageUsed == 0 {
                     Text("The drive reports less than 1 % of its rated endurance used, too little to project from.")
@@ -65,9 +66,9 @@ struct SSDWearCard: View {
     }
 
     private func years(_ value: Double) -> String {
-        if value > 50 { return "more than 50 years" }
-        if value >= 2 { return String(format: "about %.0f years", value) }
-        if value >= 1 { return String(format: "about %.1f years", value) }
-        return "under a year, check the apps below"
+        if value > 50 { return String(localized: "more than 50 years") }
+        if value >= 2 { return String(format: String(localized: "about %.0f years"), value) }
+        if value >= 1 { return String(format: String(localized: "about %.1f years"), value) }
+        return String(localized: "under a year, check the apps below")
     }
 }

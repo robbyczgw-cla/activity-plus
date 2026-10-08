@@ -23,7 +23,7 @@ struct StorageView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(disk.volumeName).font(.headline)
-                            BigNumber(text: Format.storage(disk.free) + " free", size: 26)
+                            BigNumber(text: Format.storage(disk.free) + String(localized: " free"), size: 26)
                         }
                         Spacer()
                         if let progress = services.storageProgress {
@@ -90,7 +90,7 @@ struct StorageView: View {
             let kept = app.locations.count - removed.count
             Text("\(app.name) and \(removed.count - 1) folders with its settings, caches and data (\(Format.storage(bytes))) move to the Trash."
                  + (kept > 0 ? " \(kept) shared folder(s) stay, because other apps use them too." : "")
-                 + " If it is running, it is asked to quit first. You can put it back from the Trash until you empty it.")
+                 + String(localized: " If it is running, it is asked to quit first. You can put it back from the Trash until you empty it."))
         }
         .confirmationDialog("Move \(selectedLocations.count) items to the Trash?", isPresented: $confirmTrash) {
             Button("Move to Trash", role: .destructive, action: trash)
@@ -118,7 +118,7 @@ struct StorageView: View {
             if Self.canUninstall(app) {
                 Button("Uninstall…") { uninstalling = app }
                     .buttonStyle(.borderless).font(.callout)
-                    .help("Moves \(app.name) and everything it keeps in your Library to the Trash")
+                    .help(String(localized: "Moves \(app.name) and everything it keeps in your Library to the Trash"))
             }
             UsageBar(fraction: Double(app.totalBytes) / Double(max(top, 1)), tint: .orange).frame(width: 120)
             Text(Format.storage(app.totalBytes)).monospacedDigit().frame(width: 80, alignment: .trailing)
@@ -157,17 +157,17 @@ struct StorageView: View {
 
     private func kindText(_ kind: StorageLocation.Kind) -> String {
         switch kind {
-        case .bundle: "App"
-        case .applicationSupport: "App data"
-        case .caches: "Caches"
-        case .containers: "Container"
-        case .groupContainers: "Shared container"
-        case .logs: "Logs"
-        case .savedState: "Saved window state"
-        case .preferences: "Settings"
-        case .webData: "Web data"
-        case .developer: "Developer cache"
-        case .other: "Other"
+        case .bundle: String(localized: "App")
+        case .applicationSupport: String(localized: "App data")
+        case .caches: String(localized: "Caches")
+        case .containers: String(localized: "Container")
+        case .groupContainers: String(localized: "Shared container")
+        case .logs: String(localized: "Logs")
+        case .savedState: String(localized: "Saved window state")
+        case .preferences: String(localized: "Settings")
+        case .webData: String(localized: "Web data")
+        case .developer: String(localized: "Developer cache")
+        case .other: String(localized: "Other")
         }
     }
 

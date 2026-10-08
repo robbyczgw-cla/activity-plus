@@ -9,11 +9,14 @@ public enum Format {
     nonisolated(unsafe) public static var temperatureUnit: TemperatureUnit = .celsius
     /// Show network speeds in bits (Mbit/s) like ISPs do, instead of bytes.
     nonisolated(unsafe) public static var networkInBits = false
+    /// Decimal separator and digits: nil keeps "25.7" (CLI and MCP output stays machine-readable);
+    /// the app sets the user's locale at launch, so German shows "25,7".
+    nonisolated(unsafe) public static var locale: Locale? = nil
 
     public static func temperature(_ celsius: Double, decimals: Int = 0, unit: Bool = true) -> String {
         let value = temperatureUnit == .celsius ? celsius : celsius * 9 / 5 + 32
         let symbol = temperatureUnit == .celsius ? "°C" : "°F"
-        return String(format: "%.\(decimals)f", value) + (unit ? " \(symbol)" : "°")
+        return String(format: "%.\(decimals)f", locale: locale, value) + (unit ? " \(symbol)" : "°")
     }
 
     /// Network throughput, in bits or bytes per the user's choice.
@@ -24,7 +27,7 @@ public enum Format {
         var index = 0
         while value >= 1000, index < units.count - 1 { value /= 1000; index += 1 }
         let decimals = index == 0 || value >= 100 ? 0 : (value >= 10 ? 1 : 2)
-        return String(format: "%.\(decimals)f %@", value, units[index])
+        return String(format: "%.\(decimals)f %@", locale: locale, value, units[index])
     }
 
     public static func memory(_ bytes: UInt64) -> String {
@@ -40,11 +43,11 @@ public enum Format {
     }
 
     public static func percent(_ value: Double, decimals: Int = 0) -> String {
-        String(format: "%.\(decimals)f%%", value)
+        String(format: "%.\(decimals)f%%", locale: locale, value)
     }
 
     public static func watts(_ value: Double) -> String {
-        value < 10 ? String(format: "%.1f W", value) : String(format: "%.0f W", value)
+        value < 10 ? String(format: "%.1f W", locale: locale, value) : String(format: "%.0f W", locale: locale, value)
     }
 
     /// Exact short durations for recordings and intervals: "2 s", "3 min 5 s", "1 h 2 min".
@@ -80,8 +83,8 @@ public enum Format {
             value /= base
             index += 1
         }
-        if index == 0 { return String(format: "%.0f %@", value, units[index]) }
+        if index == 0 { return String(format: "%.0f %@", locale: locale, value, units[index]) }
         let decimals = value >= 100 ? 0 : (value >= 10 ? 1 : 2)
-        return String(format: "%.\(decimals)f %@", value, units[index])
+        return String(format: "%.\(decimals)f %@", locale: locale, value, units[index])
     }
 }

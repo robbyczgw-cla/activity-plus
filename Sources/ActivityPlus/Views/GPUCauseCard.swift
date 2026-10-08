@@ -21,7 +21,7 @@ struct GPUCauseCard: View {
                 results(result, date: date, unmeasured: unmeasured)
             case let .failed(message):
                 Text(message).foregroundStyle(.secondary)
-                startButton("Try Again")
+                startButton(String(localized: "Try Again"))
             }
         }
         .alert("Hide apps for a moment?", isPresented: $confirming) {
@@ -30,20 +30,20 @@ struct GPUCauseCard: View {
         } message: {
             Text("\(candidates.count) apps with open windows are hidden one after another and shown again, "
                 + "then all together. This takes about \(GPUCauseFinder.estimatedSeconds(apps: candidates.count)) seconds. "
-                + "Leave the Mac alone meanwhile, or the measurement gets noisy.")
+                + String(localized: "Leave the Mac alone meanwhile, or the measurement gets noisy."))
         }
     }
 
     private var intro: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("WindowServer puts every window on screen together. Apps that draw through it, which is most of them, "
-                + "do not show their GPU use under their own name: it is counted as WindowServer.")
+            Text(String(localized: "WindowServer puts every window on screen together. Apps that draw through it, which is most of them, ")
+                + String(localized: "do not show their GPU use under their own name: it is counted as WindowServer."))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             Text("To find the app behind it, Activity+ hides your apps one at a time for a few seconds and measures how much WindowServer's GPU time drops.")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            startButton("Find the Cause")
+            startButton(String(localized: "Find the Cause"))
         }
     }
 
@@ -72,8 +72,8 @@ struct GPUCauseCard: View {
         return VStack(alignment: .leading, spacing: 10) {
             Text("WindowServer used \(Format.percent(result.baseline)) of the GPU with every window visible.")
             if measurable.isEmpty {
-                Text("Hiding a single app made no measurable difference. "
-                    + "The load comes from the displays themselves or from several apps together.")
+                Text(String(localized: "Hiding a single app made no measurable difference. ")
+                    + String(localized: "The load comes from the displays themselves or from several apps together."))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -89,7 +89,7 @@ struct GPUCauseCard: View {
                         detail: "left with all apps hidden", isRemainder: true)
                 } else {
                     row(name: "Left with the measured apps hidden", icon: Image(systemName: "display"), drop: floor, scale: scale,
-                        detail: "still visible and not measured: \(unmeasured.joined(separator: ", "))", isRemainder: true)
+                        detail: { let names = unmeasured.joined(separator: ", "); return String(localized: "still visible and not measured: \(names)") }(), isRemainder: true)
                 }
             }
             let quiet = result.causes.filter { !$0.isMeasurable }.map(\.name)
@@ -104,7 +104,7 @@ struct GPUCauseCard: View {
             HStack {
                 Text("Measured \(date.formatted(date: .omitted, time: .shortened))").font(.caption).foregroundStyle(.secondary)
                 Spacer()
-                startButton("Measure Again")
+                startButton(String(localized: "Measure Again"))
             }
         }
     }
@@ -119,7 +119,7 @@ struct GPUCauseCard: View {
                     Text(isRemainder ? Format.percent(drop) : "−\(Format.percent(drop))").monospacedDigit()
                 }
                 UsageBar(fraction: min(1, drop / scale), tint: isRemainder ? .gray : .purple)
-                Text(detail).font(.caption).foregroundStyle(.secondary)
+                Text(LocalizedStringKey(detail)).font(.caption).foregroundStyle(.secondary)
             }
         }
     }

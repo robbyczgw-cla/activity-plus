@@ -20,8 +20,8 @@ public final class DiskBenchmark: @unchecked Sendable {
             switch self {
             case .notEnoughSpace(let needed, let free):
                 "The test needs \(Format.storage(needed * 3)) free; the disk has \(Format.storage(free))."
-            case .io(let message): "The test could not write to the disk: \(message)"
-            case .cancelled: "The test was stopped."
+            case .io(let message): String(localized: "The test could not write to the disk: \(message)")
+            case .cancelled: String(localized: "The test was stopped.")
             }
         }
     }

@@ -147,12 +147,12 @@ private struct FindingCard: View {
 
     private func title(_ action: Diagnosis.Action) -> String {
         switch action {
-        case .quitApp(_, let name): "Quit \(name)…"
-        case .openStorage: "Free up space"
-        case .openStartupItems: "Review"
-        case .openProjects: "Show servers"
-        case .restartMac: "Restart…"
-        case .openBatterySettings: "Battery settings"
+        case .quitApp(_, let name): String(localized: "Quit \(name)…")
+        case .openStorage: String(localized: "Free up space")
+        case .openStartupItems: String(localized: "Review")
+        case .openProjects: String(localized: "Show servers")
+        case .restartMac: String(localized: "Restart…")
+        case .openBatterySettings: String(localized: "Battery settings")
         }
     }
 }

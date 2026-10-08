@@ -7,15 +7,15 @@ enum OverviewCard: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .cpu: "CPU"
-        case .memory: "Memory"
-        case .gpu: "GPU"
-        case .disk: "Disk"
-        case .network: "Network"
-        case .battery: "Battery"
-        case .temperature: "Temperatures"
-        case .insights: "Unusual activity"
-        case .busiest: "Busiest right now"
+        case .cpu: String(localized: "CPU")
+        case .memory: String(localized: "Memory")
+        case .gpu: String(localized: "GPU")
+        case .disk: String(localized: "Disk")
+        case .network: String(localized: "Network")
+        case .battery: String(localized: "Battery")
+        case .temperature: String(localized: "Temperatures")
+        case .insights: String(localized: "Unusual activity")
+        case .busiest: String(localized: "Busiest right now")
         }
     }
 
@@ -55,7 +55,7 @@ struct OverviewView: View {
                 if visible.contains(.busiest) {
                     Card {
                         CardHeader(title: "Busiest right now", systemImage: "flame", tint: .orange,
-                                   trailing: "\(monitor.snapshot.processCount) processes in \(monitor.snapshot.apps.count) apps")
+                                   trailing: String(localized: "\(monitor.snapshot.processCount) processes in \(monitor.snapshot.apps.count) apps"))
                         AppListView(metric: .cpu, limit: 8)
                     }
                 }
@@ -80,7 +80,7 @@ struct OverviewView: View {
         case .memory:
             button(.metric(.memory)) {
                 CardHeader(title: "Memory", systemImage: "memorychip", tint: Metric.memory.tint,
-                           trailing: "In use of \(Format.memory(s.memory.total))")
+                           trailing: String(localized: "In use of \(Format.memory(s.memory.total))"))
                 HStack(alignment: .firstTextBaseline) {
                     BigNumber(text: Format.memory(s.memory.used))
                     Spacer()
@@ -105,7 +105,7 @@ struct OverviewView: View {
         case .disk:
             button(.metric(.disk)) {
                 CardHeader(title: "Disk", systemImage: "internaldrive", tint: Metric.disk.tint,
-                           trailing: "Free of \(Format.storage(s.disk.total))")
+                           trailing: String(localized: "Free of \(Format.storage(s.disk.total))"))
                 BigNumber(text: Format.storage(s.disk.free))
                 Sparkline(values: zip(h.diskRead.values, h.diskWrite.values).map(+), tint: Metric.disk.tint).frame(height: 38)
                 StatLine(label: "Reading", value: Format.rate(s.disk.readRate))
@@ -144,7 +144,7 @@ struct OverviewView: View {
                     Sparkline(values: h.cpuTemperature.values, tint: .red).frame(height: 38)
                     if let gpu = s.sensors.gpuTemperature { StatLine(label: "GPU", value: Format.temperature(gpu)) }
                     ForEach(s.sensors.fans.prefix(2), id: \.name) { fan in
-                        StatLine(label: fan.name, value: "\(Int(fan.rpm)) rpm")
+                        StatLine(label: fan.name, value: String(localized: "\(Int(fan.rpm)) rpm"))
                     }
                 }
             }

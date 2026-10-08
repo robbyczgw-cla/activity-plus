@@ -31,7 +31,7 @@ struct ConnectionQualityCard: View {
                             if ping.isOutage {
                                 Text("No answer").font(.title3.weight(.semibold)).foregroundStyle(.red)
                             } else {
-                                Text(ping.averageMs.map { String(format: "%.0f ms", $0) } ?? "–").font(.title3.weight(.semibold)).monospacedDigit()
+                                Text(ping.averageMs.map { String(format: String(localized: "%.0f ms"), $0) } ?? "–").font(.title3.weight(.semibold)).monospacedDigit()
                             }
                             Text("jitter \(ping.jitterMs.map { String(format: "%.0f ms", $0) } ?? "–") · loss \(Int(ping.lossPercent.rounded())) %")
                                 .font(.caption).foregroundStyle(ping.lossPercent > 0 ? .orange : .secondary).monospacedDigit()
@@ -61,7 +61,8 @@ struct ConnectionQualityCard: View {
                     .frame(height: 130)
                     let outages = series.filter(\.isOutage).count
                     let lossy = series.filter { $0.lossPercent > 0 && !$0.isOutage }.count
-                    Text(outages == 0 && lossy == 0 ? "No lost packets in this period." : "\(outages) outage(s) and \(lossy) round(s) with packet loss in this period (red and orange points).")
+                    (outages == 0 && lossy == 0 ? Text("No lost packets in this period.")
+                        : Text("\(outages) outages") + Text(verbatim: ", ") + Text("\(lossy) rounds with packet loss in this period (red and orange points)."))
                         .font(.caption).foregroundStyle(outages > 0 ? .red : .secondary)
                 }
                 HStack {

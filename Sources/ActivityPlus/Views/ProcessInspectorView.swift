@@ -29,36 +29,36 @@ struct ProcessInspectorView: View {
             if let d = details {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
-                        section("Identity") {
-                            row("Executable", d.executable ?? "–", selectable: true)
+                        section(String(localized: "Identity")) {
+                            row(String(localized: "Executable"), d.executable ?? "–", selectable: true)
                             row("User", d.user)
-                            if let start = d.startTime { row("Started", start.formatted(date: .abbreviated, time: .standard)) }
-                            if let cwd = d.workingDirectory { row("Folder", cwd, selectable: true) }
+                            if let start = d.startTime { row(String(localized: "Started"), start.formatted(date: .abbreviated, time: .standard)) }
+                            if let cwd = d.workingDirectory { row(String(localized: "Folder"), cwd, selectable: true) }
                             if !d.arguments.isEmpty {
-                                row("Command line", d.arguments.joined(separator: " "), selectable: true)
+                                row(String(localized: "Command line"), d.arguments.joined(separator: " "), selectable: true)
                             }
                         }
                         if let p = live, p.hasDetails {
-                            section("Right now") {
+                            section(String(localized: "Right now")) {
                                 row("CPU", Format.percent(p.cpuPercent))
                                 if let share = p.pCoreShare {
                                     row("Cores", "\(Int((share * 100).rounded())) % on performance cores, \(Int(((1 - share) * 100).rounded())) % on efficiency cores")
                                 }
-                                if let ipc = p.ipc { row("Instructions per cycle", String(format: "%.2f", ipc)) }
-                                if p.neuralMemory > 0 { row("Neural Engine memory", Format.memory(p.neuralMemory)) }
+                                if let ipc = p.ipc { row(String(localized: "Instructions per cycle"), String(format: "%.2f", ipc)) }
+                                if p.neuralMemory > 0 { row(String(localized: "Neural Engine memory"), Format.memory(p.neuralMemory)) }
                             }
                         }
                         if let signature = d.signature {
-                            section("Signature") {
-                                row("Signed by", signature.authority ?? (signature.isApple ? "Apple" : "Unknown"))
-                                if let team = signature.teamID { row("Team ID", team) }
-                                if let identifier = signature.identifier { row("Identifier", identifier) }
-                                row("Valid", signature.isValid ? "Yes (signature and program code)" : "No — the program was changed after signing, or the signature is broken")
-                                if let notarized = signature.isNotarized { row("Notarized", signature.isApple ? "Part of macOS" : (notarized ? "Yes" : "No")) }
+                            section(String(localized: "Signature")) {
+                                row(String(localized: "Signed by"), signature.authority ?? (signature.isApple ? "Apple" : String(localized: "Unknown")))
+                                if let team = signature.teamID { row(String(localized: "Team ID"), team) }
+                                if let identifier = signature.identifier { row(String(localized: "Identifier"), identifier) }
+                                row(String(localized: "Valid"), signature.isValid ? String(localized: "Yes (signature and program code)") : String(localized: "No — the program was changed after signing, or the signature is broken"))
+                                if let notarized = signature.isNotarized { row(String(localized: "Notarized"), signature.isApple ? String(localized: "Part of macOS") : (notarized ? String(localized: "Yes") : String(localized: "No"))) }
                             }
                         }
                         if !d.parentChain.isEmpty {
-                            section("Started by") {
+                            section(String(localized: "Started by")) {
                                 Text(d.parentChain.map { "\($0.name) (\($0.pid))" }.joined(separator: "  ›  "))
                                     .font(.callout).textSelection(.enabled)
                             }
@@ -106,14 +106,14 @@ struct ProcessInspectorView: View {
 
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.headline)
+            Text(LocalizedStringKey(title)).font(.headline)
             content()
         }
     }
 
     private func row(_ label: String, _ value: String, selectable: Bool = false) -> some View {
         HStack(alignment: .top) {
-            Text(label).foregroundStyle(.secondary).frame(width: 110, alignment: .leading)
+            Text(LocalizedStringKey(label)).foregroundStyle(.secondary).frame(width: 110, alignment: .leading)
             Text(value).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
         }
         .font(.callout)

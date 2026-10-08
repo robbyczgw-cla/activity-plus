@@ -47,9 +47,9 @@ struct BatteryHeroCard: View {
             return parts.joined(separator: " · ")
         }
         if b.isPluggedIn, let hold = b.hold { return BatteryText.title(hold) }
-        if b.isPluggedIn { return "Plugged in, the adapter powers the Mac" }
-        var parts = ["Supplying \(Format.watts(abs(b.batteryPower)))"]
-        if let t = b.timeRemaining { parts.append("\(Format.duration(t)) left") }
+        if b.isPluggedIn { return String(localized: "Plugged in, the adapter powers the Mac") }
+        var parts = [String(localized: "Supplying \(Format.watts(abs(b.batteryPower)))")]
+        if let t = b.timeRemaining { parts.append(String(localized: "\(Format.duration(t)) left")) }
         return parts.joined(separator: " · ")
     }
 }
@@ -67,14 +67,14 @@ struct PowerFlowCard: View {
                          note: battery.adapterWatts.map { "\($0) W rated" })
                     arrow
                     VStack(spacing: 10) {
-                        node("Mac", watts: battery.systemPower, symbol: "laptopcomputer", tint: .blue, note: "system load")
+                        node("Mac", watts: battery.systemPower, symbol: "laptopcomputer", tint: .blue, note: String(localized: "system load"))
                         node(batteryLabel, watts: abs(battery.batteryPower), symbol: "battery.100percent.bolt",
                              tint: battery.batteryPower >= 0 ? .green : .orange, note: batteryNote)
                     }
                 } else {
                     node("Battery", watts: abs(battery.batteryPower), symbol: BatteryView.symbol(for: battery), tint: .green, note: Format.percent(battery.percent))
                     arrow
-                    node("Mac", watts: battery.systemPower ?? abs(battery.batteryPower), symbol: "laptopcomputer", tint: .blue, note: "system load")
+                    node("Mac", watts: battery.systemPower ?? abs(battery.batteryPower), symbol: "laptopcomputer", tint: .blue, note: String(localized: "system load"))
                 }
             }
             if let loss = battery.adapterLoss, loss > 0.05, battery.isPluggedIn {
@@ -84,10 +84,10 @@ struct PowerFlowCard: View {
         }
     }
 
-    private var batteryLabel: String { battery.batteryPower >= 0 ? "Battery" : "Battery (helping)" }
+    private var batteryLabel: String { battery.batteryPower >= 0 ? "Battery" : String(localized: "Battery (helping)") }
     private var batteryNote: String {
         if battery.batteryPower > 0.5 { return "charging" }
-        if battery.batteryPower < -0.5 { return "adapter too weak" }
+        if battery.batteryPower < -0.5 { return String(localized: "adapter too weak") }
         return "resting"
     }
 
@@ -99,7 +99,7 @@ struct PowerFlowCard: View {
 
     private func node(_ title: String, watts: Double?, symbol: String, tint: Color, note: String?) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            Label(title, systemImage: symbol).font(.caption.weight(.semibold)).foregroundStyle(tint)
+            Label(LocalizedStringKey(title), systemImage: symbol).font(.caption.weight(.semibold)).foregroundStyle(tint)
             BigNumber(text: watts.map(Format.watts) ?? "–", size: 22)
             if let note { Text(note).font(.caption2).foregroundStyle(.secondary) }
         }
@@ -169,19 +169,19 @@ struct BatteryHealthCard: View {
                     .frame(height: 12)
                 HStack {
                     legend("Now", battery.remainingCapacity, .green)
-                    legend("Full", full, .green.opacity(0.4))
-                    legend("New", design, .secondary.opacity(0.3))
+                    legend(String(localized: "Full"), full, .green.opacity(0.4))
+                    legend(String(localized: "New"), design, .secondary.opacity(0.3))
                 }
             }
             if let rated = battery.designCycleCount, rated > 0 {
-                StatLine(label: "Charge cycles", value: "\(battery.cycleCount) of \(rated.formatted()) rated")
+                StatLine(label: "Charge cycles", value: String(localized: "\(battery.cycleCount) of \(rated.formatted()) rated"))
                 UsageBar(fraction: Double(battery.cycleCount) / Double(rated), tint: .pink)
             } else {
                 StatLine(label: "Charge cycles", value: "\(battery.cycleCount)")
             }
             if let t = battery.temperature { StatLine(label: "Temperature", value: Format.temperature(t, decimals: 1)) }
             if battery.voltage > 0 {
-                StatLine(label: "Voltage · current", value: String(format: "%.2f V · %+.0f mA", battery.voltage, battery.amperage))
+                StatLine(label: "Voltage · current", value: String(format: String(localized: "%.2f V · %+.0f mA"), battery.voltage, battery.amperage))
             }
             Text("Health is what a full charge holds today compared with the battery when new.")
                 .font(.caption).foregroundStyle(.secondary)
@@ -191,7 +191,7 @@ struct BatteryHealthCard: View {
     private func legend(_ label: String, _ mAh: Int?, _ color: Color) -> some View {
         HStack(spacing: 4) {
             RoundedRectangle(cornerRadius: 2).fill(color).frame(width: 10, height: 6)
-            Text(label).foregroundStyle(.secondary)
+            Text(LocalizedStringKey(label)).foregroundStyle(.secondary)
             Text(mAh.map { "\($0.formatted()) mAh" } ?? "–").monospacedDigit()
         }
         .font(.caption)
@@ -232,8 +232,8 @@ struct ChargeSessionCard: View {
                        trailing: (sinceLaunch ? "measured since Activity+ started, " : "since ")
                         + session.start.formatted(date: .omitted, time: .shortened))
             HStack(spacing: 18) {
-                figure("Gained", String(format: "%+.0f %%", session.gainedPercent))
-                figure("Energy", String(format: "%.1f Wh", session.energyWh))
+                figure(String(localized: "Gained"), String(format: "%+.0f %%", session.gainedPercent))
+                figure("Energy", String(format: String(localized: "%.1f Wh"), session.energyWh))
                 figure("Average", Format.watts(session.averageWatts))
                 figure("Peak", Format.watts(session.peakWatts))
             }
@@ -276,7 +276,7 @@ struct ChargeSessionCard: View {
 
     private func figure(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(label).font(.caption).foregroundStyle(.secondary)
+            Text(LocalizedStringKey(label)).font(.caption).foregroundStyle(.secondary)
             Text(value).font(.title3.weight(.semibold)).monospacedDigit()
         }
     }
@@ -288,12 +288,12 @@ enum BatteryText {
 
     static func explanation(_ hold: ChargeHold) -> String {
         switch hold {
-        case .full: "The battery is full; the adapter powers the Mac directly."
-        case .optimized: "macOS learned when you usually unplug and finishes charging shortly before. This keeps the battery healthier."
-        case .chargeLimit(let p): "You set a charge limit of \(p) % in Battery settings. Staying below full slows battery ageing."
-        case .temperature: "Charging pauses while the battery is too hot or too cold, and resumes on its own."
-        case .adapterTooWeak: "The Mac needs more than the adapter delivers, so the battery makes up the rest. A stronger adapter or fewer heavy apps help."
-        case .other(let code): "The battery controller paused charging (reason \(code))."
+        case .full: String(localized: "The battery is full; the adapter powers the Mac directly.")
+        case .optimized: String(localized: "macOS learned when you usually unplug and finishes charging shortly before. This keeps the battery healthier.")
+        case .chargeLimit(let p): String(localized: "You set a charge limit of \(p) % in Battery settings. Staying below full slows battery ageing.")
+        case .temperature: String(localized: "Charging pauses while the battery is too hot or too cold, and resumes on its own.")
+        case .adapterTooWeak: String(localized: "The Mac needs more than the adapter delivers, so the battery makes up the rest. A stronger adapter or fewer heavy apps help.")
+        case .other(let code): String(localized: "The battery controller paused charging (reason \(code)).")
         }
     }
 
@@ -309,10 +309,10 @@ enum BatteryText {
 
     static func explanation(_ slow: SlowCharging) -> String {
         switch slow {
-        case .temperature: "Charging is slowed to keep the battery cool."
-        case .adapterLimited: "The adapter or cable limits the charging speed."
-        case .nearFull: "Above about 80 % the battery takes charge more slowly by design."
-        case .other(let code): "The battery controller is charging slowly (reason \(code))."
+        case .temperature: String(localized: "Charging is slowed to keep the battery cool.")
+        case .adapterLimited: String(localized: "The adapter or cable limits the charging speed.")
+        case .nearFull: String(localized: "Above about 80 % the battery takes charge more slowly by design.")
+        case .other(let code): String(localized: "The battery controller is charging slowly (reason \(code)).")
         }
     }
 
@@ -327,7 +327,7 @@ enum BatteryText {
     /// IOKit names USB-C adapters "pd charger"; say what that means.
     static func adapterName(_ raw: String) -> String {
         switch raw.lowercased() {
-        case "pd charger": "USB-C Power Delivery"
+        case "pd charger": String(localized: "USB-C Power Delivery")
         default: raw
         }
     }

@@ -51,7 +51,7 @@ struct DisplaysCard: View {
                         Image(systemName: d.isBuiltIn ? "laptopcomputer" : "display").foregroundStyle(.purple)
                         Text(d.name).fontWeight(.medium)
                         Spacer()
-                        Text(String(format: "%.0f Hz", d.refresh)).monospacedDigit().foregroundStyle(d.isHeldBack ? .orange : .primary)
+                        Text(String(format: String(localized: "%.0f Hz"), d.refresh)).monospacedDigit().foregroundStyle(d.isHeldBack ? .orange : .primary)
                     }
                     HStack(spacing: 14) {
                         Text("\(Int(d.pixels.width)) × \(Int(d.pixels.height)) pixels")
@@ -62,8 +62,8 @@ struct DisplaysCard: View {
                     .font(.caption).foregroundStyle(.secondary)
                     if d.isHeldBack {
                         Label(d.bestRefresh - d.refresh > 5
-                              ? String(format: "Running at %.0f Hz, %.0f Hz is available at this resolution. Check the cable, adapter or dock, or pick the rate in System Settings → Displays.", d.refresh, d.bestRefresh)
-                              : String(format: "Only %.0f Hz: often a cable or adapter that cannot carry more at this resolution.", d.refresh),
+                              ? String(format: String(localized: "Running at %.0f Hz, %.0f Hz is available at this resolution. Check the cable, adapter or dock, or pick the rate in System Settings → Displays."), d.refresh, d.bestRefresh)
+                              : String(format: String(localized: "Only %.0f Hz: often a cable or adapter that cannot carry more at this resolution."), d.refresh),
                               systemImage: "exclamationmark.triangle.fill")
                             .font(.caption).foregroundStyle(.orange)
                     }

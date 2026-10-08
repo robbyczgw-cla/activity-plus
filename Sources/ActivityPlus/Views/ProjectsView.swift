@@ -86,14 +86,16 @@ struct ProjectsView: View {
             Button("Stop", role: .destructive) { stop(server) }
             Button("Cancel", role: .cancel) {}
         } message: { server in
-            Text("\(server.pids.count == 1 ? "1 process" : "\(server.pids.count) processes") will be asked to stop. Port \(server.ports.map(String.init).joined(separator: ", ")) will be freed.")
+            let ports = server.ports.map(String.init).joined(separator: ", ")
+            Text("\(server.pids.count) processes will be asked to stop. Port \(ports) will be freed.")
         }
     }
 
     private func stop(_ server: DevServer) {
         let project = (server.directory.map { ($0 as NSString).lastPathComponent }) ?? server.name
         if ProjectScanner.stop(server) {
-            toast = "\(project) stopped. \(Format.memory(server.memory)) and port \(server.ports.map(String.init).joined(separator: ", ")) are free."
+            let freedPorts = server.ports.map(String.init).joined(separator: ", ")
+            toast = String(localized: "\(project) stopped. \(Format.memory(server.memory)) and port \(freedPorts) are free.")
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) { services.scanProjects() }
             DispatchQueue.main.asyncAfter(deadline: .now() + 6) { toast = nil }
         } else {
@@ -114,7 +116,7 @@ private struct ServerRow: View {
                         .font(.system(.callout, design: .monospaced).weight(.semibold))
                         .padding(.horizontal, 7).padding(.vertical, 2)
                         .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
-                        .help("Open http://localhost:\(port)")
+                        .help(String(localized: "Open http://localhost:\(port)"))
                 }
             }
             .frame(width: 66)
@@ -125,7 +127,7 @@ private struct ServerRow: View {
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 Text(Format.memory(server.memory)).monospacedDigit()
-                Text(Format.percent(server.cpuPercent, decimals: 1) + " CPU").font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                Text(Format.percent(server.cpuPercent, decimals: 1) + String(localized: " CPU")).font(.caption).foregroundStyle(.secondary).monospacedDigit()
             }
             Button("Stop…", action: onStop)
         }

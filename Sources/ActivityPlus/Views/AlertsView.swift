@@ -45,7 +45,7 @@ struct AlertsView: View {
                     Stepper("For \(services.alertSettings.cpuMinutes) minutes", value: $services.alertSettings.cpuMinutes, in: 2...60)
                 }
                 Section("Memory") {
-                    Stepper(String(format: "Grows by %.1f GB", services.alertSettings.memoryGrowthGB), value: $services.alertSettings.memoryGrowthGB, in: 0.25...8, step: 0.25)
+                    Stepper(String(format: String(localized: "Grows by %.1f GB"), services.alertSettings.memoryGrowthGB), value: $services.alertSettings.memoryGrowthGB, in: 0.25...8, step: 0.25)
                     Stepper("Within \(services.alertSettings.memoryWindowMinutes) minutes", value: $services.alertSettings.memoryWindowMinutes, in: 10...180, step: 10)
                 }
                 Section("Disk and network") {

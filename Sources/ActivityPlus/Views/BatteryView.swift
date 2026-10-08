@@ -80,8 +80,8 @@ struct BatteryView: View {
     }
 
     static func stateText(_ b: BatteryStats) -> String {
-        if b.isCharging { return "Charging" }
-        if b.isPluggedIn { return b.isFullyCharged ? "Charged" : "Plugged in" }
-        return "On battery"
+        if b.isCharging { return String(localized: "Charging") }
+        if b.isPluggedIn { return b.isFullyCharged ? "Charged" : String(localized: "Plugged in") }
+        return String(localized: "On battery")
     }
 }

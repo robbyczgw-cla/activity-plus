@@ -59,7 +59,7 @@ struct MetricDetailView: View {
         case .memory:
             HStack(alignment: .top, spacing: 14) {
                 Card {
-                    CardHeader(title: "Memory", systemImage: "memorychip", tint: metric.tint, trailing: "of \(Format.memory(s.memory.total))")
+                    CardHeader(title: "Memory", systemImage: "memorychip", tint: metric.tint, trailing: String(localized: "of \(Format.memory(s.memory.total))"))
                     HStack { BigNumber(text: Format.memory(s.memory.used), size: 36); Spacer(); PressureBadge(pressure: s.memory.pressure) }
                     MemoryBar(stats: s.memory)
                     StatLine(label: "App memory", value: Format.memory(s.memory.app), tint: .purple)
@@ -70,7 +70,7 @@ struct MetricDetailView: View {
                 }
                 .frame(width: 280)
                 Card {
-                    LiveChart(lines: [.init(name: "Used", values: h.memory.values, color: metric.tint)],
+                    LiveChart(lines: [.init(name: String(localized: "Used"), values: h.memory.values, color: metric.tint)],
                               format: { Format.memory(UInt64($0)) }, maxValue: Double(s.memory.total), interval: interval)
                     .frame(height: 220)
                 }
@@ -111,8 +111,8 @@ struct MetricDetailView: View {
                 .frame(width: 280)
                 Card {
                     LiveChart(lines: [
-                        .init(name: "Read", values: h.diskRead.values, color: .orange),
-                        .init(name: "Write", values: h.diskWrite.values, color: .brown),
+                        .init(name: String(localized: "Read"), values: h.diskRead.values, color: .orange),
+                        .init(name: String(localized: "Write"), values: h.diskWrite.values, color: .brown),
                     ], format: Format.rate, interval: interval)
                     .frame(height: 170)
                 }
@@ -135,8 +135,8 @@ struct MetricDetailView: View {
                 NetworkDetailsCard()
                 Card {
                     LiveChart(lines: [
-                        .init(name: "Down", values: h.netIn.values, color: .teal),
-                        .init(name: "Up", values: h.netOut.values, color: .indigo),
+                        .init(name: String(localized: "Down"), values: h.netIn.values, color: .teal),
+                        .init(name: String(localized: "Up"), values: h.netOut.values, color: .indigo),
                     ], format: Format.rate, interval: interval)
                     .frame(height: 150)
                 }
@@ -166,7 +166,7 @@ struct MetricDetailView: View {
 
 extension MetricDetailView {
     static func clock(_ mhz: Double) -> String {
-        mhz >= 1000 ? String(format: "%.2f GHz", mhz / 1000) : String(format: "%.0f MHz", mhz)
+        mhz >= 1000 ? String(format: String(localized: "%.2f GHz"), mhz / 1000) : String(format: String(localized: "%.0f MHz"), mhz)
     }
 }
 
@@ -199,7 +199,7 @@ struct DrivesCard: View {
                                 if let used = health.percentageUsed { Text("Wear \(used) %") }
                                 if let t = health.temperatureC { Text(Format.temperature(t)) }
                                 if let hours = health.powerOnHours { Text("\(hours) h powered on") }
-                                if let tb = health.dataWrittenTB { Text(String(format: "%.1f TB written", tb)) }
+                                if let tb = health.dataWrittenTB { Text(String(format: String(localized: "%.1f TB written"), tb)) }
                             }
                         }
                         .font(.caption).foregroundStyle(.secondary)
@@ -223,7 +223,7 @@ struct NetworkDetailsCard: View {
             ForEach(s.interfaces) { interface in
                 HStack {
                     Image(systemName: symbol(interface.kind)).frame(width: 18).foregroundStyle(.teal)
-                    Text(interface.displayName + (interface.isPrimary ? " (primary)" : ""))
+                    Text(interface.displayName + (interface.isPrimary ? String(localized: " (primary)") : ""))
                     Spacer()
                     Text(interface.ipv4.first ?? interface.ipv6.first ?? "–").monospacedDigit().textSelection(.enabled)
                 }
@@ -231,15 +231,16 @@ struct NetworkDetailsCard: View {
             }
             if let wifi = s.wifi {
                 Divider()
-                StatLine(label: "Wi-Fi network", value: wifi.ssid ?? "Hidden by macOS (needs Location access)")
-                if let rssi = wifi.rssi { StatLine(label: "Signal", value: "\(rssi) dBm · \(quality(rssi))") }
+                StatLine(label: "Wi-Fi network", value: wifi.ssid ?? String(localized: "Hidden by macOS (needs Location access)"))
+                if let rssi = wifi.rssi { StatLine(label: "Signal", value: String(localized: "\(rssi) dBm · \(quality(rssi))")) }
                 if let rssi = wifi.rssi, let noise = wifi.noise, noise != 0 {
                     // Signal minus noise: what decides whether Wi-Fi is fast, more than the signal alone.
                     let snr = rssi - noise
-                    StatLine(label: "Noise", value: "\(noise) dBm · \(snr) dB above it, \(snr >= 40 ? "excellent" : snr >= 25 ? "good" : snr >= 15 ? "weak, slower Wi-Fi" : "poor, expect dropouts")")
+                    let rating = snr >= 40 ? String(localized: "excellent") : snr >= 25 ? String(localized: "good") : snr >= 15 ? String(localized: "weak, slower Wi-Fi") : String(localized: "poor, expect dropouts")
+                    StatLine(label: "Noise", value: String(localized: "\(noise) dBm · \(snr) dB above it, \(rating)"))
                 }
-                if let channel = wifi.channel { StatLine(label: "Channel", value: "\(channel)\(wifi.band.map { " · " + $0 } ?? "")") }
-                if let rate = wifi.transmitRateMbps { StatLine(label: "Link speed", value: String(format: "%.0f Mbit/s", rate)) }
+                if let channel = wifi.channel { StatLine(label: "Channel", value: "\(channel)" + (wifi.band.map { " · " + $0 } ?? "")) }
+                if let rate = wifi.transmitRateMbps { StatLine(label: "Link speed", value: String(format: String(localized: "%.0f Mbit/s"), rate)) }
             }
             if let gateway = s.gateway { StatLine(label: "Router", value: gateway) }
             HStack {
@@ -251,7 +252,7 @@ struct NetworkDetailsCard: View {
                     Button(fetching ? "Asking…" : "Look up") {
                         fetching = true
                         Task {
-                            publicIP = await NetworkInfo.publicIP() ?? "Not available"
+                            publicIP = await NetworkInfo.publicIP() ?? String(localized: "Not available")
                             fetching = false
                         }
                     }
@@ -276,7 +277,7 @@ struct NetworkDetailsCard: View {
     }
 
     private func quality(_ rssi: Int) -> String {
-        rssi >= -55 ? "excellent" : rssi >= -67 ? "good" : rssi >= -75 ? "fair" : "weak"
+        rssi >= -55 ? String(localized: "excellent") : rssi >= -67 ? String(localized: "good") : rssi >= -75 ? String(localized: "fair") : String(localized: "weak")
     }
 }
 
@@ -311,7 +312,7 @@ struct CoreGrid: View {
                         .frame(height: 40)
                         Text(index < efficiencyCores ? "E" : "P").font(.system(size: 9)).foregroundStyle(.tertiary)
                     }
-                    .help("Core \(index + 1): \(Format.percent(value))")
+                    .help(String(localized: "Core \(index + 1): \(Format.percent(value))"))
                 }
             }
             .animation(.smooth, value: cores)

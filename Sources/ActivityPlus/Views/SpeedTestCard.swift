@@ -25,13 +25,13 @@ struct SpeedTestCard: View {
             }
             if let latest = results.first {
                 HStack(spacing: 40) {
-                    figure("Write", latest.writeMBps)
-                    figure("Read", latest.readMBps)
+                    figure(String(localized: "Write"), latest.writeMBps)
+                    figure(String(localized: "Read"), latest.readMBps)
                     Spacer()
                     Text("Measured \(latest.date.formatted(date: .abbreviated, time: .shortened))").font(.caption).foregroundStyle(.secondary)
                 }
                 if results.count > 1 {
-                    Text("Earlier: " + results.dropFirst().prefix(4).map { String(format: "%.0f / %.0f MB/s", $0.writeMBps, $0.readMBps) }.joined(separator: ", "))
+                    Text(String(localized: "Earlier: ") + results.dropFirst().prefix(4).map { String(format: String(localized: "%.0f / %.0f MB/s"), $0.writeMBps, $0.readMBps) }.joined(separator: ", "))
                         .font(.caption).foregroundStyle(.tertiary)
                 }
             } else if !running {
@@ -44,8 +44,8 @@ struct SpeedTestCard: View {
 
     private func figure(_ title: String, _ mbps: Double) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
-            BigNumber(text: mbps >= 1000 ? String(format: "%.2f GB/s", mbps / 1000) : String(format: "%.0f MB/s", mbps), size: 26)
+            Text(LocalizedStringKey(title)).font(.caption).foregroundStyle(.secondary)
+            BigNumber(text: mbps >= 1000 ? String(format: String(localized: "%.2f GB/s"), mbps / 1000) : String(format: String(localized: "%.0f MB/s"), mbps), size: 26)
         }
     }
 

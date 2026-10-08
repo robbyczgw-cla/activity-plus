@@ -8,17 +8,17 @@ enum PanelTile: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .cpu: "CPU"
-        case .memory: "Memory"
-        case .network: "Network"
-        case .diskFree: "Disk free"
-        case .gpu: "GPU"
-        case .battery: "Battery"
-        case .temperature: "CPU temperature"
-        case .power: "Power draw"
-        case .fans: "Fans"
-        case .swap: "Swap"
-        case .uptime: "Uptime"
+        case .cpu: String(localized: "CPU")
+        case .memory: String(localized: "Memory")
+        case .network: String(localized: "Network")
+        case .diskFree: String(localized: "Disk free")
+        case .gpu: String(localized: "GPU")
+        case .battery: String(localized: "Battery")
+        case .temperature: String(localized: "CPU temperature")
+        case .power: String(localized: "Power draw")
+        case .fans: String(localized: "Fans")
+        case .swap: String(localized: "Swap")
+        case .uptime: String(localized: "Uptime")
         }
     }
 
@@ -85,10 +85,10 @@ enum PanelTheme: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .system: "Match macOS"
-        case .graphite: "Graphite"
-        case .midnight: "Midnight"
-        case .accent: "Tinted with the accent color"
+        case .system: String(localized: "Match macOS")
+        case .graphite: String(localized: "Graphite")
+        case .midnight: String(localized: "Midnight")
+        case .accent: String(localized: "Tinted with the accent color")
         }
     }
 

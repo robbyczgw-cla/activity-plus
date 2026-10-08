@@ -9,9 +9,9 @@ enum AppPresence: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .both: "Menu bar and Dock"
-        case .menuBarOnly: "Menu bar only"
-        case .dockOnly: "Dock only"
+        case .both: String(localized: "Menu bar and Dock")
+        case .menuBarOnly: String(localized: "Menu bar only")
+        case .dockOnly: String(localized: "Dock only")
         }
     }
 

@@ -20,11 +20,11 @@ public enum USBLinkCheck {
 
     static func describe(speed: Int) -> String {
         switch speed {
-        case 0: "USB 1 · 1.5 Mbit/s"
-        case 1: "USB 1 · 12 Mbit/s"
-        case 2: "USB 2 · 480 Mbit/s"
-        case 3: "USB 3 · 5 Gbit/s"
-        case 4: "USB 3 · 10 Gbit/s"
+        case 0: String(localized: "USB 1 · 1.5 Mbit/s")
+        case 1: String(localized: "USB 1 · 12 Mbit/s")
+        case 2: String(localized: "USB 2 · 480 Mbit/s")
+        case 3: String(localized: "USB 3 · 5 Gbit/s")
+        case 4: String(localized: "USB 3 · 10 Gbit/s")
         default: "USB 3 · 20 Gbit/s"
         }
     }

@@ -113,7 +113,7 @@ private struct GeneralSettings: View {
         let confirm = NSAlert()
         confirm.messageText = "Replace your settings with \"\(url.lastPathComponent)\"?"
         confirm.informativeText = "\(settings.count) settings are replaced: menu bar, panel, alert rules, automations and performance switches. Your history stays. Activity+ restarts to apply them."
-        confirm.addButton(withTitle: "Replace and Restart")
+        confirm.addButton(withTitle: String(localized: "Replace and Restart"))
         confirm.addButton(withTitle: "Cancel")
         guard confirm.runModal() == .alertFirstButtonReturn else { return }
         let defaults = UserDefaults.standard
@@ -131,9 +131,9 @@ private struct GeneralSettings: View {
 
     private var presenceHint: String {
         switch presence {
-        case .both: "Click a menu bar item for the panel, or use the Dock icon for the window."
-        case .menuBarOnly: "No Dock icon. Open the window from any menu bar item (right-click → Open Activity+)."
-        case .dockOnly: "No menu bar items. Click the Dock icon to open the window; Activity+ keeps measuring in the background."
+        case .both: String(localized: "Click a menu bar item for the panel, or use the Dock icon for the window.")
+        case .menuBarOnly: String(localized: "No Dock icon. Open the window from any menu bar item (right-click → Open Activity+).")
+        case .dockOnly: String(localized: "No menu bar items. Click the Dock icon to open the window; Activity+ keeps measuring in the background.")
         }
     }
 }
@@ -175,9 +175,9 @@ private struct MenuBarSettings: View {
         if let showing = status.combinedShowing {
             return "Even as one item they don't fit next to the notch, so the menu bar shows the first \(showing). The panel has them all."
         }
-        if status.autoCombined { return "Not every item fit next to the notch, so they are shown as one. Click a value to open its tab." }
+        if status.autoCombined { return String(localized: "Not every item fit next to the notch, so they are shown as one. Click a value to open its tab.") }
         if status.hidden > 0 {
-            return "\(status.hidden) \(status.hidden == 1 ? "item is" : "items are") hidden, most likely behind the notch. Choose Combined, or Combine when they don't fit."
+            return String(localized: "\(status.hidden) items are hidden, most likely behind the notch. Choose Combined, or Combine when they don't fit.")
         }
         return nil
     }
@@ -497,18 +497,18 @@ private struct PerformanceSettings: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("Measurements") {
-                row("Network use per app", "Runs nettop, a separate process. Without it, per-app network figures, alerts and history stay empty.", "high", $perAppNetwork)
-                row("GPU use per app", "Walks every graphics client in the system registry.", "medium", $perAppGPU)
-                row("Temperatures and fans", "Reads about 60 sensors every 10 seconds.", "medium", $sensors)
-                row("Clock speeds and chip power", "IOReport, only while a window or the panel is open.", "low", $chip)
-                row("Drives and SSD health", "Only while a window or the panel is open.", "low", $drives)
-                row("Network details", "Interfaces, Wi-Fi and router, every 10 seconds while you look.", "low", $networkDetails)
+                row(String(localized: "Network use per app"), String(localized: "Runs nettop, a separate process. Without it, per-app network figures, alerts and history stay empty."), "high", $perAppNetwork)
+                row(String(localized: "GPU use per app"), String(localized: "Walks every graphics client in the system registry."), "medium", $perAppGPU)
+                row(String(localized: "Temperatures and fans"), String(localized: "Reads about 60 sensors every 10 seconds."), "medium", $sensors)
+                row(String(localized: "Clock speeds and chip power"), String(localized: "IOReport, only while a window or the panel is open."), "low", $chip)
+                row(String(localized: "Drives and SSD health"), String(localized: "Only while a window or the panel is open."), "low", $drives)
+                row(String(localized: "Network details"), String(localized: "Interfaces, Wi-Fi and router, every 10 seconds while you look."), "low", $networkDetails)
             }
             Section("Background features") {
-                row("Dev servers and ports", "Runs lsof every 5 seconds while you look, every minute otherwise.", "medium", $devServers)
-                row("Freeze detection", "Asks WindowServer about every open app every few seconds.", "medium", $hangs)
-                row("Unusual activity and leaks", "Compares apps with their history once a minute.", "low", $insights)
-                row("Connection quality", "Pings your router every 30 seconds (and a host you choose on the Network page). Off by default.", "low", $connectionQuality)
+                row(String(localized: "Dev servers and ports"), String(localized: "Runs lsof every 5 seconds while you look, every minute otherwise."), "medium", $devServers)
+                row(String(localized: "Freeze detection"), String(localized: "Asks WindowServer about every open app every few seconds."), "medium", $hangs)
+                row(String(localized: "Unusual activity and leaks"), String(localized: "Compares apps with their history once a minute."), "low", $insights)
+                row("Connection quality", String(localized: "Pings your router every 30 seconds (and a host you choose on the Network page). Off by default."), "low", $connectionQuality)
             }
         }
         .formStyle(.grouped)
@@ -520,13 +520,13 @@ private struct PerformanceSettings: View {
         Toggle(isOn: isOn) {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    Text(title)
-                    Text(cost + " cost")
+                    Text(LocalizedStringKey(title))
+                    Text(cost == "high" ? String(localized: "high cost") : cost == "medium" ? String(localized: "medium cost") : String(localized: "low cost"))
                         .font(.caption2.weight(.semibold))
                         .padding(.horizontal, 5).padding(.vertical, 1)
                         .background((cost == "high" ? Color.orange : cost == "medium" ? Color.yellow : Color.green).opacity(0.2), in: Capsule())
                 }
-                Text(detail).font(.caption).foregroundStyle(.secondary)
+                Text(LocalizedStringKey(detail)).font(.caption).foregroundStyle(.secondary)
             }
         }
     }

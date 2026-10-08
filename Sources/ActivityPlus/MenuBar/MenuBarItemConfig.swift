@@ -9,31 +9,31 @@ struct MenuBarItemConfig: Codable, Identifiable, Hashable {
         var id: String { rawValue }
         var title: String {
             switch self {
-            case .status: "Activity+ icon"
-            case .cpu: "CPU"
-            case .memory: "Memory"
-            case .gpu: "GPU"
-            case .disk: "Disk"
-            case .network: "Network"
-            case .temperature: "Temperature"
-            case .fans: "Fans"
-            case .battery: "Battery"
-            case .power: "Power draw"
-            case .clock: "Clock"
+            case .status: String(localized: "Activity+ icon")
+            case .cpu: String(localized: "CPU")
+            case .memory: String(localized: "Memory")
+            case .gpu: String(localized: "GPU")
+            case .disk: String(localized: "Disk")
+            case .network: String(localized: "Network")
+            case .temperature: String(localized: "Temperature")
+            case .fans: String(localized: "Fans")
+            case .battery: String(localized: "Battery")
+            case .power: String(localized: "Power draw")
+            case .clock: String(localized: "Clock")
             }
         }
         var shortLabel: String {
             switch self {
             case .status: ""
-            case .cpu: "CPU"
-            case .memory: "MEM"
-            case .gpu: "GPU"
-            case .disk: "SSD"
-            case .network: "NET"
-            case .temperature: "TMP"
-            case .fans: "FAN"
-            case .battery: "BAT"
-            case .power: "PWR"
+            case .cpu: String(localized: "CPU")
+            case .memory: String(localized: "MEM")
+            case .gpu: String(localized: "GPU")
+            case .disk: String(localized: "SSD")
+            case .network: String(localized: "NET")
+            case .temperature: String(localized: "TMP")
+            case .fans: String(localized: "FAN")
+            case .battery: String(localized: "BAT")
+            case .power: String(localized: "PWR")
             case .clock: ""
             }
         }
@@ -84,17 +84,17 @@ struct MenuBarItemConfig: Codable, Identifiable, Hashable {
         var id: String { rawValue }
         var title: String {
             switch self {
-            case .icon: "Icon"
-            case .text: "Value"
-            case .labeled: "Label + value"
-            case .line: "Line chart"
-            case .bars: "Bar chart"
-            case .coreBars: "Bar per core"
-            case .ring: "Ring"
-            case .gauge: "Gauge"
-            case .dot: "Dot"
-            case .speed: "Up / down"
-            case .battery: "Battery"
+            case .icon: String(localized: "Icon")
+            case .text: String(localized: "Value")
+            case .labeled: String(localized: "Label + value")
+            case .line: String(localized: "Line chart")
+            case .bars: String(localized: "Bar chart")
+            case .coreBars: String(localized: "Bar per core")
+            case .ring: String(localized: "Ring")
+            case .gauge: String(localized: "Gauge")
+            case .dot: String(localized: "Dot")
+            case .speed: String(localized: "Up / down")
+            case .battery: String(localized: "Battery")
             }
         }
     }
@@ -104,9 +104,9 @@ struct MenuBarItemConfig: Codable, Identifiable, Hashable {
         var id: String { rawValue }
         var title: String {
             switch self {
-            case .monochrome: "Match the menu bar"
-            case .byLevel: "Green → red by load"
-            case .fixed: "Fixed color"
+            case .monochrome: String(localized: "Match the menu bar")
+            case .byLevel: String(localized: "Green → red by load")
+            case .fixed: String(localized: "Fixed color")
             }
         }
     }
@@ -122,9 +122,9 @@ struct MenuBarItemConfig: Codable, Identifiable, Hashable {
         var id: String { rawValue }
         var title: String {
             switch self {
-            case .free: "Free space"
-            case .usedPercent: "Used %"
-            case .activity: "Read + write"
+            case .free: String(localized: "Free space")
+            case .usedPercent: String(localized: "Used %")
+            case .activity: String(localized: "Read + write")
             }
         }
     }
@@ -198,10 +198,10 @@ struct MenuBarItemConfig: Codable, Identifiable, Hashable {
         var id: String { rawValue }
         var title: String {
             switch self {
-            case .minimal: "Minimal (CPU)"
-            case .balanced: "Balanced (CPU, memory, network, temperature)"
-            case .everything: "Everything"
-            case .iconOnly: "Just the Activity+ icon"
+            case .minimal: String(localized: "Minimal (CPU)")
+            case .balanced: String(localized: "Balanced (CPU, memory, network, temperature)")
+            case .everything: String(localized: "Everything")
+            case .iconOnly: String(localized: "Just the Activity+ icon")
             }
         }
         var items: [MenuBarItemConfig] {

@@ -11,7 +11,7 @@ struct SlowUSBNote: View {
                 Card {
                     CardHeader(title: "Slower than it could be", systemImage: "cable.connector", tint: .orange)
                     ForEach(slow) { link in
-                        StatLine(label: link.name, value: "\(link.connected), can do \(link.supports)")
+                        StatLine(label: link.name, value: String(localized: "\(link.connected), can do \(link.supports)"))
                     }
                     Text("The drive can do USB 3 but is connected at USB 2 speed. Usually the cable only does USB 2 (charging cables often do), or a hub or port in between does. Try another cable or plug it straight into the Mac.")
                         .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)

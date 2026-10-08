@@ -55,10 +55,10 @@ struct SleepView: View {
                         Text("The Mac was plugged in the whole time.").foregroundStyle(.secondary)
                     } else {
                         HStack(spacing: 30) {
-                            figure("On battery", Format.duration(drain.hoursOnBattery * 3600))
-                            figure("Battery used", Format.percent(drain.percentUsed))
-                            figure("Per hour", Format.percent(drain.percentUsed / max(drain.hoursOnBattery, 0.1), decimals: 1))
-                            if drain.energyWh > 0 { figure("Energy", String(format: "%.0f Wh", drain.energyWh)) }
+                            figure(String(localized: "On battery"), Format.duration(drain.hoursOnBattery * 3600))
+                            figure(String(localized: "Battery used"), Format.percent(drain.percentUsed))
+                            figure(String(localized: "Per hour"), Format.percent(drain.percentUsed / max(drain.hoursOnBattery, 0.1), decimals: 1))
+                            if drain.energyWh > 0 { figure("Energy", String(format: String(localized: "%.0f Wh"), drain.energyWh)) }
                         }
                         Text("Apps that used the most energy on battery").font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.top, 6)
                         let total = max(drainApps.reduce(0) { $0 + $1.energyWh }, 0.001)
@@ -67,7 +67,7 @@ struct SleepView: View {
                                 Text(app.name).lineLimit(1)
                                 Spacer()
                                 UsageBar(fraction: app.energyWh / total, tint: .green).frame(width: 120)
-                                Text(String(format: "%.1f Wh", app.energyWh)).monospacedDigit().frame(width: 70, alignment: .trailing)
+                                Text(String(format: String(localized: "%.1f Wh"), app.energyWh)).monospacedDigit().frame(width: 70, alignment: .trailing)
                             }
                             .font(.callout)
                         }
@@ -110,7 +110,7 @@ struct SleepView: View {
 
     private func figure(_ title: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
+            Text(LocalizedStringKey(title)).font(.caption).foregroundStyle(.secondary)
             BigNumber(text: value, size: 22)
         }
     }

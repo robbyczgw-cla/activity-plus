@@ -29,6 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(AppPresence.current.showsDock ? .regular : .accessory)
         MainActor.assumeIsolated {
             UnitPreferences.apply()
+            Format.locale = .current
             _ = Updates.shared
             AppServices.shared.attach(to: Monitor.shared)
             HelperClient.shared.attach(to: Monitor.shared)

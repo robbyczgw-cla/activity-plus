@@ -20,22 +20,22 @@ enum SidebarItem: Hashable {
     static let pages: [Page] = [
         Page(item: .overview, key: "overview", title: "Overview", icon: "square.grid.2x2", section: ""),
     ] + [Metric.cpu, .memory, .gpu, .disk, .network, .energy].map {
-        Page(item: .metric($0), key: "metric:\($0.rawValue)", title: $0.title, icon: $0.systemImage, section: "Resources")
+        Page(item: .metric($0), key: "metric:\($0.rawValue)", title: $0.title, icon: $0.systemImage, section: String(localized: "Resources"))
     } + [
-        Page(item: .battery, key: "battery", title: "Battery", icon: "battery.75percent", section: "Resources"),
-        Page(item: .sensors, key: "sensors", title: "Temperatures", icon: "thermometer.medium", section: "Resources"),
-        Page(item: .projects, key: "projects", title: "Projects", icon: "hammer", section: "Tools"),
-        Page(item: .connections, key: "connections", title: "Connections", icon: "point.3.connected.trianglepath.dotted", section: "Tools"),
-        Page(item: .history, key: "history", title: "History", icon: "clock.arrow.circlepath", section: "Tools"),
-        Page(item: .sessions, key: "sessions", title: "Sessions", icon: "record.circle", section: "Tools"),
-        Page(item: .weekly, key: "weekly", title: "Weekly Report", icon: "calendar", section: "Tools"),
-        Page(item: .alerts, key: "alerts", title: "Alerts", icon: "bell", section: "Tools"),
-        Page(item: .automations, key: "automations", title: "Automations", icon: "wand.and.stars", section: "Tools"),
-        Page(item: .sound, key: "sound", title: "Sound", icon: "speaker.wave.2", section: "Tools"),
-        Page(item: .diagnosis, key: "diagnosis", title: "Why Is It Slow?", icon: "stethoscope", section: "Maintenance"),
-        Page(item: .sleep, key: "sleep", title: "Sleep & Battery Drain", icon: "moon.zzz", section: "Maintenance"),
-        Page(item: .startup, key: "startup", title: "Startup Items", icon: "power", section: "Maintenance"),
-        Page(item: .storage, key: "storage", title: "Storage", icon: "externaldrive", section: "Maintenance"),
+        Page(item: .battery, key: "battery", title: "Battery", icon: "battery.75percent", section: String(localized: "Resources")),
+        Page(item: .sensors, key: "sensors", title: "Temperatures", icon: "thermometer.medium", section: String(localized: "Resources")),
+        Page(item: .projects, key: "projects", title: "Projects", icon: "hammer", section: String(localized: "Tools")),
+        Page(item: .connections, key: "connections", title: "Connections", icon: "point.3.connected.trianglepath.dotted", section: String(localized: "Tools")),
+        Page(item: .history, key: "history", title: "History", icon: "clock.arrow.circlepath", section: String(localized: "Tools")),
+        Page(item: .sessions, key: "sessions", title: "Sessions", icon: "record.circle", section: String(localized: "Tools")),
+        Page(item: .weekly, key: "weekly", title: "Weekly Report", icon: "calendar", section: String(localized: "Tools")),
+        Page(item: .alerts, key: "alerts", title: "Alerts", icon: "bell", section: String(localized: "Tools")),
+        Page(item: .automations, key: "automations", title: "Automations", icon: "wand.and.stars", section: String(localized: "Tools")),
+        Page(item: .sound, key: "sound", title: "Sound", icon: "speaker.wave.2", section: String(localized: "Tools")),
+        Page(item: .diagnosis, key: "diagnosis", title: "Why Is It Slow?", icon: "stethoscope", section: String(localized: "Maintenance")),
+        Page(item: .sleep, key: "sleep", title: "Sleep & Battery Drain", icon: "moon.zzz", section: String(localized: "Maintenance")),
+        Page(item: .startup, key: "startup", title: "Startup Items", icon: "power", section: String(localized: "Maintenance")),
+        Page(item: .storage, key: "storage", title: "Storage", icon: "externaldrive", section: String(localized: "Maintenance")),
     ]
 
     /// Pages that can be hidden (Overview always stays).
@@ -54,7 +54,7 @@ struct ContentView: View {
     @AppStorage("hiddenPages") private var hiddenPages = ""
     @AppStorage("accentColor") private var accent = "system"
 
-    private let sections = ["", "Resources", "Tools", "Maintenance"]
+    private let sections = ["", String(localized: "Resources"), String(localized: "Tools"), String(localized: "Maintenance")]
 
     private func visiblePages(in section: String) -> [SidebarItem.Page] {
         let hidden = Set(hiddenPages.split(separator: ",").map(String.init))
@@ -67,7 +67,7 @@ struct ContentView: View {
     }
 
     @ViewBuilder private func row(_ page: SidebarItem.Page) -> some View {
-        Label(page.title, systemImage: page.icon)
+        Label(LocalizedStringKey(page.title), systemImage: page.icon)
             .badge(badge(for: page.item))
             .tag(page.item)
     }
@@ -80,7 +80,7 @@ struct ContentView: View {
                     if section.isEmpty {
                         ForEach(visiblePages(in: section), id: \.key) { row($0) }
                     } else {
-                        Section(section) {
+                        Section(LocalizedStringKey(section)) {
                             ForEach(visiblePages(in: section), id: \.key) { row($0) }
                         }
                     }

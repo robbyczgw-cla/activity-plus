@@ -98,9 +98,9 @@ final class GPUCauseFinder {
 
     private func run() async {
         let apps = Self.candidates()
-        guard !apps.isEmpty else { state = .failed("No app has a window on this screen."); return }
+        guard !apps.isEmpty else { state = .failed(String(localized: "No app has a window on this screen.")); return }
         guard let server = GPUClientTime.snapshot().values.first(where: { $0.name == "WindowServer" })?.pid else {
-            state = .failed("WindowServer's GPU time is not readable on this Mac.")
+            state = .failed(String(localized: "WindowServer's GPU time is not readable on this Mac."))
             return
         }
         let frontmost = NSWorkspace.shared.frontmostApplication
@@ -111,20 +111,20 @@ final class GPUCauseFinder {
         var cancelled = false
 
         do {
-            state = .running(step: 1, total: total, label: "Measuring with every window visible")
+            state = .running(step: 1, total: total, label: String(localized: "Measuring with every window visible"))
             var visible = try await measure(server, seconds: Self.baselineSeconds)
 
             // Each app is compared with the measurement right before it, so a load that changes
             // during the run (an app that stays quiet after being shown again) does not blur the rest.
             for (index, app) in apps.enumerated() {
-                state = .running(step: index + 2, total: total, label: "Hiding \(app.name)")
+                state = .running(step: index + 2, total: total, label: String(localized: "Hiding \(app.name)"))
                 let hidden = try await measureHidden(app.processes, server: server)
                 let shownAgain = try await measure(server, seconds: Self.stepSeconds)
                 steps.append(.init(name: app.name, bundleID: app.bundleID, before: visible, hidden: hidden, shownAgain: shownAgain))
                 visible = shownAgain
             }
 
-            state = .running(step: total, total: total, label: "Hiding all of them at once")
+            state = .running(step: total, total: total, label: String(localized: "Hiding all of them at once"))
             floor = try await measureHidden(apps.flatMap(\.processes), server: server)
         } catch {
             cancelled = true

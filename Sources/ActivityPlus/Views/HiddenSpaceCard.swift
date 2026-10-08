@@ -38,16 +38,16 @@ struct HiddenSpaceCard: View {
             let dates = timeMachine.compactMap(\.date).sorted()
             row(icon: "clock.arrow.circlepath", title: String(localized: "\(timeMachine.count) local Time Machine snapshots"),
                 detail: (dates.first.map { "Oldest from \($0.formatted(date: .abbreviated, time: .shortened)). " } ?? "")
-                    + "Time Machine keeps them while the backup disk is away and removes them after 24 hours or when space runs low.",
-                button: "Time Machine Settings", url: "x-apple.systempreferences:com.apple.Time-Machine-Settings.extension")
+                    + String(localized: "Time Machine keeps them while the backup disk is away and removes them after 24 hours or when space runs low."),
+                button: String(localized: "Time Machine Settings"), url: "x-apple.systempreferences:com.apple.Time-Machine-Settings.extension")
         }
         if !updates.isEmpty {
             let prepared = updates.contains { $0.name.contains("MSUPrepareUpdate") }
             row(icon: "arrow.down.circle", title: String(localized: "\(updates.count) macOS update snapshots"),
                 detail: prepared
-                    ? "One belongs to an update that is downloaded and prepared but not installed yet. It can take several GB until you install the update."
-                    : "Left by macOS updates so the system can be restored. macOS removes them on its own.",
-                button: "Software Update", url: "x-apple.systempreferences:com.apple.Software-Update-Settings.extension")
+                    ? String(localized: "One belongs to an update that is downloaded and prepared but not installed yet. It can take several GB until you install the update.")
+                    : String(localized: "Left by macOS updates so the system can be restored. macOS removes them on its own."),
+                button: String(localized: "Software Update"), url: "x-apple.systempreferences:com.apple.Software-Update-Settings.extension")
         }
         if !other.isEmpty {
             row(icon: "camera.on.rectangle", title: String(localized: "\(other.count) other snapshots"),
@@ -60,8 +60,8 @@ struct HiddenSpaceCard: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: icon).foregroundStyle(.orange).frame(width: 20)
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).fontWeight(.medium)
-                Text(detail).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(LocalizedStringKey(title)).fontWeight(.medium)
+                Text(LocalizedStringKey(detail)).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             if let button, let url, let link = URL(string: url) {

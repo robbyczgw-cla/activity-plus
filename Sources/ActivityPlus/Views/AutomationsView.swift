@@ -136,7 +136,7 @@ private struct RuleRow: View {
         case .batteryBelow(let percent):
             Stepper("Below \(Int(percent)) %", value: Binding(get: { percent }, set: { rule.trigger = .batteryBelow(percent: $0) }), in: 5...80, step: 5)
         case .appMemoryAbove(let id, let name, let gb):
-            Stepper(String(format: "Above %g GB", gb), value: Binding(get: { gb }, set: { rule.trigger = .appMemoryAbove(appID: id, appName: name, gigabytes: $0) }), in: 0.5...64, step: 0.5)
+            Stepper(String(format: String(localized: "Above %g GB"), gb), value: Binding(get: { gb }, set: { rule.trigger = .appMemoryAbove(appID: id, appName: name, gigabytes: $0) }), in: 0.5...64, step: 0.5)
         case .appCPUAbove(let id, let name, let percent, let minutes):
             Stepper("Above \(Int(percent)) %", value: Binding(get: { percent }, set: { rule.trigger = .appCPUAbove(appID: id, appName: name, percent: $0, minutes: minutes) }), in: 20...800, step: 10)
             Stepper("for \(minutes) min", value: Binding(get: { minutes }, set: { rule.trigger = .appCPUAbove(appID: id, appName: name, percent: percent, minutes: $0) }), in: 1...120)

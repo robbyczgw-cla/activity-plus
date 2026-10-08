@@ -9,12 +9,12 @@ enum Metric: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .cpu: "CPU"
-        case .memory: "Memory"
-        case .gpu: "GPU"
-        case .disk: "Disk"
-        case .network: "Network"
-        case .energy: "Energy"
+        case .cpu: String(localized: "CPU")
+        case .memory: String(localized: "Memory")
+        case .gpu: String(localized: "GPU")
+        case .disk: String(localized: "Disk")
+        case .network: String(localized: "Network")
+        case .energy: String(localized: "Energy")
         }
     }
 
