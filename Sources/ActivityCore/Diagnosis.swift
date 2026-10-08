@@ -43,6 +43,8 @@ public struct DiagnosisInput: Sendable {
     /// Dev servers idle for a while and the memory they hold.
     public var idleServers: (count: Int, memory: UInt64) = (0, 0)
     public var lowPowerMode: Bool = ProcessInfo.processInfo.isLowPowerModeEnabled
+    /// USB drives that can do USB 3 but are connected at USB 2 speed.
+    public var slowUSB: [USBLinkCheck.SlowLink] = []
 
     public init(snapshot: SystemSnapshot, recentCPU: [Double], recentAppCPU: [String: [Double]]) {
         self.snapshot = snapshot
@@ -57,6 +59,16 @@ public enum Diagnostician {
         var findings: [Diagnosis.Finding] = []
         let userApps = s.apps.filter { $0.kind != .system }
         let cores = Double(max(1, s.cpu.perCore.count))
+
+        if !input.slowUSB.isEmpty {
+            let names = input.slowUSB.map(\.name).joined(separator: ", ")
+            findings.append(.init(
+                id: "usb-speed", severity: .warning,
+                title: input.slowUSB.count == 1 ? "\(names) runs at USB 2 speed" : "\(input.slowUSB.count) drives run at USB 2 speed",
+                detail: "\(names) can do USB 3 but is connected at USB 2 speed, up to ten times slower. Usually the cable is a USB 2 or charging cable, or a hub or port in between only does USB 2. Try another cable or plug it straight into the Mac.",
+                evidence: input.slowUSB.map { "\($0.name): supports \($0.supports), connected at \($0.connected)" },
+                action: nil))
+        }
 
         // Memory
         let memory = s.memory

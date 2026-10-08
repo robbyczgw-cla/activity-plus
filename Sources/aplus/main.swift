@@ -36,6 +36,8 @@ if arguments.contains("--hardware") {
         print("net: \(i.id) \(i.displayName) \(i.kind.rawValue)\(i.isPrimary ? " primary" : "") \(i.ipv4.joined(separator: ","))")
     }
     print("wifi:", NetworkInfo.wifi().map { "ssid \($0.ssid ?? "(no permission)") rssi \($0.rssi.map(String.init) ?? "–") channel \($0.channel.map(String.init) ?? "–") rate \($0.transmitRateMbps.map { String(format: "%.0f Mbps", $0) } ?? "–")" } ?? "none")
+    let slowUSB = USBLinkCheck.slowStorage()
+    print("usb drives below their speed:", slowUSB.isEmpty ? "none" : slowUSB.map { "\($0.name) (\($0.connected), supports \($0.supports))" }.joined(separator: ", "))
     let sensors = sampler.sensorList()
     for reading in sensors where reading.kind == .power && reading.value > 0.05 {
         print("power: \(reading.group) · \(reading.name) [\(reading.id)] \(String(format: "%.2f W", reading.value))")

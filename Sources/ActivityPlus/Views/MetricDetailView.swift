@@ -117,6 +117,7 @@ struct MetricDetailView: View {
                     .frame(height: 170)
                 }
             }
+            SlowUSBNote()
             DrivesCard(drives: s.drives)
             SSDWearCard(drive: s.drives.first { $0.isInternal && $0.nvmeHealth != nil })
             SpeedTestCard()

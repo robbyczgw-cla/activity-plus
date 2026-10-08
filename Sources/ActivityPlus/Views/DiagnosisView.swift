@@ -79,6 +79,7 @@ struct DiagnosisView: View {
         }
         let idle = services.projects.projects.flatMap(\.servers).filter { $0.isIdle() }
         input.idleServers = (idle.count, idle.reduce(0) { $0 + $1.memory })
+        input.slowUSB = USBLinkCheck.slowStorage()
         withAnimation(.snappy) { diagnosis = Diagnostician.diagnose(input) }
     }
 
