@@ -109,6 +109,27 @@ final class AppServices {
             MainActor.assumeIsolated { if Performance.hangs { self?.hangs.poll() } }
         }
         testFreezeIfRequested()
+        // VPNs: a local list, cheap to read; a drop is reported once it lasts a minute.
+        vpnTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkVPN() }
+        }
+    }
+
+    @ObservationIgnored private var vpnTimer: Timer?
+    @ObservationIgnored private var vpnWatch = VPNWatch()
+
+    private func checkVPN() {
+        guard alertSettings.enabled, alertSettings.systemAlerts else { return }
+        Task.detached(priority: .utility) {
+            let services = VPNWatch.read()
+            await MainActor.run {
+                for vpn in self.vpnWatch.update(services) {
+                    self.record(AppAlert(date: Date(), kind: .vpn, appID: nil, appName: vpn.name,
+                                         title: "VPN \"\(vpn.name)\" disconnected",
+                                         detail: "It has been off for over a minute. Traffic now goes out without the VPN."))
+                }
+            }
+        }
     }
 
     /// Debug aid: ACTIVITYPLUS_TEST_FREEZE=<bundle id> reports that app as frozen for 8 seconds right after

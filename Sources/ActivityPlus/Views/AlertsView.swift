@@ -92,6 +92,7 @@ struct AlertsView: View {
         case .automation: "wand.and.stars"
         case .weekly: "calendar"
         case .power: "powerplug"
+        case .vpn: "lock.open"
         }
     }
 
