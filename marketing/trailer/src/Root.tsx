@@ -3,12 +3,15 @@ import { Composition } from "remotion";
 import { FPS, totalFrames } from "./script";
 import { Trailer, TrailerProps } from "./Trailer";
 import { GpuCause, gpuTotalFrames } from "./GpuCause";
+import { Release030, releaseTotalFrames } from "./Release030";
 
 export const Root: React.FC = () => (
   <>
     <Composition id="Trailer" component={Trailer} durationInFrames={totalFrames} fps={FPS} width={1920} height={1080}
       defaultProps={{ voice: "none", music: false } satisfies TrailerProps} />
     <Composition id="GpuCause" component={GpuCause} durationInFrames={gpuTotalFrames} fps={FPS} width={1920} height={1080}
+      defaultProps={{ music: true }} />
+    <Composition id="Release030" component={Release030} durationInFrames={releaseTotalFrames} fps={FPS} width={1920} height={1080}
       defaultProps={{ music: true }} />
   </>
 );
