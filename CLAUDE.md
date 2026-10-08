@@ -22,7 +22,7 @@ macOS system monitor (Vitals alternative + extras). SwiftPM, no Xcode project. P
 
 ## Gotchas
 - Delegated agents (Codex) run in a sandbox that blocks IOKit/SystemConfiguration: their "returns nil" findings for hardware readers are not conclusive — test with `aplus --hardware` outside the sandbox.
-- IOReport on M1 Max / macOS 27: GPU energy and all performance states work; CPU energy channels read 0. Frequencies come from `pmgr` `voltage-states1-sram` (E), `voltage-states5-sram` (P), `voltage-states9` (GPU).
+- IOReport on M1 Max / macOS 27: GPU energy and all performance states work; CPU, ANE and the per-block energy channels (GPU0, ISP0, AVE0, DRAM0) read 0, so UI shows those only when non-zero. Frequencies come from `pmgr` `voltage-states1-sram` (E), `voltage-states5-sram` (P), `voltage-states9` (GPU).
 - Leak detection only counts windows with a stable process count (`apps.procs`), otherwise new sessions/tabs look like leaks.
 - README screenshots: never use pages that show project names, IPs or connections (public repo).
 

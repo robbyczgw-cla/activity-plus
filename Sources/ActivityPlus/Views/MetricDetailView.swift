@@ -75,7 +75,7 @@ struct MetricDetailView: View {
                     .frame(height: 220)
                 }
             }
-            NeuralEngineCard(apps: s.apps)
+            NeuralEngineCard(apps: s.apps, watts: s.chip.aneWatts)
         case .gpu:
             HStack(alignment: .top, spacing: 14) {
                 Card {

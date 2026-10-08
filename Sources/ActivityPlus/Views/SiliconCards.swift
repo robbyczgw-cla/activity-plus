@@ -51,6 +51,8 @@ struct CoreTypeCard: View {
 /// Memory apps hold for the Neural Engine: Core ML and local models, which a GPU meter never shows.
 struct NeuralEngineCard: View {
     let apps: [AppGroup]
+    /// Neural Engine power from IOReport; nil or 0 where the energy channel reads nothing (M1 Max on macOS 27).
+    var watts: Double? = nil
 
     private var users: [AppGroup] {
         apps.filter { $0.neuralMemory > 0 }.sorted { $0.neuralMemory > $1.neuralMemory }
@@ -60,6 +62,9 @@ struct NeuralEngineCard: View {
         Card {
             CardHeader(title: "Neural Engine", systemImage: "brain", tint: .pink,
                        trailing: users.isEmpty ? nil : Format.memory(users.reduce(0) { $0 + $1.neuralMemory }))
+            if let watts, watts > 0.005 {
+                StatLine(label: "Power", value: Format.watts(watts))
+            }
             if users.isEmpty {
                 Text("No app holds Neural Engine memory right now. Apps that run Core ML or local models show up here.")
                     .font(.callout).foregroundStyle(.secondary)
