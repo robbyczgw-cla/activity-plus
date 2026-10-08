@@ -140,10 +140,10 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
         let debug = ProcessInfo.processInfo.environment["ACTIVITYPLUS_DEBUG_MENUBAR"] != nil
         if let combined {
             let hidden = Self.isHidden(combined, among: [])
-            if debug { NSLog("menubar fit: combined (%d values) window %@ hidden %d", combinedLimit, combined.button?.window.map { NSStringFromRect($0.frame) } ?? "none", hidden ? 1 : 0) }
+            if debug { NSLog("menubar fit: combined (%ld values) window %@ hidden %d", segments.count, combined.button?.window.map { NSStringFromRect($0.frame) } ?? "none", hidden ? 1 : 0) }
             // Even one item is too wide: show fewer values until it fits; the panel has them all.
-            if hidden, combinedLimit > 1 {
-                combinedLimit = max(1, combinedLimit / 2)
+            if hidden, segments.count > 1 {
+                combinedLimit = max(1, segments.count - max(1, segments.count / 3))
                 MenuBarLayoutStatus.shared.combinedShowing = combinedLimit
                 refresh()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in self?.checkFit() }
@@ -267,7 +267,16 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
                 showMenu(for: combined)
             } else {
                 // Open the tab of the value under the pointer.
-                let x = NSApp.currentEvent.map { sender.convert($0.locationInWindow, from: nil).x } ?? 0
+                // The image sits centered in the button, with a margin on both sides.
+                let margin = (sender.bounds.width - (sender.image?.size.width ?? sender.bounds.width)) / 2
+                // The pointer on screen, converted into the button (the click event's own location
+                // does not match the status item's window on macOS 27).
+                let onScreen = NSEvent.mouseLocation
+                let inWindow = sender.window?.convertPoint(fromScreen: onScreen) ?? .zero
+                let x = sender.convert(inWindow, from: nil).x - margin
+                if ProcessInfo.processInfo.environment["ACTIVITYPLUS_DEBUG_MENUBAR"] != nil {
+                    NSLog("menubar click: x %.1f margin %.1f segments %@", x, margin, segments.map { "\($0.tab):\(Int($0.minX))-\(Int($0.maxX))" }.joined(separator: " "))
+                }
                 let tab = segments.first { x >= $0.minX && x < $0.maxX }?.tab ?? segments.last?.tab ?? .overview
                 togglePopover(from: sender, tab: tab)
             }
