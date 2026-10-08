@@ -7,7 +7,7 @@ public enum FreezeSample {
         public let url: URL
         /// The main thread's busiest path, outermost first, with run-loop and kernel plumbing left out.
         public let mainThreadPath: [String]
-        /// The app binary's own name, as sample labels its frames ("Telegram" in "… (Telegram)").
+        /// The app binary's own name, as sample labels its frames ("Mail" in "… (Mail)").
         public var binary: String? = nil
 
         /// The deepest frame from the app's own code, which is where its developer would look first.
@@ -44,7 +44,7 @@ public enum FreezeSample {
         return report
     }
 
-    /// "Path:            /Applications/Telegram.app/Contents/MacOS/Telegram" → "Telegram"
+    /// "Path:            /System/Applications/Mail.app/Contents/MacOS/Mail" → "Mail"
     static func binaryName(_ text: String) -> String? {
         guard let line = text.components(separatedBy: "\n").first(where: { $0.hasPrefix("Path:") }) else { return nil }
         return line.dropFirst(5).trimmingCharacters(in: .whitespaces).components(separatedBy: "/").last
