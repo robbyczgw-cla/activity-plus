@@ -22,7 +22,8 @@ if [[ "${1:-}" == "--check" ]]; then
   python3 - "$CATALOG" <<'EOF'
 import json, sys
 catalog = json.load(open(sys.argv[1]))
-languages = ["de"]
+import plistlib
+languages = [l for l in plistlib.load(open("Resources/Info.plist", "rb"))["CFBundleLocalizations"] if l != "en"]
 missing = {lang: [] for lang in languages}
 for key, entry in catalog["strings"].items():
     if not key.strip() or entry.get("shouldTranslate") is False or entry.get("extractionState") == "stale":
