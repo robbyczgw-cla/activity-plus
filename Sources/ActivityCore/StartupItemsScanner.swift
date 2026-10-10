@@ -18,6 +18,8 @@ public struct StartupItem: Sendable, Identifiable, Hashable {
     public let ownerName: String
     public let isApple: Bool
     public var canToggle: Bool { scope == .userAgent }
+    /// Set when the program this item should start no longer exists.
+    public var orphan: OrphanedItem?
 
     public init(id: String, label: String, scope: Scope, plistPath: String?, program: String?, arguments: [String], runAtLoad: Bool, keepAlive: Bool, isDisabled: Bool, isRunning: Bool, pid: Int32?, ownerBundlePath: String?, ownerName: String, isApple: Bool) {
         self.id = id; self.label = label; self.scope = scope; self.plistPath = plistPath; self.program = program; self.arguments = arguments
@@ -54,10 +56,12 @@ public enum StartupItemsScanner {
                 let program = dict["Program"] as? String ?? args.first
                 let pid = scope == .userAgent ? running[label] : nil
                 let owner = ownerInfo(program: program, label: label, apps: apps)
-                result.append(StartupItem(id: url.path, label: label, scope: scope, plistPath: url.path, program: program, arguments: args,
+                var item = StartupItem(id: url.path, label: label, scope: scope, plistPath: url.path, program: program, arguments: args,
                     runAtLoad: dict["RunAtLoad"] as? Bool ?? false, keepAlive: (dict["KeepAlive"] as? Bool) == true || dict["KeepAlive"] is [String: Any],
                     isDisabled: (scope == .globalDaemon ? disabledSystem : disabledUser).contains(label), isRunning: pid != nil, pid: pid,
-                    ownerBundlePath: owner.path, ownerName: owner.name, isApple: label.hasPrefix("com.apple.")))
+                    ownerBundlePath: owner.path, ownerName: owner.name, isApple: label.hasPrefix("com.apple."))
+                item.orphan = OrphanedItems.check(program: program, arguments: args)
+                result.append(item)
             }
         }
         return result.sorted { a, b in

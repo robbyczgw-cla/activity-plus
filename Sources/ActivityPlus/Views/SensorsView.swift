@@ -45,6 +45,7 @@ struct SensorsView: View {
                         }
                     }
                 }
+                FanSpinUpsCard()
             }
             .padding(20)
         }

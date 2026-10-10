@@ -17,6 +17,8 @@ struct DiagnosisView: View {
                     ForEach(diagnosis.findings) { finding in
                         FindingCard(finding: finding) { perform($0) }
                     }
+                    SpotlightCard()
+                    CrashesCard()
                 } else {
                     ProgressView("Looking at your Mac…").frame(maxWidth: .infinity, minHeight: 200)
                 }
@@ -28,6 +30,7 @@ struct DiagnosisView: View {
             if services.startupScannedAt == nil { services.scanStartupItems() }
             // The first samples have no history yet; give it a moment before the first verdict.
             if monitor.history.cpu.values.count < 3 { try? await Task.sleep(for: .seconds(4)) }
+            await CrashStore.shared.refresh()
             run()
         }
         .confirmationDialog("Quit \(pendingQuit?.name ?? "")?", isPresented: Binding(get: { pendingQuit != nil }, set: { if !$0 { pendingQuit = nil } }), presenting: pendingQuit) { app in
@@ -80,6 +83,8 @@ struct DiagnosisView: View {
         let idle = services.projects.projects.flatMap(\.servers).filter { $0.isIdle() }
         input.idleServers = (idle.count, idle.reduce(0) { $0 + $1.memory })
         input.slowUSB = USBLinkCheck.slowStorage()
+        input.crashSummaries = CrashStore.shared.summaries
+        input.spotlightCardShown = true
         withAnimation(.snappy) { diagnosis = Diagnostician.diagnose(input) }
     }
 

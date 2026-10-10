@@ -8,6 +8,7 @@ struct StartupItemsView: View {
     @State private var pendingDisable: StartupItem?
     @State private var pendingEnable: StartupItem?
     @State private var errorMessage: String?
+    @State private var pendingTrash: StartupItem?
 
     private var groups: [(owner: String, bundle: String?, items: [StartupItem])] {
         let items = services.startupItems.filter { (showApple || !$0.isApple) && matches($0) }
@@ -33,6 +34,7 @@ struct StartupItemsView: View {
                     }
                     .help("Apps that open at login are managed in System Settings")
                 }
+                OrphanSummaryCard(items: services.startupItems)
                 if services.startupScannedAt == nil {
                     ProgressView().frame(maxWidth: .infinity, minHeight: 160)
                 }
@@ -48,7 +50,7 @@ struct StartupItemsView: View {
                             Spacer()
                         }
                         ForEach(group.items) { item in
-                            StartupRow(item: item) { enabled in toggle(item, enabled: enabled) }
+                            StartupRow(item: item, trash: { pendingTrash = $0 }) { enabled in toggle(item, enabled: enabled) }
                         }
                     }
                 }
@@ -70,6 +72,10 @@ struct StartupItemsView: View {
             Button("Cancel", role: .cancel) {}
         } message: { item in
             Text("It starts now and at every login. Its program: \(item.program ?? item.plistPath ?? item.label)")
+        }
+        .orphanTrashDialog($pendingTrash) { message in
+            errorMessage = message
+            services.scanStartupItems()
         }
         .alert("Could not change it", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
             Button("OK") {}
@@ -96,6 +102,7 @@ struct StartupItemsView: View {
 
 private struct StartupRow: View {
     let item: StartupItem
+    var trash: (StartupItem) -> Void = { _ in }
     let toggle: (Bool) -> Void
 
     var body: some View {
@@ -110,6 +117,7 @@ private struct StartupRow: View {
                     if item.runAtLoad { badge(String(localized: "At login")) }
                     if item.keepAlive { badge(String(localized: "Restarts itself")) }
                 }
+                OrphanNote(item: item, trash: trash)
             }
             Spacer()
             if item.canToggle {
