@@ -101,6 +101,29 @@ public final class DiskIndex: @unchecked Sendable {
         return result
     }
 
+    /// The `limit` largest direct children (cheaper than `children(of:)` for folders with thousands of entries).
+    public func children(of id: NodeID, limit: Int) -> [Node] {
+        lock.lock(); defer { lock.unlock() }
+        guard valid(id), limit > 0 else { return [] }
+        let r = records[Int(id)]
+        guard r.isDirectory, r.childCount > 0 else { return [] }
+        var result: [Node] = []
+        for slot in Int(r.firstChild) ..< Int(r.firstChild + r.childCount) where result.count < limit {
+            let child = childOrder[slot]
+            if !records[Int(child)].isRemoved { result.append(makeNode(child)) }
+        }
+        return result
+    }
+
+    /// Number of direct children.
+    public func childCount(of id: NodeID) -> Int {
+        lock.lock(); defer { lock.unlock() }
+        guard valid(id) else { return 0 }
+        let r = records[Int(id)]
+        guard r.isDirectory else { return 0 }
+        return (Int(r.firstChild) ..< Int(r.firstChild + r.childCount)).reduce(0) { $0 + (records[$1].isRemoved ? 0 : 1) }
+    }
+
     public func url(of id: NodeID) -> URL {
         lock.lock(); defer { lock.unlock() }
         guard valid(id), id != rootID else { return root }
