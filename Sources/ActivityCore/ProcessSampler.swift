@@ -92,6 +92,8 @@ final class ProcessSampler {
                 startTime: start
             )
 
+            sample.isPaused = bsd.map { $0.pbi_status == Self.stoppedStatus } ?? false
+
             var neural: UInt64 = 0
             let exact: (counters: Counters, footprint: UInt64)? = {
                 if let usage = Self.rusage(pid) {
@@ -236,6 +238,9 @@ final class ProcessSampler {
         guard count > 0 else { return [] }
         return Array(pids.prefix(Int(count)))
     }
+
+    /// SSTOP in sys/proc.h: the state `ps` shows as "T".
+    static let stoppedStatus: UInt32 = 4
 
     static func bsdInfo(_ pid: pid_t) -> proc_bsdinfo? {
         var info = proc_bsdinfo()

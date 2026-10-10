@@ -41,6 +41,8 @@ enum ProcessActions {
         guard isSame(process) else {
             return .denied("\(process.name) (pid \(process.pid)) has already quit.")
         }
+        // A paused process ignores a polite quit until it runs again.
+        if process.isPaused { kill(process.pid, SIGCONT) }
         if let app = NSRunningApplication(processIdentifier: process.pid) {
             if force { app.forceTerminate() } else { app.terminate() }
             return .done
