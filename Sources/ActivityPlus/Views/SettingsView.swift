@@ -348,6 +348,8 @@ private struct WindowSettings: View {
     @AppStorage("hiddenOverviewCards") private var hiddenCards = ""
     @AppStorage("textSize") private var textSize = TextSize.standard.rawValue
     @AppStorage("density") private var density = Density.normal.rawValue
+    @AppStorage("startPage") private var startPage = ""
+    @AppStorage("chartMinutes") private var chartMinutes = 10
 
     var body: some View {
         Form {
@@ -364,9 +366,26 @@ private struct WindowSettings: View {
                 Text("Applies to the main window. The menu bar panel and share cards keep their size.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+            Section {
+                Picker("When the window opens", selection: $startPage) {
+                    Text("The page that was open last").tag("")
+                    Divider()
+                    ForEach(SidebarItem.pages, id: \.key) { page in
+                        Text(LocalizedStringKey(page.title)).tag(page.key)
+                    }
+                }
+                Picker("Charts show the last", selection: $chartMinutes) {
+                    ForEach([5, 10, 30, 60], id: \.self) { Text("\($0) minutes").tag($0) }
+                }
+            } header: {
+                Text("Behavior")
+            } footer: {
+                Text("The chart range applies to the large charts on the detail pages; the small curves on the overview always show about ten minutes.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             Section("Sidebar") {
                 ForEach(SidebarItem.customizable, id: \.key) { page in
-                    Toggle(page.title, isOn: toggle(key: page.key, in: $hiddenPages))
+                    Toggle(LocalizedStringKey(page.title), isOn: toggle(key: page.key, in: $hiddenPages))
                 }
             }
             Section("Overview cards (drag to reorder)") {

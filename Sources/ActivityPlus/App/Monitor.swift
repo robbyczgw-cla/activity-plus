@@ -2,16 +2,20 @@ import ActivityCore
 import Foundation
 import Observation
 
-/// A fixed-size series for sparklines and charts.
+/// A fixed-size series for sparklines and charts. `values` is the recent window (300 samples, ~10 minutes at the
+/// default interval) that sparklines and averages use; `history` keeps up to an hour for the detail charts.
 struct Series: Sendable {
-    private(set) var values: [Double] = []
+    private(set) var history: [Double] = []
     let capacity: Int
+    static let window = 300
 
-    init(capacity: Int = 300) { self.capacity = capacity }
+    init(capacity: Int = 1800) { self.capacity = capacity }
+
+    var values: [Double] { history.count <= Self.window ? history : Array(history.suffix(Self.window)) }
 
     mutating func append(_ value: Double) {
-        values.append(value)
-        if values.count > capacity { values.removeFirst(values.count - capacity) }
+        history.append(value)
+        if history.count > capacity { history.removeFirst(history.count - capacity) }
     }
 
     var last: Double { values.last ?? 0 }

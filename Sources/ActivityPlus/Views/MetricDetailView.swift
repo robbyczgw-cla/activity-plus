@@ -50,8 +50,8 @@ struct MetricDetailView: View {
                 .frame(width: 280 * uiScale)
                 Card {
                     LiveChart(lines: [
-                        .init(name: "User", values: h.cpuUser.values, color: .blue),
-                        .init(name: "System", values: h.cpuSystem.values, color: .red),
+                        .init(name: "User", values: h.cpuUser.history, color: .blue),
+                        .init(name: "System", values: h.cpuSystem.history, color: .red),
                     ], format: { Format.percent($0) }, maxValue: 100, interval: interval)
                     .frame(height: 150)
                     CoreGrid(cores: s.cpu.perCore, efficiencyCores: s.cpu.efficiencyCores)
@@ -72,7 +72,7 @@ struct MetricDetailView: View {
                 }
                 .frame(width: 280 * uiScale)
                 Card {
-                    LiveChart(lines: [.init(name: String(localized: "Used"), values: h.memory.values, color: metric.tint)],
+                    LiveChart(lines: [.init(name: String(localized: "Used"), values: h.memory.history, color: metric.tint)],
                               format: { Format.memory(UInt64($0)) }, maxValue: Double(s.memory.total), interval: interval)
                     .frame(height: 220)
                 }
@@ -92,7 +92,7 @@ struct MetricDetailView: View {
                 }
                 .frame(width: 280 * uiScale)
                 Card {
-                    LiveChart(lines: [.init(name: "GPU", values: h.gpu.values, color: metric.tint)],
+                    LiveChart(lines: [.init(name: "GPU", values: h.gpu.history, color: metric.tint)],
                               format: { Format.percent($0) }, maxValue: 100, interval: interval)
                     .frame(height: 150)
                 }
@@ -115,8 +115,8 @@ struct MetricDetailView: View {
                 .frame(width: 280 * uiScale)
                 Card {
                     LiveChart(lines: [
-                        .init(name: String(localized: "Read"), values: h.diskRead.values, color: .orange),
-                        .init(name: String(localized: "Write"), values: h.diskWrite.values, color: .brown),
+                        .init(name: String(localized: "Read"), values: h.diskRead.history, color: .orange),
+                        .init(name: String(localized: "Write"), values: h.diskWrite.history, color: .brown),
                     ], format: Format.rate, interval: interval)
                     .frame(height: 170)
                 }
@@ -139,8 +139,8 @@ struct MetricDetailView: View {
                 NetworkDetailsCard()
                 Card {
                     LiveChart(lines: [
-                        .init(name: String(localized: "Down"), values: h.netIn.values, color: .teal),
-                        .init(name: String(localized: "Up"), values: h.netOut.values, color: .indigo),
+                        .init(name: String(localized: "Down"), values: h.netIn.history, color: .teal),
+                        .init(name: String(localized: "Up"), values: h.netOut.history, color: .indigo),
                     ], format: Format.rate, interval: interval)
                     .frame(height: 150)
                 }

@@ -22,7 +22,7 @@ struct BatteryView: View {
                     }
                     BatteryHealthCard(battery: b)
                     Card {
-                        LiveChart(lines: [.init(name: "Power", values: monitor.history.power.values, color: .green)],
+                        LiveChart(lines: [.init(name: "Power", values: monitor.history.power.history, color: .green)],
                                   format: Format.watts, interval: monitor.interval)
                             .frame(height: 160)
                     }

@@ -56,6 +56,8 @@ struct ContentView: View {
     @Environment(AppServices.self) private var services
     @SceneStorage("sidebarSelection") private var stored = "overview"
     @AppStorage("hiddenPages") private var hiddenPages = ""
+    /// Page shown when the window opens; empty means the page that was open last.
+    @AppStorage("startPage") private var startPage = ""
     @AppStorage("accentColor") private var accent = "system"
     @Environment(\.uiScale) private var uiScale
 
@@ -133,7 +135,7 @@ struct ContentView: View {
             // Snapshot runs render offscreen-ish windows that macOS may report as covered.
             monitor.windowVisible = visible || SnapshotRunner.isActive
         })
-        .onAppear { selection = Self.decode(stored) }
+        .onAppear { selection = Self.decode(startPage.isEmpty ? stored : startPage) }
         .onDisappear { monitor.windowVisible = false }
         .onChange(of: selection) { _, new in stored = Self.encode(new ?? .overview) }
         .onChange(of: services.requestedPage, initial: true) { _, page in

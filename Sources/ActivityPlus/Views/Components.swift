@@ -151,8 +151,26 @@ struct LiveChart: View {
     var maxValue: Double?
     var interval: TimeInterval
     @Environment(\.uiScale) private var scale
+    @AppStorage("chartMinutes") private var minutes = 10
+
+    /// The chosen time range, averaged down to at most 300 points so an hour draws as fast as ten minutes.
+    private var shown: (lines: [Line], interval: TimeInterval) {
+        let wanted = max(2, Int(Double(minutes) * 60 / max(interval, 0.1)))
+        let step = max(1, Int((Double(wanted) / 300).rounded(.up)))
+        let trimmed = lines.map { line -> Line in
+            let recent = Array(line.values.suffix(wanted))
+            guard step > 1 else { return Line(name: line.name, values: recent, color: line.color) }
+            let buckets = stride(from: 0, to: recent.count, by: step).map { start -> Double in
+                let bucket = recent[start..<min(start + step, recent.count)]
+                return bucket.reduce(0, +) / Double(bucket.count)
+            }
+            return Line(name: line.name, values: buckets, color: line.color)
+        }
+        return (trimmed, interval * Double(step))
+    }
 
     var body: some View {
+        let (lines, interval) = shown
         Chart {
             ForEach(lines) { line in
                 ForEach(Array(line.values.enumerated()), id: \.offset) { point in

@@ -23,7 +23,7 @@ struct SensorsView: View {
                 if monitor.history.cpuTemperature.values.count > 2 {
                     Card {
                         CardHeader(title: "CPU temperature", systemImage: "chart.xyaxis.line", tint: .red)
-                        LiveChart(lines: [.init(name: "CPU", values: monitor.history.cpuTemperature.values, color: .red)],
+                        LiveChart(lines: [.init(name: "CPU", values: monitor.history.cpuTemperature.history, color: .red)],
                                   format: { Format.temperature($0, unit: false) }, maxValue: 110, interval: monitor.interval)
                             .frame(height: 160)
                     }
