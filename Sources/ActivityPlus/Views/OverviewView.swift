@@ -46,6 +46,7 @@ struct OverviewView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
+                PrivacyBanner()
                 LazyVGrid(columns: columns, spacing: 14) {
                     ForEach(visible.filter { $0 != .busiest && $0 != .insights }) { card in tile(card) }
                 }
@@ -59,6 +60,7 @@ struct OverviewView: View {
                         AppListView(metric: .cpu, limit: 8)
                     }
                 }
+                OverviewStatusCards()
             }
             .padding(20)
         }
