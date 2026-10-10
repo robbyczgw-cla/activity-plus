@@ -75,8 +75,11 @@ final class CleanupModel {
         let cancel = GatherCancel()
         self.cancel = cancel
         progress = (0, "")
-        // The large-files scan reads Downloads, Desktop and Documents; snapshot runs of the dev copy skip it.
-        let skipLarge = SnapshotRunner.isActive
+        // With Explore's map of the home folder the large files come from memory in a moment; without it the
+        // folders are walked again. That walk reads Downloads, Desktop and Documents, so snapshot runs skip it.
+        let diskIndex = AppServices.shared.diskIndex
+        let map = diskIndex.isCustomRoot ? nil : diskIndex.index
+        let skipLarge = map == nil && SnapshotRunner.isActive
         Task.detached(priority: .utility) {
             let groups = SystemDataBreakdown.measure(isCancelled: { cancel.isCancelled }, progress: { fraction, item in
                 Task { @MainActor in CleanupModel.shared.report(fraction * 0.55, item) }
@@ -86,9 +89,10 @@ final class CleanupModel {
             if !skipLarge, !cancel.isCancelled {
                 let scanner = LargeFilesScanner()
                 cancel.attach(scanner)
-                let found = scanner.scan { fraction, item in
+                let report: @Sendable (Double, String) -> Void = { fraction, item in
                     Task { @MainActor in CleanupModel.shared.report(0.55 + fraction * 0.45, item) }
                 }
+                let found = map.map { scanner.scan(index: $0, progress: report) } ?? scanner.scan(progress: report)
                 large = CleanupPlan.entries(from: found)
             } else {
                 large = []

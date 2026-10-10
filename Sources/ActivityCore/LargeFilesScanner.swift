@@ -128,6 +128,82 @@ public final class LargeFilesScanner: @unchecked Sendable {
         }
     }
 
+    /// Same candidates as `scan`, read from an existing size map of the home folder instead of walking the disk
+    /// again. Only the device backups and mounted disk images, which the map doesn't cover, are read from disk.
+    public func scan(
+        index: DiskIndex,
+        minimumLargeFileBytes: UInt64 = 500_000_000,
+        progress: @escaping @Sendable (Double, String) -> Void
+    ) -> [CleanupCandidate] {
+        lock.lock()
+        cancelled = false
+        lock.unlock()
+
+        let home = fileManager.homeDirectoryForCurrentUser.standardizedFileURL
+        let downloads = home.appendingPathComponent("Downloads", isDirectory: true)
+        var found: [String: CleanupCandidate] = [:]
+        progress(0, "Home")
+
+        func candidate(_ node: DiskIndex.Node, _ url: URL, _ kind: CleanupCandidate.Kind) -> CleanupCandidate {
+            CleanupCandidate(url: url, kind: kind, bytes: node.bytes, lastOpened: node.accessed, modified: node.modified)
+        }
+
+        // Depth-first over the map with the walk's rules: hidden items, ~/Library and build folders are skipped,
+        // packages count as one item, and a stale folder at the top of Downloads counts as one old download.
+        var stack: [(DiskIndex.NodeID, Int)] = [(index.rootID, 0)]
+        var visited = 0
+        while let (id, level) = stack.popLast() {
+            visited += 1
+            if visited & 1023 == 0, isCancelled { return [] }
+            for child in index.children(of: id) where child.bytes > 0 {
+                let name = child.name
+                if name.hasPrefix(".") || Self.skippedDirectoryNames.contains(name.lowercased()) { continue }
+                if level == 0, name == "Library" { continue }
+                let url = index.url(of: child.id)
+                guard child.isDirectory else {
+                    if let kind = classify(url: url, bytes: child.bytes, lastOpened: child.accessed, modified: child.modified,
+                                           home: home, downloads: downloads, minimum: minimumLargeFileBytes) {
+                        insert(candidate(child, url, kind), into: &found)
+                    }
+                    continue
+                }
+                if !(name as NSString).pathExtension.isEmpty,
+                   (try? url.resourceValues(forKeys: [.isPackageKey]))?.isPackage == true || url.pathExtension.lowercased() == "app" {
+                    if let kind = classify(url: url, bytes: child.bytes, lastOpened: child.accessed, modified: child.modified,
+                                           home: home, downloads: downloads, minimum: minimumLargeFileBytes) {
+                        insert(candidate(child, url, kind), into: &found)
+                    }
+                    continue
+                }
+                if url.deletingLastPathComponent().standardizedFileURL.path == downloads.path,
+                   child.bytes >= Self.oldDownloadMinimum, isStale(child.accessed, child.modified) {
+                    insert(candidate(child, url, .oldDownload), into: &found)
+                    continue
+                }
+                stack.append((child.id, level + 1))
+            }
+        }
+
+        // Xcode keeps archives in one folder per day, so look one level deeper than the folder itself.
+        let archives = home.appendingPathComponent("Library/Developer/Xcode/Archives", isDirectory: true)
+        if let archivesID = index.id(of: archives) {
+            for day in index.children(of: archivesID) {
+                let items = day.isDirectory && !day.name.hasSuffix(".xcarchive") ? index.children(of: day.id) : [day]
+                for item in items where item.name.lowercased().hasSuffix(".xcarchive") && item.bytes > 0 {
+                    insert(candidate(item, index.url(of: item.id), .xcodeArchive), into: &found)
+                }
+            }
+        }
+        progress(0.9, "iOS Backups")
+        if !isCancelled { scanIOSBackups(home: home, into: &found) }
+        if !isCancelled { scanDiskImageMounts(into: &found) }
+        progress(1, "")
+        return found.values.sorted { lhs, rhs in
+            if lhs.bytes != rhs.bytes { return lhs.bytes > rhs.bytes }
+            return lhs.url.path < rhs.url.path
+        }
+    }
+
     // MARK: - Walk
 
     private struct OpenFolder {

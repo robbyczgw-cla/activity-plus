@@ -193,3 +193,21 @@ struct CleanupPlanTests {
         #expect(CleanupPlan.isBlocked(merged[0], running: ["company.thebrowser.Browser"]))
     }
 }
+
+@Suite("Large files from the size map")
+struct LargeFilesFromIndexTests {
+    @Test func usesTheMapWithTheWalksRules() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("lfi-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let big = Data(count: 2_000_000)
+        for path in ["Movies/big.mov", ".hidden/big.bin", "code/node_modules/big.bin", "small.txt"] {
+            let url = root.appendingPathComponent(path)
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try (path == "small.txt" ? Data(count: 10) : big).write(to: url)
+        }
+        let index = DiskIndex.build(root: root)
+        let found = LargeFilesScanner().scan(index: index, minimumLargeFileBytes: 1_000_000) { _, _ in }
+        #expect(found.map(\.url.lastPathComponent) == ["big.mov"])
+        #expect(found.first?.kind == .largeFile)
+    }
+}
