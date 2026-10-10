@@ -18,12 +18,14 @@ strings = catalog.setdefault("strings", {})
 STARTS = [r"CardHeader\(title:", r"StatLine\(label:", r"trailing:", r"\.help\(", r"NSMenuItem\(title:",
           r"addItem\(withTitle:", r"row\(name:", r"detail:", r"emptyText:", r"title:"]
 LITERAL = re.compile(r'"((?:[^"\\]|\\.)*)"')
-NEXT_ARG = re.compile(r",\s*(systemImage|tint|value|action|keyEquivalent|icon|drop|scale|isRemainder|button|url)\s*:")
+NEXT_ARG = re.compile(r",\s*(systemImage|tint|value|action|keyEquivalent|icon|drop|scale|isRemainder|button|url|page)\s*:")
 
 def looks_like_text(s: str) -> bool:
     if "\\(" in s or len(s) < 2:            # interpolations are handled with String(localized:) at the call site
         return False
     if re.fullmatch(r"[a-z0-9_.\-]+", s):    # SF Symbols, identifiers, keys
+        return False
+    if re.fullmatch(r"[a-z]+:[A-Za-z0-9_.\-]+", s):  # page keys like "metric:memory"
         return False
     if s.startswith(("http", "/", "x-apple", "at.hifiteam", "com.", "ACTIVITYPLUS")):
         return False
