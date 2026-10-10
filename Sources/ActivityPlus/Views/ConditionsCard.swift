@@ -17,7 +17,7 @@ struct ConditionsCard: View {
             CardHeader(title: "Conditions", systemImage: "thermometer.medium", tint: .orange, trailing: String(localized: "last \(range.rawValue)"))
             if recorded.count < 2 {
                 Text("Heat, memory pressure and Wi-Fi signal are kept from version 0.3 on. Come back in a few minutes.")
-                    .font(.callout).foregroundStyle(.secondary)
+                    .appFont(.callout).foregroundStyle(.secondary)
             } else {
                 band(title: "Heat", summary: heatSummary) { p in
                     switch p.thermal ?? 0 {
@@ -43,9 +43,9 @@ struct ConditionsCard: View {
     private func band(title: String, summary: String, color: @escaping (HistoryStore.SystemPoint) -> Color) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(LocalizedStringKey(title)).font(.callout.weight(.medium))
+                Text(LocalizedStringKey(title)).appFont(.callout, weight: .medium)
                 Spacer()
-                Text(summary).font(.caption).foregroundStyle(.secondary)
+                Text(summary).appFont(.caption).foregroundStyle(.secondary)
             }
             Chart {
                 ForEach(recorded) { p in
@@ -68,9 +68,9 @@ struct ConditionsCard: View {
     private var wifiChart: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text("Wi-Fi signal").font(.callout.weight(.medium))
+                Text("Wi-Fi signal").appFont(.callout, weight: .medium)
                 Spacer()
-                Text(wifiSummary).font(.caption).foregroundStyle(.secondary)
+                Text(wifiSummary).appFont(.caption).foregroundStyle(.secondary)
             }
             Chart {
                 ForEach(wifi) { p in
@@ -93,7 +93,7 @@ struct ConditionsCard: View {
             }
             .frame(height: 90)
             Text("Teal is the signal, gray the noise. The gap between them matters more than the signal alone: under 25 dB Wi-Fi slows down, under 15 dB it drops out.")
-                .font(.caption).foregroundStyle(.tertiary)
+                .appFont(.caption).foregroundStyle(.tertiary)
         }
     }
 

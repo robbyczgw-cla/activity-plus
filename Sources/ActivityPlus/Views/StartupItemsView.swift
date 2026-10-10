@@ -2,6 +2,7 @@ import ActivityCore
 import SwiftUI
 
 struct StartupItemsView: View {
+    @Environment(\.density) private var density
     @Environment(AppServices.self) private var services
     @AppStorage("startupShowApple") private var showApple = false
     @State private var search = ""
@@ -19,10 +20,10 @@ struct StartupItemsView: View {
     var body: some View {
         let visible = services.startupItems.filter { showApple || !$0.isApple }
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: density.stack) {
                 HStack(alignment: .firstTextBaseline) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("\(visible.count) items start automatically").font(.title2.weight(.semibold))
+                        Text("\(visible.count) items start automatically").appFont(.title2, weight: .semibold)
                         Text("\(visible.filter(\.isRunning).count) are running now. Turning one off stops it and keeps it from starting at login.")
                             .foregroundStyle(.secondary)
                     }
@@ -44,7 +45,7 @@ struct StartupItemsView: View {
                             } else {
                                 Image(systemName: "gearshape.2").frame(width: 24, height: 24).foregroundStyle(.secondary)
                             }
-                            Text(group.owner).font(.headline)
+                            Text(group.owner).appFont(.headline)
                             Spacer()
                         }
                         ForEach(group.items) { item in
@@ -53,7 +54,7 @@ struct StartupItemsView: View {
                     }
                 }
             }
-            .padding(20)
+            .padding(density.page)
         }
         .searchable(text: $search, placement: .toolbar, prompt: "Search startup items")
         .navigationTitle("Startup Items")
@@ -104,7 +105,7 @@ private struct StartupRow: View {
                 .help(item.isRunning ? "Running (pid \(item.pid ?? 0))" : "Not running")
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.label).fontWeight(.medium).lineLimit(1)
-                Text(item.program ?? item.plistPath ?? "").font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                Text(item.program ?? item.plistPath ?? "").appFont(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                 HStack(spacing: 6) {
                     badge(scopeText)
                     if item.runAtLoad { badge(String(localized: "At login")) }
@@ -141,7 +142,7 @@ private struct StartupRow: View {
     }
 
     private func badge(_ text: String) -> some View {
-        Text(text).font(.caption2).padding(.horizontal, 6).padding(.vertical, 1)
+        Text(text).appFont(.caption2).padding(.horizontal, 6).padding(.vertical, 1)
             .background(.quaternary, in: Capsule())
     }
 }

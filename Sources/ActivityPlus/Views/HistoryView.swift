@@ -3,6 +3,7 @@ import Charts
 import SwiftUI
 
 struct HistoryView: View {
+    @Environment(\.density) private var density
     @Environment(AppServices.self) private var services
     @State private var range: HistoryStore.Range = .hours24
     @State private var metric: Metric = .cpu
@@ -17,7 +18,7 @@ struct HistoryView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: density.stack) {
                 HStack {
                     Picker("Range", selection: $range) {
                         ForEach(HistoryStore.Range.allCases) { Text($0.rawValue).tag($0) }
@@ -31,7 +32,7 @@ struct HistoryView: View {
                     .frame(width: 180)
                 }
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 12)], spacing: 12) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: density.space(12))], spacing: density.space(12)) {
                     total("Written today", Format.storage(UInt64(today.diskWritten)), .orange)
                     total(String(localized: "Downloaded today"), Format.storage(UInt64(today.received)), .teal)
                     total(String(localized: "Downloaded, 7 days"), Format.storage(UInt64(week.received)), .teal)
@@ -62,7 +63,7 @@ struct HistoryView: View {
                     ForEach(Array(sorted)) { app in
                         HStack(spacing: 10) {
                             Image(systemName: expanded.contains(app.appID) ? "chevron.down" : "chevron.right")
-                                .font(.caption2).foregroundStyle(.secondary).frame(width: 10)
+                                .appFont(.caption2).foregroundStyle(.secondary).frame(width: 10)
                             if let path = app.bundlePath {
                                 Image(nsImage: NSWorkspace.shared.icon(forFile: path)).resizable().frame(width: 20, height: 20)
                             } else {
@@ -71,25 +72,25 @@ struct HistoryView: View {
                             Text(app.name).lineLimit(1)
                             Spacer()
                             UsageBar(fraction: value(app) / max(top, 0.000_1), tint: metric.tint).frame(width: 120)
-                            Text(format(app)).monospacedDigit().frame(width: 90, alignment: .trailing)
+                            Text(format(app)).monospacedDigit().textColumn(width: 90, alignment: .trailing)
                         }
-                        .font(.callout)
+                        .appFont(.callout)
                         .contentShape(Rectangle())
                         .onTapGesture { toggle(app.appID) }
                         if expanded.contains(app.appID) {
                             let processes = appProcesses[app.appID] ?? []
                             if processes.isEmpty {
                                 Text("No process details for this period (they are kept from version 0.2.5 on, for apps with several processes).")
-                                    .font(.caption).foregroundStyle(.secondary).padding(.leading, 40)
+                                    .appFont(.caption).foregroundStyle(.secondary).padding(.leading, 40)
                             }
                             ForEach(processes) { p in processRow(p, indent: 40) }
                         }
                     }
                 }
                 Text("Stored on this Mac in \(services.history.url.path.replacingOccurrences(of: NSHomeDirectory(), with: "~")) (\(Format.storage(services.history.fileSize))).")
-                    .font(.caption).foregroundStyle(.tertiary)
+                    .appFont(.caption).foregroundStyle(.tertiary)
             }
-            .padding(20)
+            .padding(density.page)
         }
         .navigationTitle("History")
         .onChange(of: selectedDate) { _, date in loadAround(date) }
@@ -143,26 +144,26 @@ struct HistoryView: View {
         if let selectedDate {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Around \(selectedDate.formatted(date: range == .hours12 || range == .hours24 ? .omitted : .abbreviated, time: .shortened)) (5-minute window)")
-                    .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    .appFont(.caption, weight: .semibold).foregroundStyle(.secondary)
                 if around.isEmpty {
                     Text("No process details for this moment. They are kept for apps with several processes, from version 0.2.5 on.")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .appFont(.caption).foregroundStyle(.secondary)
                 }
                 ForEach(around) { p in processRow(p, indent: 0, showApp: true) }
             }
             .padding(.top, 6)
         } else {
-            Text("Point at the chart to see which processes were behind a spike.").font(.caption).foregroundStyle(.tertiary)
+            Text("Point at the chart to see which processes were behind a spike.").appFont(.caption).foregroundStyle(.tertiary)
         }
     }
 
     private func processRow(_ p: ProcessTotal, indent: CGFloat, showApp: Bool = false) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: "terminal").font(.caption).foregroundStyle(.secondary)
+            Image(systemName: "terminal").appFont(.caption).foregroundStyle(.secondary)
             if showApp { Text(p.appName).fontWeight(.medium).lineLimit(1) }
-            Text(p.command.isEmpty ? p.name : p.command).font(.callout.monospaced()).lineLimit(1).truncationMode(.middle)
+            Text(p.command.isEmpty ? p.name : p.command).appFont(.callout, monospaced: true).lineLimit(1).truncationMode(.middle)
                 .foregroundStyle(showApp ? .secondary : .primary)
-            Text(verbatim: "pid \(p.pid)").font(.caption2).foregroundStyle(.tertiary)
+            Text(verbatim: "pid \(p.pid)").appFont(.caption2).foregroundStyle(.tertiary)
             Spacer()
             Text(metric == .memory ? Format.memory(UInt64(p.peakMemory)) + String(localized: " peak")
                  : metric == .disk ? Format.storage(UInt64(p.diskBytes))
@@ -170,7 +171,7 @@ struct HistoryView: View {
                  : Format.percent(p.averageCPU, decimals: 1))
                 .monospacedDigit().foregroundStyle(.secondary)
         }
-        .font(.callout)
+        .appFont(.callout)
         .padding(.leading, indent)
     }
 
@@ -195,7 +196,7 @@ struct HistoryView: View {
 
     private func total(_ title: String, _ value: String, _ tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(LocalizedStringKey(title)).font(.caption).foregroundStyle(tint)
+            Text(LocalizedStringKey(title)).appFont(.caption).foregroundStyle(tint)
             BigNumber(text: value, size: 22)
         }
         .padding(12)

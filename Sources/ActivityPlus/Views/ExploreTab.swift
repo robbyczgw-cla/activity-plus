@@ -5,6 +5,7 @@ import SwiftUI
 /// Storage → Explore: the home folder as a size map. Biggest folders as a list and a treemap,
 /// click to go deeper, a breakdown by kind of file. The map comes from `DiskIndexModel` (cached on disk).
 struct ExploreTab: View {
+    @Environment(\.density) private var density
     @Environment(AppServices.self) private var services
     /// Folder on screen, as a path so it survives a new scan; nil = the scanned root.
     @State private var folderPath: String?
@@ -19,7 +20,7 @@ struct ExploreTab: View {
 
     var body: some View {
         let model = services.diskIndex
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: density.stack) {
             if let index = model.index {
                 content(index, model: model)
             } else {
@@ -48,8 +49,8 @@ struct ExploreTab: View {
         Card {
             CardHeader(title: "See what takes the space", systemImage: "square.grid.3x3.topleft.filled", tint: .blue)
             Text("Activity+ reads your home folder once and shows which folders and kinds of files take the most space; nothing is moved or removed without asking.")
-                .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            if let message { Text(message).font(.callout).foregroundStyle(.red) }
+                .appFont(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            if let message { Text(message).appFont(.callout).foregroundStyle(.red) }
             Button("Scan home folder") { model.scan() }
                 .buttonStyle(.borderedProminent)
         }
@@ -60,7 +61,7 @@ struct ExploreTab: View {
             CardHeader(title: "Reading your home folder", systemImage: "magnifyingglass", tint: .blue)
             progressRow(fraction: fraction, item: item, model: model)
             Text("This takes a moment the first time. The map is kept, so it opens instantly next time.")
-                .font(.caption).foregroundStyle(.secondary)
+                .appFont(.caption).foregroundStyle(.secondary)
         }
     }
 
@@ -69,7 +70,7 @@ struct ExploreTab: View {
             VStack(alignment: .leading, spacing: 4) {
                 ProgressView(value: fraction)
                 // A folder name, not a sentence: shown as is.
-                Text(verbatim: item.isEmpty ? " " : item).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                Text(verbatim: item.isEmpty ? " " : item).appFont(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
             }
             Button("Stop") { model.cancel() }
         }
@@ -101,7 +102,7 @@ struct ExploreTab: View {
             if children.isEmpty {
                 Card {
                     Text(folder.isDirectory ? "This folder is empty or could not be read." : "This is a file.")
-                        .font(.callout).foregroundStyle(.secondary)
+                        .appFont(.callout).foregroundStyle(.secondary)
                 }
             } else if width >= 900 {
                 HStack(alignment: .top, spacing: 16) {
@@ -122,7 +123,7 @@ struct ExploreTab: View {
         HStack(spacing: 4) {
             ForEach(Array(chain.enumerated()), id: \.element.id) { position, node in
                 if position > 0 {
-                    Image(systemName: "chevron.right").font(.caption2.weight(.semibold)).foregroundStyle(.tertiary)
+                    Image(systemName: "chevron.right").appFont(.caption2, weight: .semibold).foregroundStyle(.tertiary)
                 }
                 let isLast = position == chain.count - 1
                 Button {
@@ -135,7 +136,7 @@ struct ExploreTab: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .font(.callout.weight(isLast ? .semibold : .regular))
+                .appFont(.callout, weight: isLast ? .semibold : .regular)
                 .foregroundStyle(isLast ? Color.primary : Color.accentColor)
                 .lineLimit(1)
                 .disabled(isLast)
@@ -153,7 +154,7 @@ struct ExploreTab: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(verbatim: folder.id == index.rootID ? rootTitle(index) : folder.name)
-                        .font(.headline).lineLimit(1).truncationMode(.middle)
+                        .appFont(.headline).lineLimit(1).truncationMode(.middle)
                     HStack(alignment: .firstTextBaseline, spacing: 10) {
                         BigNumber(text: Format.storage(folder.bytes), size: 26)
                         Text("\(folder.fileCount) files").foregroundStyle(.secondary)
@@ -165,7 +166,7 @@ struct ExploreTab: View {
                         Button("Scan again") { model.scan() }
                     }
                     Text("Scanned \(index.builtAt, format: .relative(presentation: .named))")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .appFont(.caption).foregroundStyle(.secondary)
                 }
             }
             if case .scanning(let fraction, let item) = model.state {
@@ -193,9 +194,9 @@ struct ExploreTab: View {
             }
             if total > children.count {
                 Button(showAll ? "Show the \(children.count) largest of \(total)" : "Show more (\(total) items)") { showAll.toggle() }
-                    .buttonStyle(.link).font(.callout)
+                    .buttonStyle(.link).appFont(.callout)
             } else if showAll && total > Self.listLimit {
-                Button("Show fewer") { showAll = false }.buttonStyle(.link).font(.callout)
+                Button("Show fewer") { showAll = false }.buttonStyle(.link).appFont(.callout)
             }
         }
     }
@@ -228,7 +229,7 @@ struct ExploreTab: View {
                         })
                 .frame(height: 360)
             Text("Click a folder to look inside. Colors show the kind of files that take most of each folder.")
-                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                .appFont(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -346,7 +347,7 @@ private struct KindBreakdown: View {
                         Spacer(minLength: 4)
                         Text(Format.storage(bytes)).monospacedDigit().foregroundStyle(.secondary)
                     }
-                    .font(.callout)
+                    .appFont(.callout)
                 }
             }
         }
@@ -377,14 +378,14 @@ private struct ExploreRow: View {
                         Text("Modified \(node.modified, format: .dateTime.day().month().year())")
                     }
                 }
-                .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                .appFont(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer(minLength: 8)
             UsageBar(fraction: Double(node.bytes) / Double(largest), tint: FileKindStyle.color(node.kind))
                 .frame(width: 70)
                 .help(String(localized: "\(Format.percent(share * 100)) of this folder"))
-            Text(Format.storage(node.bytes)).monospacedDigit().frame(width: 76, alignment: .trailing)
-            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+            Text(Format.storage(node.bytes)).monospacedDigit().textColumn(width: 76, alignment: .trailing)
+            Image(systemName: "chevron.right").appFont(.caption, weight: .semibold).foregroundStyle(.tertiary)
                 .opacity(node.isDirectory ? 1 : 0)
         }
         .padding(.vertical, 6)
@@ -498,11 +499,11 @@ struct TreemapView<Menu: View>: View {
 
     private func label(_ node: Item, compact: Bool) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(verbatim: node.name).font(.caption.weight(.semibold)).lineLimit(1).truncationMode(.middle)
+            Text(verbatim: node.name).appFont(.caption, weight: .semibold).lineLimit(1).truncationMode(.middle)
             if !compact {
-                Text(Format.storage(node.bytes)).font(.caption2).monospacedDigit().opacity(0.9)
+                Text(Format.storage(node.bytes)).appFont(.caption2).monospacedDigit().opacity(0.9)
             } else {
-                Text(Format.storage(node.bytes)).font(.caption2).monospacedDigit().opacity(0.85).lineLimit(1)
+                Text(Format.storage(node.bytes)).appFont(.caption2).monospacedDigit().opacity(0.85).lineLimit(1)
             }
         }
         .foregroundStyle(.white)

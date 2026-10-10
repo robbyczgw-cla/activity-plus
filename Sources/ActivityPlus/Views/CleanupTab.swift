@@ -169,12 +169,13 @@ final class CleanupModel {
 }
 
 struct CleanupTab: View {
+    @Environment(\.density) private var density
     @Environment(AppServices.self) private var services
     @State private var model = CleanupModel.shared
     @State private var confirm = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: density.stack) {
             controls
             if let summary = model.summary { summaryCard(summary) }
             if model.hasGathered && model.entries.isEmpty && model.progress == nil {
@@ -223,14 +224,14 @@ struct CleanupTab: View {
             }
             if let progress = model.progress {
                 Text(progress.item.isEmpty ? String(localized: "Looking…") : progress.item)
-                    .font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                    .appFont(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
             } else if model.hasGathered {
                 let total = model.entries.reduce(UInt64(0)) { $0 + $1.item.bytes }
                 Text("\(model.entries.count) things found, \(Format.storage(total)) in all. \(Format.storage(model.tickedBytes)) is ticked.")
-                    .font(.callout).foregroundStyle(.secondary)
+                    .appFont(.callout).foregroundStyle(.secondary)
             } else {
                 Text("Caches, logs and leftovers that can go to the Trash, each with the reason. Safe items are ticked; items that need a look first are not. Apps that are open are left alone. Nothing moves until you confirm.")
-                    .font(.callout).foregroundStyle(.secondary)
+                    .appFont(.callout).foregroundStyle(.secondary)
             }
         }
     }
@@ -238,7 +239,7 @@ struct CleanupTab: View {
     @ViewBuilder private var appScanHint: some View {
         Card {
             HStack {
-                Text("Caches of your apps are only listed after the app scan.").font(.callout).foregroundStyle(.secondary)
+                Text("Caches of your apps are only listed after the app scan.").appFont(.callout).foregroundStyle(.secondary)
                 Spacer()
                 if let progress = services.storageProgress {
                     ProgressView(value: progress.fraction).frame(width: 140)
@@ -259,13 +260,13 @@ struct CleanupTab: View {
                 Button {
                     model.setAll(section, on: ticked != selectable.count)
                 } label: {
-                    Image(systemName: state).font(.title3)
+                    Image(systemName: state).appFont(.title3)
                         .foregroundStyle(ticked == 0 ? Color.secondary : Color.accentColor)
                 }
                 .buttonStyle(.plain)
                 .disabled(selectable.isEmpty)
                 .help("Tick or untick everything in this group")
-                Label(section.title, systemImage: section.systemImage).font(.headline)
+                Label(section.title, systemImage: section.systemImage).appFont(.headline)
                 Spacer()
                 Text(Format.storage(items.reduce(0) { $0 + $1.item.bytes })).monospacedDigit().foregroundStyle(.secondary)
             }
@@ -279,7 +280,7 @@ struct CleanupTab: View {
     private var footer: some View {
         HStack {
             Text("\(model.tickedEntries.count) of \(model.entries.count) ticked")
-                .font(.callout).foregroundStyle(.secondary)
+                .appFont(.callout).foregroundStyle(.secondary)
             Spacer()
             Button("Move \(Format.storage(model.tickedBytes)) to Trash…") { confirm = true }
                 .buttonStyle(.borderedProminent)
@@ -296,12 +297,12 @@ struct CleanupTab: View {
                         .foregroundStyle(.green)
                     if !summary.skipped.isEmpty {
                         Text("Left alone because the app is open: \(summary.skipped.joined(separator: ", "))")
-                            .font(.callout).foregroundStyle(.orange)
+                            .appFont(.callout).foregroundStyle(.orange)
                     }
                     if !summary.failures.isEmpty {
-                        Text("Could not be moved:").font(.callout).foregroundStyle(.red)
+                        Text("Could not be moved:").appFont(.callout).foregroundStyle(.red)
                         ForEach(Array(summary.failures.enumerated()), id: \.offset) { _, failure in
-                            Text("\(failure.title): \(failure.reason)").font(.caption).foregroundStyle(.secondary)
+                            Text("\(failure.title): \(failure.reason)").appFont(.caption).foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -328,22 +329,22 @@ private struct CleanupRow: View {
                 HStack(spacing: 6) {
                     Text(entry.item.title).lineLimit(1).truncationMode(.middle)
                     if entry.item.safety == .lookFirst {
-                        Text("Look first").font(.caption2.weight(.medium)).foregroundStyle(.orange)
+                        Text("Look first").appFont(.caption2, weight: .medium).foregroundStyle(.orange)
                             .padding(.horizontal, 6).padding(.vertical, 1)
                             .background(.orange.opacity(0.15), in: Capsule())
                     }
                 }
-                Text(entry.item.location).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                Text(entry.item.location).appFont(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                 if blocked {
-                    Text("\(entry.ownerName ?? entry.item.title) is open").font(.caption).foregroundStyle(.orange)
+                    Text("\(entry.ownerName ?? entry.item.title) is open").appFont(.caption).foregroundStyle(.orange)
                 } else {
-                    Text(entry.item.reason).font(.caption2).foregroundStyle(.secondary).lineLimit(2)
+                    Text(entry.item.reason).appFont(.caption2).foregroundStyle(.secondary).lineLimit(2)
                 }
             }
             Spacer(minLength: 12)
             Text(Format.storage(entry.item.bytes)).monospacedDigit().foregroundStyle(.secondary)
         }
-        .font(.callout)
+        .appFont(.callout)
         .opacity(blocked ? 0.5 : 1)
         .contextMenu {
             Button("Show in Finder") { ProcessActions.reveal(entry.item.urls.first?.path) }

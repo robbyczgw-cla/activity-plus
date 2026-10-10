@@ -2,6 +2,7 @@ import ActivityCore
 import SwiftUI
 
 struct DiagnosisView: View {
+    @Environment(\.density) private var density
     @Environment(Monitor.self) private var monitor
     @Environment(AppServices.self) private var services
     @Binding var selection: SidebarItem?
@@ -11,7 +12,7 @@ struct DiagnosisView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: density.stack) {
                 if let diagnosis {
                     verdict(diagnosis)
                     ForEach(diagnosis.findings) { finding in
@@ -21,7 +22,7 @@ struct DiagnosisView: View {
                     ProgressView("Looking at your Mac…").frame(maxWidth: .infinity, minHeight: 200)
                 }
             }
-            .padding(20)
+            .padding(density.page)
         }
         .navigationTitle("Why is my Mac slow?")
         .task {
@@ -52,19 +53,19 @@ struct DiagnosisView: View {
     private func verdict(_ d: Diagnosis) -> some View {
         HStack(alignment: .top, spacing: 16) {
             Image(systemName: Self.symbol(d.severity))
-                .font(.system(size: 44))
+                .appFont(size: 44)
                 .foregroundStyle(Self.color(d.severity))
             VStack(alignment: .leading, spacing: 6) {
-                Text(d.headline).font(.title2.weight(.semibold))
+                Text(d.headline).appFont(.title2, weight: .semibold)
                 Text(d.summary).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 HStack {
-                    Text("Checked \(d.date.formatted(date: .omitted, time: .shortened))").font(.caption).foregroundStyle(.tertiary)
-                    Button("Check again", action: run).buttonStyle(.link).font(.caption)
+                    Text("Checked \(d.date.formatted(date: .omitted, time: .shortened))").appFont(.caption).foregroundStyle(.tertiary)
+                    Button("Check again", action: run).buttonStyle(.link).appFont(.caption)
                 }
             }
             Spacer()
         }
-        .padding(20)
+        .padding(density.page)
         .background(Self.color(d.severity).opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
     }
 
@@ -124,14 +125,14 @@ private struct FindingCard: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: DiagnosisView.symbol(finding.severity))
                     .foregroundStyle(DiagnosisView.color(finding.severity))
-                    .font(.title3)
+                    .appFont(.title3)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(finding.title).font(.headline)
+                    Text(finding.title).appFont(.headline)
                     Text(finding.detail).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     if !finding.evidence.isEmpty {
                         VStack(alignment: .leading, spacing: 2) {
                             ForEach(finding.evidence, id: \.self) { line in
-                                Text("· " + line).font(.callout).monospacedDigit()
+                                Text("· " + line).appFont(.callout).monospacedDigit()
                             }
                         }
                         .padding(.top, 2)

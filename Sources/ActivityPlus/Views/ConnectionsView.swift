@@ -3,6 +3,7 @@ import SwiftUI
 
 /// Which servers each app is talking to right now (read-only; nothing is blocked).
 struct ConnectionsView: View {
+    @Environment(\.density) private var density
     @Environment(Monitor.self) private var monitor
     @State private var byApp: [(app: AppGroup, connections: [Connection])] = []
     @State private var hosts: [String: String] = [:]
@@ -12,7 +13,7 @@ struct ConnectionsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: density.space(14)) {
                 HStack {
                     Text("Open connections to other computers, grouped by app. Local traffic is left out.")
                         .foregroundStyle(.secondary)
@@ -29,13 +30,13 @@ struct ConnectionsView: View {
                     ForEach(byApp, id: \.app.id) { entry in
                         let remotes = Dictionary(grouping: entry.connections) { hostOnly(hosts[$0.remote] ?? $0.remote) }
                         HStack(spacing: 10) {
-                            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+                            Image(systemName: "chevron.right").appFont(.caption, weight: .semibold).foregroundStyle(.tertiary)
                                 .rotationEffect(.degrees(expanded.contains(entry.app.id) ? 90 : 0))
                             AppIconView(app: entry.app, size: 22)
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(entry.app.name).fontWeight(.medium)
                                 (Text("\(remotes.count) destinations") + Text(verbatim: " · ") + Text("\(entry.connections.count) connections"))
-                                    .font(.caption).foregroundStyle(.secondary)
+                                    .appFont(.caption).foregroundStyle(.secondary)
                             }
                             Spacer()
                             Text(Format.networkRate(entry.app.netInRate + entry.app.netOutRate)).monospacedDigit().foregroundStyle(.secondary)
@@ -49,10 +50,10 @@ struct ConnectionsView: View {
                             ForEach(remotes.sorted { $0.value.count > $1.value.count }, id: \.key) { host, connections in
                                 HStack {
                                     Spacer().frame(width: 44)
-                                    Text(host).font(.callout).textSelection(.enabled)
+                                    Text(host).appFont(.callout).textSelection(.enabled)
                                     Spacer()
-                                    Text(Set(connections.map(\.proto)).sorted().joined(separator: ", ")).font(.caption).foregroundStyle(.secondary)
-                                    Text("\(connections.count)×").font(.caption).monospacedDigit().foregroundStyle(.tertiary)
+                                    Text(Set(connections.map(\.proto)).sorted().joined(separator: ", ")).appFont(.caption).foregroundStyle(.secondary)
+                                    Text("\(connections.count)×").appFont(.caption).monospacedDigit().foregroundStyle(.tertiary)
                                 }
                             }
                         }
@@ -60,7 +61,7 @@ struct ConnectionsView: View {
                     }
                 }
             }
-            .padding(20)
+            .padding(density.page)
         }
         .navigationTitle("Connections")
         .task {

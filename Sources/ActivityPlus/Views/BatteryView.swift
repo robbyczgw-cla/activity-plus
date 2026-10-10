@@ -2,15 +2,16 @@ import ActivityCore
 import SwiftUI
 
 struct BatteryView: View {
+    @Environment(\.density) private var density
     @Environment(Monitor.self) private var monitor
     @Environment(AppServices.self) private var services
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: density.stack) {
                 if let b = monitor.snapshot.battery {
                     BatteryHeroCard(battery: b)
-                    HStack(alignment: .top, spacing: 14) {
+                    HStack(alignment: .top, spacing: density.grid) {
                         PowerFlowCard(battery: b)
                         if b.isPluggedIn, b.adapterWatts != nil { ChargerCard(battery: b) }
                     }
@@ -26,7 +27,7 @@ struct BatteryView: View {
                             .frame(height: 160)
                     }
                     Card {
-                        Text("Apps using the most energy").font(.headline)
+                        Text("Apps using the most energy").appFont(.headline)
                         AppListView(metric: .energy, limit: 15)
                     }
                 }
@@ -52,7 +53,7 @@ struct BatteryView: View {
                     ContentUnavailableView("No battery", systemImage: "powerplug", description: Text("This Mac runs on mains power."))
                 }
             }
-            .padding(20)
+            .padding(density.page)
         }
         .navigationTitle("Battery")
     }

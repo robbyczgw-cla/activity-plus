@@ -2,6 +2,7 @@ import ActivityCore
 import SwiftUI
 
 struct StorageView: View {
+    @Environment(\.density) private var density
     @Environment(Monitor.self) private var monitor
     @Environment(AppServices.self) private var services
     @State private var selected: Set<String> = []
@@ -32,11 +33,11 @@ struct StorageView: View {
     var body: some View {
         let disk = monitor.snapshot.disk
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: density.stack) {
                 Card {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(disk.volumeName).font(.headline)
+                            Text(disk.volumeName).appFont(.headline)
                             BigNumber(text: Format.storage(disk.free) + String(localized: " free"), size: 26)
                         }
                         Spacer()
@@ -60,7 +61,7 @@ struct StorageView: View {
                 case .apps: appsTab
                 }
             }
-            .padding(20)
+            .padding(density.page)
         }
         .navigationTitle("Storage")
         .onAppear {
@@ -94,17 +95,17 @@ struct StorageView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     if services.storageScannedAt != nil {
                         Text("Apps and their data use \(Format.storage(services.storage.reduce(0) { $0 + $1.totalBytes })). \(Format.storage(cleanable)) of it is caches and logs that apps rebuild on their own.")
-                            .font(.callout).foregroundStyle(.secondary)
+                            .appFont(.callout).foregroundStyle(.secondary)
                     } else {
                         Text("Finds how much space each app takes with everything it stores in your Library, plus developer caches. Nothing is removed without asking; removed files go to the Trash.")
-                            .font(.callout).foregroundStyle(.secondary)
+                            .appFont(.callout).foregroundStyle(.secondary)
                     }
                 }
                 Spacer()
                 if let progress = services.storageProgress {
                     VStack(alignment: .trailing) {
                         ProgressView(value: progress.fraction).frame(width: 180)
-                        Text(progress.item).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        Text(progress.item).appFont(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
                     Button("Stop") { services.cancelStorageScan() }
                 } else {
@@ -144,7 +145,7 @@ struct StorageView: View {
 
     private func appRow(_ app: AppDiskUsage, top: UInt64) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+            Image(systemName: "chevron.right").appFont(.caption, weight: .semibold).foregroundStyle(.tertiary)
                 .rotationEffect(.degrees(expanded.contains(app.id) ? 90 : 0)).frame(width: 12)
             if let bundle = app.bundlePath {
                 Image(nsImage: NSWorkspace.shared.icon(forFile: bundle)).resizable().frame(width: 24, height: 24)
@@ -154,16 +155,16 @@ struct StorageView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(app.name).fontWeight(.medium)
                 Text(app.cleanableBytes > 0 ? "\(Format.storage(app.cleanableBytes)) cleanable" : "\(app.locations.count) locations")
-                    .font(.caption).foregroundStyle(app.cleanableBytes > 100_000_000 ? .green : .secondary)
+                    .appFont(.caption).foregroundStyle(app.cleanableBytes > 100_000_000 ? .green : .secondary)
             }
             Spacer()
             if Self.canUninstall(app) {
                 Button("Uninstall…") { uninstalling = app }
-                    .buttonStyle(.borderless).font(.callout)
+                    .buttonStyle(.borderless).appFont(.callout)
                     .help(String(localized: "Moves \(app.name) and everything it keeps in your Library to the Trash"))
             }
             UsageBar(fraction: Double(app.totalBytes) / Double(max(top, 1)), tint: .orange).frame(width: 120)
-            Text(Format.storage(app.totalBytes)).monospacedDigit().frame(width: 80, alignment: .trailing)
+            Text(Format.storage(app.totalBytes)).monospacedDigit().textColumn(width: 80, alignment: .trailing)
         }
         .padding(.vertical, 6)
         .contentShape(Rectangle())
@@ -185,14 +186,14 @@ struct StorageView: View {
                     .help("App data or settings — not removed by Activity+")
             }
             VStack(alignment: .leading, spacing: 1) {
-                Text(kindText(location.kind)).font(.callout)
+                Text(kindText(location.kind)).appFont(.callout)
                 Text(location.path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
-                    .font(.caption2).foregroundStyle(.tertiary).lineLimit(1).truncationMode(.middle)
+                    .appFont(.caption2).foregroundStyle(.tertiary).lineLimit(1).truncationMode(.middle)
             }
             Spacer()
             Button { ProcessActions.reveal(location.path) } label: { Image(systemName: "magnifyingglass") }
                 .buttonStyle(.borderless).help("Show in Finder")
-            Text(Format.storage(location.bytes)).monospacedDigit().foregroundStyle(.secondary).frame(width: 80, alignment: .trailing)
+            Text(Format.storage(location.bytes)).monospacedDigit().foregroundStyle(.secondary).textColumn(width: 80, alignment: .trailing)
         }
         .padding(.vertical, 2)
     }

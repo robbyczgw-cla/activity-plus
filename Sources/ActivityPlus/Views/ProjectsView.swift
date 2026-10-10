@@ -2,6 +2,7 @@ import ActivityCore
 import SwiftUI
 
 struct ProjectsView: View {
+    @Environment(\.density) private var density
     @Environment(AppServices.self) private var services
     @State private var pendingStop: DevServer?
     @State private var toast: String?
@@ -12,11 +13,11 @@ struct ProjectsView: View {
         let servers = projects.flatMap(\.servers)
         let idle = servers.filter { $0.isIdle() }.count
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: density.stack) {
                 HStack(alignment: .firstTextBaseline) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(servers.count == 1 ? "1 dev server" : "\(servers.count) dev servers")
-                            .font(.title2.weight(.semibold))
+                            .appFont(.title2, weight: .semibold)
                         Text(idle == 0 ? "All of them are doing something." : "\(idle) idle for a while — they still hold memory and ports.")
                             .foregroundStyle(.secondary)
                     }
@@ -43,11 +44,11 @@ struct ProjectsView: View {
                     Card {
                         HStack {
                             Image(systemName: "folder.fill").foregroundStyle(.blue)
-                            Text(project.name).font(.headline)
+                            Text(project.name).appFont(.headline)
                             Text(project.root.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
-                                .font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                                .appFont(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                             Spacer()
-                            Button("Show in Finder") { ProcessActions.reveal(project.root) }.buttonStyle(.link).font(.caption)
+                            Button("Show in Finder") { ProcessActions.reveal(project.root) }.buttonStyle(.link).appFont(.caption)
                         }
                         ForEach(project.servers) { server in
                             ServerRow(server: server) { pendingStop = server }
@@ -61,23 +62,23 @@ struct ProjectsView: View {
                         VStack(spacing: 4) {
                             ForEach(services.projects.otherPorts) { port in
                                 HStack {
-                                    Text(String(port.port)).monospacedDigit().fontWeight(.medium).frame(width: 60, alignment: .leading)
+                                    Text(String(port.port)).monospacedDigit().fontWeight(.medium).textColumn(width: 60, alignment: .leading)
                                     Text(port.processName)
                                     Spacer()
-                                    Text(port.address).foregroundStyle(.secondary).font(.caption)
+                                    Text(port.address).foregroundStyle(.secondary).appFont(.caption)
                                 }
-                                .font(.callout)
+                                .appFont(.callout)
                             }
                         }
                         .padding(.top, 6)
                     } label: {
-                        Text("Other open ports (\(services.projects.otherPorts.count))").font(.headline)
+                        Text("Other open ports (\(services.projects.otherPorts.count))").appFont(.headline)
                     }
                     .padding(16)
                     .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14))
                 }
             }
-            .padding(20)
+            .padding(density.page)
             .animation(.snappy, value: toast)
         }
         .navigationTitle("Projects")
@@ -113,7 +114,7 @@ private struct ServerRow: View {
             VStack(spacing: 3) {
                 ForEach(server.ports.prefix(3), id: \.self) { port in
                     Link(String(port), destination: URL(string: "http://localhost:\(port)")!)
-                        .font(.system(.callout, design: .monospaced).weight(.semibold))
+                        .appFont(.callout, weight: .semibold, design: .monospaced)
                         .padding(.horizontal, 7).padding(.vertical, 2)
                         .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
                         .help(String(localized: "Open http://localhost:\(port)"))
@@ -122,12 +123,12 @@ private struct ServerRow: View {
             .frame(width: 66)
             VStack(alignment: .leading, spacing: 2) {
                 Text(server.command).fontWeight(.medium).lineLimit(1)
-                Text(statusText).font(.caption).foregroundStyle(server.isIdle() ? .orange : .secondary)
+                Text(statusText).appFont(.caption).foregroundStyle(server.isIdle() ? .orange : .secondary)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 Text(Format.memory(server.memory)).monospacedDigit()
-                Text(Format.percent(server.cpuPercent, decimals: 1) + String(localized: " CPU")).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                Text(Format.percent(server.cpuPercent, decimals: 1) + String(localized: " CPU")).appFont(.caption).foregroundStyle(.secondary).monospacedDigit()
             }
             Button("Stop…", action: onStop)
         }

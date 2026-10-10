@@ -28,11 +28,11 @@ struct HiddenSpaceCard: View {
 
         StatLine(label: "Purgeable", value: Format.storage(s.purgeableBytes))
         Text("Space macOS frees by itself as soon as something needs it: caches, iCloud files that are also in the cloud, older snapshots. It counts as used in some places and as free in others, which is why numbers disagree.")
-            .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            .appFont(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
 
         Divider()
         if s.snapshots.isEmpty {
-            Text("No snapshots on this volume.").font(.callout).foregroundStyle(.secondary)
+            Text("No snapshots on this volume.").appFont(.callout).foregroundStyle(.secondary)
         }
         if !timeMachine.isEmpty {
             let dates = timeMachine.compactMap(\.date).sorted()
@@ -53,7 +53,7 @@ struct HiddenSpaceCard: View {
             row(icon: "camera.on.rectangle", title: String(localized: "\(other.count) other snapshots"),
                 detail: other.map(\.name).prefix(3).joined(separator: ", ") + ". Made by a backup app or by hand.", button: nil, url: nil)
         }
-        Text("macOS does not reveal how much each snapshot takes.").font(.caption).foregroundStyle(.tertiary)
+        Text("macOS does not reveal how much each snapshot takes.").appFont(.caption).foregroundStyle(.tertiary)
     }
 
     private func row(icon: String, title: String, detail: String, button: String?, url: String?) -> some View {
@@ -61,7 +61,7 @@ struct HiddenSpaceCard: View {
             Image(systemName: icon).foregroundStyle(.orange).frame(width: 20)
             VStack(alignment: .leading, spacing: 3) {
                 Text(LocalizedStringKey(title)).fontWeight(.medium)
-                Text(LocalizedStringKey(detail)).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(LocalizedStringKey(detail)).appFont(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             if let button, let url, let link = URL(string: url) {

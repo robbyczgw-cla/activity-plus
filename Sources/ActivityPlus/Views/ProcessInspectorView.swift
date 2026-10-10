@@ -19,7 +19,7 @@ struct ProcessInspectorView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text(name).font(.title3.weight(.semibold))
+                Text(name).appFont(.title3, weight: .semibold)
                 Text(verbatim: "pid \(pid)").foregroundStyle(.secondary)
                 Spacer()
                 Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
@@ -60,27 +60,27 @@ struct ProcessInspectorView: View {
                         if !d.parentChain.isEmpty {
                             section(String(localized: "Started by")) {
                                 Text(d.parentChain.map { "\($0.name) (\($0.pid))" }.joined(separator: "  ›  "))
-                                    .font(.callout).textSelection(.enabled)
+                                    .appFont(.callout).textSelection(.enabled)
                             }
                         }
                         section("Network connections (\(d.connections.count))") {
-                            Toggle("Look up host names (sends DNS queries)", isOn: $resolveHosts).toggleStyle(.checkbox).font(.caption)
-                            if d.connections.isEmpty { Text("None right now.").foregroundStyle(.secondary).font(.callout) }
+                            Toggle("Look up host names (sends DNS queries)", isOn: $resolveHosts).toggleStyle(.checkbox).appFont(.caption)
+                            if d.connections.isEmpty { Text("None right now.").foregroundStyle(.secondary).appFont(.callout) }
                             ForEach(d.connections) { connection in
                                 HStack {
-                                    Text(connection.proto).font(.caption.monospaced()).frame(width: 34, alignment: .leading)
+                                    Text(connection.proto).appFont(.caption, monospaced: true).textColumn(width: 34, alignment: .leading)
                                     Text(hosts[connection.remote] ?? connection.remote).lineLimit(1).textSelection(.enabled)
                                     Spacer()
-                                    Text(connection.state).font(.caption).foregroundStyle(.secondary)
+                                    Text(connection.state).appFont(.caption).foregroundStyle(.secondary)
                                 }
-                                .font(.callout)
+                                .appFont(.callout)
                             }
                         }
                         section("Open files (\(d.openFiles.count))") {
-                            if d.openFiles.isEmpty { Text("None visible (other users' processes hide this).").foregroundStyle(.secondary).font(.callout) }
+                            if d.openFiles.isEmpty { Text("None visible (other users' processes hide this).").foregroundStyle(.secondary).appFont(.callout) }
                             ForEach(d.openFiles.prefix(200), id: \.self) { file in
                                 Text(file.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
-                                    .font(.caption.monospaced()).lineLimit(1).truncationMode(.middle).textSelection(.enabled)
+                                    .appFont(.caption, monospaced: true).lineLimit(1).truncationMode(.middle).textSelection(.enabled)
                             }
                         }
                     }
@@ -106,17 +106,17 @@ struct ProcessInspectorView: View {
 
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(LocalizedStringKey(title)).font(.headline)
+            Text(LocalizedStringKey(title)).appFont(.headline)
             content()
         }
     }
 
     private func row(_ label: String, _ value: String, selectable: Bool = false) -> some View {
         HStack(alignment: .top) {
-            Text(LocalizedStringKey(label)).foregroundStyle(.secondary).frame(width: 110, alignment: .leading)
+            Text(LocalizedStringKey(label)).foregroundStyle(.secondary).textColumn(width: 110, alignment: .leading)
             Text(value).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
         }
-        .font(.callout)
+        .appFont(.callout)
     }
 }
 

@@ -11,6 +11,7 @@ struct ActivityPlusApp: App {
             ContentView()
                 .environment(monitor)
                 .environment(AppServices.shared)
+                .modifier(MainWindowAppearance())
         }
         .defaultSize(width: 1080, height: 720)
         .commands {

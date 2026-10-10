@@ -3,24 +3,26 @@ import SwiftUI
 
 /// One page per metric: the headline figures, a live chart and every app sorted by that metric.
 struct MetricDetailView: View {
+    @Environment(\.density) private var density
+    @Environment(\.uiScale) private var uiScale
     @Environment(Monitor.self) private var monitor
     let metric: Metric
     @State private var search = ""
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: density.stack) {
                 header
                 Card {
                     HStack {
-                        Text("Apps").font(.headline)
+                        Text("Apps").appFont(.headline)
                         Spacer()
                         SystemToggle()
                     }
                     AppListView(metric: metric, searchText: search)
                 }
             }
-            .padding(20)
+            .padding(density.page)
         }
         .searchable(text: $search, placement: .toolbar, prompt: "Search apps and processes")
         .navigationTitle(metric.title)
@@ -32,7 +34,7 @@ struct MetricDetailView: View {
         let interval = monitor.interval
         switch metric {
         case .cpu:
-            HStack(alignment: .top, spacing: 14) {
+            HStack(alignment: .top, spacing: density.grid) {
                 Card {
                     CardHeader(title: "CPU", systemImage: "cpu", tint: metric.tint, trailing: SystemSampler.chipName)
                     BigNumber(text: Format.percent(s.cpu.total), size: 36)
@@ -45,7 +47,7 @@ struct MetricDetailView: View {
                     if let p = s.chip.performanceMHz { StatLine(label: "P-cores clock", value: Self.clock(p)) }
                     if let w = s.chip.cpuWatts { StatLine(label: "CPU power", value: Format.watts(w)) }
                 }
-                .frame(width: 280)
+                .frame(width: 280 * uiScale)
                 Card {
                     LiveChart(lines: [
                         .init(name: "User", values: h.cpuUser.values, color: .blue),
@@ -57,7 +59,7 @@ struct MetricDetailView: View {
             }
             CoreTypeCard(apps: s.apps)
         case .memory:
-            HStack(alignment: .top, spacing: 14) {
+            HStack(alignment: .top, spacing: density.grid) {
                 Card {
                     CardHeader(title: "Memory", systemImage: "memorychip", tint: metric.tint, trailing: String(localized: "of \(Format.memory(s.memory.total))"))
                     HStack { BigNumber(text: Format.memory(s.memory.used), size: 36); Spacer(); PressureBadge(pressure: s.memory.pressure) }
@@ -68,7 +70,7 @@ struct MetricDetailView: View {
                     StatLine(label: "Cached files", value: Format.memory(s.memory.cachedFiles), tint: .gray)
                     StatLine(label: "Swap used", value: Format.memory(s.memory.swapUsed))
                 }
-                .frame(width: 280)
+                .frame(width: 280 * uiScale)
                 Card {
                     LiveChart(lines: [.init(name: String(localized: "Used"), values: h.memory.values, color: metric.tint)],
                               format: { Format.memory(UInt64($0)) }, maxValue: Double(s.memory.total), interval: interval)
@@ -77,7 +79,7 @@ struct MetricDetailView: View {
             }
             NeuralEngineCard(apps: s.apps, watts: s.chip.aneWatts)
         case .gpu:
-            HStack(alignment: .top, spacing: 14) {
+            HStack(alignment: .top, spacing: density.grid) {
                 Card {
                     CardHeader(title: "GPU", systemImage: "square.stack.3d.up", tint: metric.tint, trailing: s.gpu?.name)
                     BigNumber(text: Format.percent(s.gpu?.utilization ?? 0), size: 36)
@@ -88,7 +90,7 @@ struct MetricDetailView: View {
                     StatLine(label: "Average", value: Format.percent(h.gpu.average))
                     StatLine(label: "Peak", value: Format.percent(h.gpu.peak))
                 }
-                .frame(width: 280)
+                .frame(width: 280 * uiScale)
                 Card {
                     LiveChart(lines: [.init(name: "GPU", values: h.gpu.values, color: metric.tint)],
                               format: { Format.percent($0) }, maxValue: 100, interval: interval)
@@ -98,7 +100,7 @@ struct MetricDetailView: View {
             GPUCauseCard()
             DisplaysCard()
         case .disk:
-            HStack(alignment: .top, spacing: 14) {
+            HStack(alignment: .top, spacing: density.grid) {
                 Card {
                     CardHeader(title: s.disk.volumeName, systemImage: "internaldrive", tint: metric.tint, trailing: "free")
                     BigNumber(text: Format.storage(s.disk.free), size: 36)
@@ -110,7 +112,7 @@ struct MetricDetailView: View {
                     Button("See what takes the space") { AppServices.shared.requestedPage = "storage" }
                         .buttonStyle(.link)
                 }
-                .frame(width: 280)
+                .frame(width: 280 * uiScale)
                 Card {
                     LiveChart(lines: [
                         .init(name: String(localized: "Read"), values: h.diskRead.values, color: .orange),
@@ -124,7 +126,7 @@ struct MetricDetailView: View {
             SSDWearCard(drive: s.drives.first { $0.isInternal && $0.nvmeHealth != nil })
             SpeedTestCard()
         case .network:
-            HStack(alignment: .top, spacing: 14) {
+            HStack(alignment: .top, spacing: density.grid) {
                 Card {
                     CardHeader(title: "Network", systemImage: "network", tint: metric.tint)
                     BigNumber(text: Format.networkRate(s.network.inRate), size: 36)
@@ -133,7 +135,7 @@ struct MetricDetailView: View {
                     StatLine(label: "Received since launch", value: Format.storage(s.network.receivedSinceLaunch))
                     StatLine(label: "Sent since launch", value: Format.storage(s.network.sentSinceLaunch))
                 }
-                .frame(width: 280)
+                .frame(width: 280 * uiScale)
                 NetworkDetailsCard()
                 Card {
                     LiveChart(lines: [
@@ -149,18 +151,18 @@ struct MetricDetailView: View {
                 CardHeader(title: "Energy", systemImage: "bolt", tint: metric.tint)
                 HStack(spacing: 30) {
                     VStack(alignment: .leading) {
-                        Text("Apps now").font(.caption).foregroundStyle(.secondary)
+                        Text("Apps now").appFont(.caption).foregroundStyle(.secondary)
                         BigNumber(text: Format.watts(s.apps.reduce(0) { $0 + $1.powerWatts }), size: 32)
                     }
                     if let system = s.battery?.systemPower {
                         VStack(alignment: .leading) {
-                            Text("Whole Mac").font(.caption).foregroundStyle(.secondary)
+                            Text("Whole Mac").appFont(.caption).foregroundStyle(.secondary)
                             BigNumber(text: Format.watts(system), size: 32)
                         }
                     }
                 }
                 Text("Measured by the kernel's per-process energy counters, not estimated. Processes owned by macOS are not included.")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .appFont(.caption).foregroundStyle(.secondary)
             }
         }
     }
@@ -186,11 +188,11 @@ struct DrivesCard: View {
                         HStack {
                             Image(systemName: drive.isInternal ? "internaldrive" : "externaldrive").foregroundStyle(.orange)
                             Text(drive.name).fontWeight(.medium)
-                            if let model = drive.model { Text(model).font(.caption).foregroundStyle(.secondary) }
+                            if let model = drive.model { Text(model).appFont(.caption).foregroundStyle(.secondary) }
                             Spacer()
                             if let smart = drive.smartStatus {
                                 Label(smart, systemImage: smart == "Verified" ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
-                                    .font(.caption).foregroundStyle(smart == "Verified" ? .green : .red)
+                                    .appFont(.caption).foregroundStyle(smart == "Verified" ? .green : .red)
                             }
                         }
                         UsageBar(fraction: 1 - Double(drive.free) / Double(max(drive.total, 1)), tint: .orange)
@@ -204,7 +206,7 @@ struct DrivesCard: View {
                                 if let tb = health.dataWrittenTB { Text(String(format: String(localized: "%.1f TB written"), tb)) }
                             }
                         }
-                        .font(.caption).foregroundStyle(.secondary)
+                        .appFont(.caption).foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 2)
                 }
@@ -215,6 +217,7 @@ struct DrivesCard: View {
 
 struct NetworkDetailsCard: View {
     @Environment(Monitor.self) private var monitor
+    @Environment(\.uiScale) private var uiScale
     @State private var publicIP: String?
     @State private var fetching = false
 
@@ -229,7 +232,7 @@ struct NetworkDetailsCard: View {
                     Spacer()
                     Text(interface.ipv4.first ?? interface.ipv6.first ?? "–").monospacedDigit().textSelection(.enabled)
                 }
-                .font(.callout)
+                .appFont(.callout)
             }
             if let wifi = s.wifi {
                 Divider()
@@ -263,9 +266,9 @@ struct NetworkDetailsCard: View {
                     .help("Asks api.ipify.org once. Activity+ never does this on its own.")
                 }
             }
-            .font(.callout)
+            .appFont(.callout)
         }
-        .frame(width: 280)
+        .frame(width: 280 * uiScale)
     }
 
     private func symbol(_ kind: NetworkInterfaceInfo.Kind) -> String {
@@ -289,7 +292,7 @@ struct SystemToggle: View {
         Toggle("Include macOS", isOn: $showSystem)
             .toggleStyle(.switch)
             .controlSize(.mini)
-            .font(.caption)
+            .appFont(.caption)
     }
 }
 
@@ -299,7 +302,7 @@ struct CoreGrid: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Cores").font(.caption).foregroundStyle(.secondary)
+            Text("Cores").appFont(.caption).foregroundStyle(.secondary)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: min(max(cores.count, 1), 12)), spacing: 6) {
                 ForEach(Array(cores.enumerated()), id: \.offset) { index, value in
                     VStack(spacing: 3) {
@@ -312,7 +315,7 @@ struct CoreGrid: View {
                             }
                         }
                         .frame(height: 40)
-                        Text(index < efficiencyCores ? "E" : "P").font(.system(size: 9)).foregroundStyle(.tertiary)
+                        Text(index < efficiencyCores ? "E" : "P").appFont(size: 9).foregroundStyle(.tertiary)
                     }
                     .help(String(localized: "Core \(index + 1): \(Format.percent(value))"))
                 }

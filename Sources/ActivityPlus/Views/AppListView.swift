@@ -110,19 +110,21 @@ private struct AppRow: View {
     let toggle: () -> Void
     let onQuit: (Bool) -> Void
     @State private var hovering = false
+    @Environment(\.density) private var density
+    @Environment(\.uiScale) private var uiScale
 
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "chevron.right")
-                .font(.caption.weight(.semibold))
+                .appFont(.caption, weight: .semibold)
                 .foregroundStyle(.tertiary)
                 .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 .frame(width: 12)
-            AppIconView(app: app, size: 24)
+            AppIconView(app: app, size: 24 * uiScale)
             VStack(alignment: .leading, spacing: 1) {
                 Text(app.name).fontWeight(.medium).lineLimit(1)
                 Text(app.processes.count == 1 ? "1 process" : "\(app.processes.count) processes")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .appFont(.caption).foregroundStyle(.secondary)
             }
             Spacer(minLength: 12)
             if hovering {
@@ -135,9 +137,9 @@ private struct AppRow: View {
                 .frame(width: 90)
             Text(metric.format(metric.value(app)))
                 .monospacedDigit()
-                .frame(width: 84, alignment: .trailing)
+                .frame(width: 84 * uiScale, alignment: .trailing)
         }
-        .padding(.vertical, 7)
+        .padding(.vertical, density.space(7))
         .padding(.horizontal, 10)
         .contentShape(Rectangle())
         .background(hovering ? Color.primary.opacity(0.04) : .clear, in: RoundedRectangle(cornerRadius: 8))
@@ -164,6 +166,8 @@ private struct ProcessRow: View {
     let scale: Double
     let onQuit: (Bool) -> Void
     @State private var inspecting = false
+    @Environment(\.density) private var density
+    @Environment(\.uiScale) private var uiScale
 
     var body: some View {
         HStack(spacing: 10) {
@@ -171,7 +175,7 @@ private struct ProcessRow: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(process.name).lineLimit(1).truncationMode(.middle)
                 Text("pid \(process.pid)" + (process.hasDetails ? "" : String(localized: " · limited details")))
-                    .font(.caption2).foregroundStyle(.tertiary)
+                    .appFont(.caption2).foregroundStyle(.tertiary)
             }
             Spacer(minLength: 12)
             UsageBar(fraction: metric.value(process) / scale, tint: metric.tint.opacity(0.7))
@@ -179,10 +183,10 @@ private struct ProcessRow: View {
             Text(metric.format(metric.value(process)))
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
-                .frame(width: 84, alignment: .trailing)
+                .frame(width: 84 * uiScale, alignment: .trailing)
         }
-        .font(.callout)
-        .padding(.vertical, 4)
+        .appFont(.callout)
+        .padding(.vertical, density.space(4))
         .padding(.horizontal, 10)
         .contentShape(Rectangle())
         .onTapGesture(count: 2) { inspecting = true }

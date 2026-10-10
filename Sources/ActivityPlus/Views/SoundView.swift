@@ -4,13 +4,14 @@ import SwiftUI
 /// Per-app volume. Changing a slider creates a private Core Audio tap for that app only;
 /// back at 100 % the tap is removed and the app plays untouched.
 struct SoundView: View {
+    @Environment(\.density) private var density
     @Environment(AppServices.self) private var services
     @State private var tick = 0
 
     var body: some View {
         let controller = services.volumeController
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: density.stack) {
                 Text("Turn the meeting up and the music down. Audio is adjusted as it plays; nothing is recorded.")
                     .foregroundStyle(.secondary)
                 if let error = controller.lastError {
@@ -27,7 +28,7 @@ struct SoundView: View {
                     }
                 }
             }
-            .padding(20)
+            .padding(density.page)
         }
         .navigationTitle("Sound")
         .task {
@@ -47,7 +48,7 @@ private struct VolumeRow: View {
     var body: some View {
         HStack(spacing: 12) {
             icon.resizable().frame(width: 24, height: 24)
-            Text(app.name).frame(width: 150, alignment: .leading).lineLimit(1)
+            Text(app.name).textColumn(width: 150, alignment: .leading).lineLimit(1)
             Button {
                 controller.setMuted(!controller.isMuted(app.id), for: app.id)
             } label: {
@@ -59,7 +60,7 @@ private struct VolumeRow: View {
                 if !editing, abs(volume - 1) < 0.04 { volume = 1 }   // snap to 100 %
                 controller.setVolume(Float(volume), for: app.id)
             }
-            Text(Format.percent(volume * 100)).monospacedDigit().frame(width: 50, alignment: .trailing)
+            Text(Format.percent(volume * 100)).monospacedDigit().textColumn(width: 50, alignment: .trailing)
         }
         .onAppear { volume = Double(controller.volume(for: app.id)) }
     }

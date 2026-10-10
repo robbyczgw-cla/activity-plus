@@ -17,8 +17,8 @@ struct AlertsView: View {
                         Image(systemName: symbol(alert.kind)).foregroundStyle(.orange).frame(width: 20)
                         VStack(alignment: .leading, spacing: 3) {
                             Text(alert.title).fontWeight(.medium)
-                            Text(alert.detail).font(.callout).foregroundStyle(.secondary)
-                            Text(alert.date, format: .relative(presentation: .named)).font(.caption).foregroundStyle(.tertiary)
+                            Text(alert.detail).appFont(.callout).foregroundStyle(.secondary)
+                            Text(alert.date, format: .relative(presentation: .named)).appFont(.caption).foregroundStyle(.tertiary)
                         }
                         Spacer()
                         if let path = alert.reportPath, FileManager.default.fileExists(atPath: path) {
@@ -27,7 +27,7 @@ struct AlertsView: View {
                         }
                         if let id = alert.appID {
                             Button("Ignore app") { services.ignore(appID: id) }
-                                .buttonStyle(.borderless).font(.caption)
+                                .buttonStyle(.borderless).appFont(.caption)
                                 .disabled(services.alertSettings.ignoredApps.contains(id))
                         }
                     }
