@@ -20,6 +20,7 @@ struct ExploreTab: View {
     var body: some View {
         let model = services.diskIndex
         VStack(alignment: .leading, spacing: 16) {
+            ExploreRootPicker()
             if let index = model.index {
                 content(index, model: model)
             } else {
@@ -32,6 +33,7 @@ struct ExploreTab: View {
         }
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
         .onAppear { model.loadCachedIfNeeded() }
+        .onChange(of: model.selection) { folderPath = nil; showAll = false; result = nil }
         .confirmationDialog(String(localized: "Move “\(pendingTrash?.name ?? "")” to the Trash?"),
                             isPresented: Binding(get: { pendingTrash != nil }, set: { if !$0 { pendingTrash = nil } }),
                             presenting: pendingTrash) { node in
@@ -50,14 +52,23 @@ struct ExploreTab: View {
             Text("Activity+ reads your home folder once and shows which folders and kinds of files take the most space; nothing is moved or removed without asking.")
                 .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             if let message { Text(message).font(.callout).foregroundStyle(.red) }
-            Button("Scan home folder") { model.scan() }
-                .buttonStyle(.borderedProminent)
+            if model.selection == .home && !model.isCustomRoot {
+                Button("Scan home folder") { model.scan() }
+                    .buttonStyle(.borderedProminent)
+            } else {
+                Button("Scan “\(model.rootTitle)”") { model.scan() }
+                    .buttonStyle(.borderedProminent)
+            }
         }
     }
 
     private func scanningCard(fraction: Double, item: String, model: DiskIndexModel) -> some View {
         Card {
-            CardHeader(title: "Reading your home folder", systemImage: "magnifyingglass", tint: .blue)
+            if model.selection == .home && !model.isCustomRoot {
+                CardHeader(title: "Reading your home folder", systemImage: "magnifyingglass", tint: .blue)
+            } else {
+                Label("Reading “\(model.rootTitle)”", systemImage: "magnifyingglass").font(.headline).foregroundStyle(.blue)
+            }
             progressRow(fraction: fraction, item: item, model: model)
             Text("This takes a moment the first time. The map is kept, so it opens instantly next time.")
                 .font(.caption).foregroundStyle(.secondary)
@@ -92,6 +103,14 @@ struct ExploreTab: View {
                     let id = folder.id
                     totals = await Task.detached(priority: .userInitiated) { index.kindTotals(under: id) }.value
                 }
+
+            if folder.id == index.rootID {
+                WhatGrewCard(index: index, summaries: model.growth) { url in
+                    showAll = false
+                    result = nil
+                    folderPath = url.path
+                }
+            }
 
             if let result {
                 Label(result, systemImage: "trash").padding(10).frame(maxWidth: .infinity, alignment: .leading)
@@ -129,7 +148,7 @@ struct ExploreTab: View {
                     open(node, index: index)
                 } label: {
                     if position == 0 {
-                        Label(rootTitle(index), systemImage: services.diskIndex.isCustomRoot ? "folder" : "house")
+                        Label(rootTitle(index), systemImage: services.diskIndex.symbol(for: services.diskIndex.selection))
                     } else {
                         Text(verbatim: node.name)
                     }
@@ -145,7 +164,8 @@ struct ExploreTab: View {
     }
 
     private func rootTitle(_ index: DiskIndex) -> String {
-        services.diskIndex.isCustomRoot ? index.root.lastPathComponent : String(localized: "Home")
+        let model = services.diskIndex
+        return model.selection == .home && !model.isCustomRoot ? String(localized: "Home") : model.rootTitle
     }
 
     private func summaryCard(_ folder: DiskIndex.Node, index: DiskIndex, model: DiskIndexModel) -> some View {
@@ -184,7 +204,7 @@ struct ExploreTab: View {
             VStack(spacing: 0) {
                 ForEach(children) { child in
                     ExploreRow(node: child, largest: largest, share: Double(child.bytes) / Double(max(folder.bytes, 1)),
-                               url: index.url(of: child.id), isSkipped: isSkipped(child, index: index))
+                               url: index.url(of: child.id), isSkipped: isSkipped(child, index: index), isUnread: child.isUnread)
                         .contentShape(Rectangle())
                         .onTapGesture { if child.isDirectory { open(child, index: index) } }
                         .contextMenu { menu(for: child, index: index, model: model) }
@@ -359,6 +379,7 @@ private struct ExploreRow: View {
     let share: Double
     let url: URL
     let isSkipped: Bool
+    var isUnread = false
     @State private var hovering = false
 
     var body: some View {
@@ -371,6 +392,8 @@ private struct ExploreRow: View {
                 Group {
                     if isSkipped {
                         Text("Not read: macOS protects other apps' data")
+                    } else if isUnread {
+                        Text("Not read: Activity+ may not open this folder")
                     } else if node.isDirectory {
                         Text("\(node.fileCount) files")
                     } else {
