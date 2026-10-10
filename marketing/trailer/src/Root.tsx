@@ -4,6 +4,7 @@ import { FPS, totalFrames } from "./script";
 import { Trailer, TrailerProps } from "./Trailer";
 import { GpuCause, gpuTotalFrames } from "./GpuCause";
 import { Release030, releaseTotalFrames } from "./Release030";
+import { Release040, release040TotalFrames } from "./Release040";
 
 export const Root: React.FC = () => (
   <>
@@ -12,6 +13,8 @@ export const Root: React.FC = () => (
     <Composition id="GpuCause" component={GpuCause} durationInFrames={gpuTotalFrames} fps={FPS} width={1920} height={1080}
       defaultProps={{ music: true }} />
     <Composition id="Release030" component={Release030} durationInFrames={releaseTotalFrames} fps={FPS} width={1920} height={1080}
+      defaultProps={{ music: true }} />
+    <Composition id="Release040" component={Release040} durationInFrames={release040TotalFrames} fps={FPS} width={1920} height={1080}
       defaultProps={{ music: true }} />
   </>
 );
