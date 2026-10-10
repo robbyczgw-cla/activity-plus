@@ -306,7 +306,10 @@ const FindScene: React.FC<{ frames: number }> = ({ frames }) => {
 
 const NotchScene: React.FC<{ frames: number }> = ({ frames }) => {
   const frame = useCurrentFrame();
-  const hint = interpolate(frame, [85, 100], [0, 1], clamp);
+  // One after the other, so the two captions and the two panels never overlap: caption out, panel swap, caption in.
+  const firstOut = interpolate(frame, [78, 88], [0, 1], clamp);
+  const hint = interpolate(frame, [90, 95], [0, 1], clamp);
+  const secondIn = interpolate(frame, [96, 108], [0, 1], clamp);
   const w = 1250;
   return (
     <AbsoluteFill style={{ opacity: fadeOut(frame, frames) }}>
@@ -315,11 +318,11 @@ const NotchScene: React.FC<{ frames: number }> = ({ frames }) => {
         <Img src={staticFile("v040/notch-hint.png")} style={{ position: "absolute", left: 0, top: 0, width: "100%", opacity: hint }} />
       </Shot>
       <div style={{ position: "absolute", top: 290 + w * 330 / 1112 + 60, width: "100%", textAlign: "center", fontFamily, fontSize: 36, fontWeight: 600,
-        color: INK, opacity: interpolate(frame, [20, 35], [0, 1], clamp) * (1 - hint) }}>
+        color: INK, opacity: interpolate(frame, [20, 35], [0, 1], clamp) * (1 - firstOut) }}>
         Point at it for live values.
       </div>
       <div style={{ position: "absolute", top: 290 + w * 330 / 1112 + 60, width: "100%", textAlign: "center", fontFamily, fontSize: 36, fontWeight: 600,
-        color: INK, opacity: hint }}>
+        color: INK, opacity: secondIn }}>
         Short hints when something changes, like “Charging · 65 W”.
       </div>
     </AbsoluteFill>
