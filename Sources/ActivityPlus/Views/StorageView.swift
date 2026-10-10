@@ -9,6 +9,21 @@ struct StorageView: View {
     @State private var confirmTrash = false
     @State private var result: String?
     @State private var uninstalling: AppDiskUsage?
+    @SceneStorage("storageTab") private var tab = Tab.explore
+
+    enum Tab: String, CaseIterable {
+        case explore, systemData, biggest, cleanup, apps
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .explore: "Explore"
+            case .systemData: "System Data"
+            case .biggest: "Biggest"
+            case .cleanup: "Clean up"
+            case .apps: "Apps"
+            }
+        }
+    }
 
     private var selectedLocations: [StorageLocation] {
         services.storage.flatMap(\.locations).filter { selected.contains($0.path) }
@@ -16,7 +31,6 @@ struct StorageView: View {
 
     var body: some View {
         let disk = monitor.snapshot.disk
-        let cleanable = services.storage.reduce(UInt64(0)) { $0 + $1.cleanableBytes }
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Card {
@@ -26,61 +40,31 @@ struct StorageView: View {
                             BigNumber(text: Format.storage(disk.free) + String(localized: " free"), size: 26)
                         }
                         Spacer()
-                        if let progress = services.storageProgress {
-                            VStack(alignment: .trailing) {
-                                ProgressView(value: progress.fraction).frame(width: 180)
-                                Text(progress.item).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                            }
-                            Button("Stop") { services.cancelStorageScan() }
-                        } else {
-                            Button(services.storageScannedAt == nil ? "Scan apps" : "Scan again") { services.scanStorage() }
-                                .buttonStyle(.borderedProminent)
-                        }
                     }
                     UsageBar(fraction: 1 - Double(disk.free) / Double(max(1, disk.total)), tint: .orange)
-                    if services.storageScannedAt != nil {
-                        Text("Apps and their data use \(Format.storage(services.storage.reduce(0) { $0 + $1.totalBytes })). \(Format.storage(cleanable)) of it is caches and logs that apps rebuild on their own.")
-                            .font(.callout).foregroundStyle(.secondary)
-                    } else {
-                        Text("Finds how much space each app takes with everything it stores in your Library, plus developer caches. Nothing is removed without asking; removed files go to the Trash.")
-                            .font(.callout).foregroundStyle(.secondary)
-                    }
                 }
 
-                HiddenSpaceCard()
-
-                CleanupCandidatesCard()
-
-                if let result {
-                    Label(result, systemImage: "trash").padding(10).frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
+                Picker("View", selection: $tab) {
+                    ForEach(Tab.allCases, id: \.self) { Text($0.title).tag($0) }
                 }
+                .pickerStyle(.segmented)
+                .labelsHidden()
 
-                if !services.storage.isEmpty {
-                    HStack {
-                        Button("Select all caches") {
-                            selected = Set(services.storage.flatMap(\.locations).filter(\.isSafeToClean).map(\.path))
-                        }
-                        Button("Select none") { selected = [] }.disabled(selected.isEmpty)
-                        Spacer()
-                        Button("Move \(Format.storage(selectedLocations.reduce(0) { $0 + $1.bytes })) to Trash…") { confirmTrash = true }
-                            .disabled(selected.isEmpty)
-                    }
-                    Card {
-                        let top = services.storage.first?.totalBytes ?? 1
-                        ForEach(services.storage) { app in
-                            appRow(app, top: top)
-                            if expanded.contains(app.id) {
-                                ForEach(app.locations) { location in locationRow(location) }
-                            }
-                            Divider().opacity(0.4)
-                        }
-                    }
+                switch tab {
+                case .explore: ExploreTab()
+                case .systemData: SystemDataTab()
+                case .biggest: BiggestTab()
+                case .cleanup: CleanupTab()
+                case .apps: appsTab
                 }
             }
             .padding(20)
         }
         .navigationTitle("Storage")
+        .onAppear {
+            // Snapshot runs pick the tab: ACTIVITYPLUS_STORAGE_TAB=explore|systemData|biggest|cleanup|apps
+            if let raw = ProcessInfo.processInfo.environment["ACTIVITYPLUS_STORAGE_TAB"], let pick = Tab(rawValue: raw) { tab = pick }
+        }
         .confirmationDialog("Uninstall \(uninstalling?.name ?? "")?", isPresented: Binding(get: { uninstalling != nil }, set: { if !$0 { uninstalling = nil } }), presenting: uninstalling) { app in
             Button("Move to Trash", role: .destructive) { uninstall(app) }
             Button("Cancel", role: .cancel) {}
@@ -97,6 +81,61 @@ struct StorageView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("\(Format.storage(selectedLocations.reduce(0) { $0 + $1.bytes })) moves to the Trash. Quit the apps first so they do not recreate their caches right away. Empty the Trash to actually free the space.")
+        }
+    }
+
+    @ViewBuilder private var appsTab: some View {
+        let cleanable = services.storage.reduce(UInt64(0)) { $0 + $1.cleanableBytes }
+        Card {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    if services.storageScannedAt != nil {
+                        Text("Apps and their data use \(Format.storage(services.storage.reduce(0) { $0 + $1.totalBytes })). \(Format.storage(cleanable)) of it is caches and logs that apps rebuild on their own.")
+                            .font(.callout).foregroundStyle(.secondary)
+                    } else {
+                        Text("Finds how much space each app takes with everything it stores in your Library, plus developer caches. Nothing is removed without asking; removed files go to the Trash.")
+                            .font(.callout).foregroundStyle(.secondary)
+                    }
+                }
+                Spacer()
+                if let progress = services.storageProgress {
+                    VStack(alignment: .trailing) {
+                        ProgressView(value: progress.fraction).frame(width: 180)
+                        Text(progress.item).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                    Button("Stop") { services.cancelStorageScan() }
+                } else {
+                    Button(services.storageScannedAt == nil ? "Scan apps" : "Scan again") { services.scanStorage() }
+                        .buttonStyle(.borderedProminent)
+                }
+            }
+        }
+
+        if let result {
+            Label(result, systemImage: "trash").padding(10).frame(maxWidth: .infinity, alignment: .leading)
+                .background(.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
+        }
+
+        if !services.storage.isEmpty {
+            HStack {
+                Button("Select all caches") {
+                    selected = Set(services.storage.flatMap(\.locations).filter(\.isSafeToClean).map(\.path))
+                }
+                Button("Select none") { selected = [] }.disabled(selected.isEmpty)
+                Spacer()
+                Button("Move \(Format.storage(selectedLocations.reduce(0) { $0 + $1.bytes })) to Trash…") { confirmTrash = true }
+                    .disabled(selected.isEmpty)
+            }
+            Card {
+                let top = services.storage.first?.totalBytes ?? 1
+                ForEach(services.storage) { app in
+                    appRow(app, top: top)
+                    if expanded.contains(app.id) {
+                        ForEach(app.locations) { location in locationRow(location) }
+                    }
+                    Divider().opacity(0.4)
+                }
+            }
         }
     }
 

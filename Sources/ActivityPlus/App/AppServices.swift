@@ -409,6 +409,8 @@ final class AppServices {
 
     private(set) var startupItems: [StartupItem] = []
     private(set) var startupScannedAt: Date?
+    /// Size map of the home folder for Storage → Explore and Biggest.
+    let diskIndex = DiskIndexModel()
     private(set) var storage: [AppDiskUsage] = []
     private(set) var storageProgress: (fraction: Double, item: String)?
     private(set) var storageScannedAt: Date?
