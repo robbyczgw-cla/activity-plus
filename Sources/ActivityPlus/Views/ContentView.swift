@@ -19,9 +19,10 @@ enum SidebarItem: Hashable {
     /// Every page in sidebar order. The sidebar, Settings → Window and saved selections all come from this list.
     static let pages: [Page] = [
         Page(item: .overview, key: "overview", title: "Overview", icon: "square.grid.2x2", section: ""),
-    ] + [Metric.cpu, .memory, .gpu, .disk, .network, .energy].map {
-        Page(item: .metric($0), key: "metric:\($0.rawValue)", title: $0.title, icon: $0.systemImage, section: String(localized: "Resources"))
-    } + [
+    ] + [Metric.cpu, .memory, .gpu, .disk].map(metricPage) + [
+        // Right under Disk: Disk is speed and drive health, Storage is what takes the space.
+        Page(item: .storage, key: "storage", title: "Storage", icon: "chart.pie", section: String(localized: "Resources")),
+    ] + [Metric.network, .energy].map(metricPage) + [
         Page(item: .battery, key: "battery", title: "Battery", icon: "battery.75percent", section: String(localized: "Resources")),
         Page(item: .sensors, key: "sensors", title: "Temperatures", icon: "thermometer.medium", section: String(localized: "Resources")),
         Page(item: .projects, key: "projects", title: "Projects", icon: "hammer", section: String(localized: "Tools")),
@@ -35,8 +36,11 @@ enum SidebarItem: Hashable {
         Page(item: .diagnosis, key: "diagnosis", title: "Why Is It Slow?", icon: "stethoscope", section: String(localized: "Maintenance")),
         Page(item: .sleep, key: "sleep", title: "Sleep & Battery Drain", icon: "moon.zzz", section: String(localized: "Maintenance")),
         Page(item: .startup, key: "startup", title: "Startup Items", icon: "power", section: String(localized: "Maintenance")),
-        Page(item: .storage, key: "storage", title: "Storage", icon: "externaldrive", section: String(localized: "Maintenance")),
     ]
+
+    private static func metricPage(_ metric: Metric) -> Page {
+        Page(item: .metric(metric), key: "metric:\(metric.rawValue)", title: metric.title, icon: metric.systemImage, section: String(localized: "Resources"))
+    }
 
     /// Pages that can be hidden (Overview always stays).
     static var customizable: [(key: String, title: String)] {

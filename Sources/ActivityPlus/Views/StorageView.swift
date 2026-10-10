@@ -42,6 +42,8 @@ struct StorageView: View {
                         Spacer()
                     }
                     UsageBar(fraction: 1 - Double(disk.free) / Double(max(1, disk.total)), tint: .orange)
+                    Button("Read and write speed, drive health") { services.requestedPage = "metric:disk" }
+                        .buttonStyle(.link)
                 }
 
                 Picker("View", selection: $tab) {

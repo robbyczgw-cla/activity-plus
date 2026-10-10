@@ -107,6 +107,8 @@ struct MetricDetailView: View {
                     StatLine(label: "Writing", value: Format.rate(s.disk.writeRate), tint: .brown)
                     StatLine(label: "Read since launch", value: Format.storage(s.disk.readSinceLaunch))
                     StatLine(label: "Written since launch", value: Format.storage(s.disk.writtenSinceLaunch))
+                    Button("See what takes the space") { AppServices.shared.requestedPage = "storage" }
+                        .buttonStyle(.link)
                 }
                 .frame(width: 280)
                 Card {
