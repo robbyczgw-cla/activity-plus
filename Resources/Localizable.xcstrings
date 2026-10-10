@@ -1934,9 +1934,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@ crashed %2$lld times this week"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%@ crashed %lld time this week"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%@ crashed %lld times this week"
+                }
+              }
+            }
           }
         },
         "es": {
@@ -5335,6 +5347,24 @@
             }
           }
         },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld copy was skipped because it or its twin changed since the search."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld copies were skipped because they or their twins changed since the search."
+                }
+              }
+            }
+          }
+        },
         "es": {
           "variations": {
             "plural": {
@@ -6286,9 +6316,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$lld files exist more than once. The extra copies take %2$@."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld file exists more than once. The extra copies take %@."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld files exist more than once. The extra copies take %@."
+                }
+              }
+            }
           }
         },
         "es": {
@@ -6732,6 +6774,24 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld Objekte starten ein Programm, das es nicht mehr gibt. Sie tun nichts und sind unten markiert. Objekte in deinem eigenen Ordner kannst du hier in den Papierkorb legen; systemweite brauchen Administratorrechte."
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld item starts a program that does not exist any more. It does nothing, and is marked below. Items in your own folder can be moved to the Trash here; system-wide ones need an administrator."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld items start a program that does not exist any more. They do nothing, and are marked below. Items in your own folder can be moved to the Trash here; system-wide ones need an administrator."
                 }
               }
             }
@@ -18696,6 +18756,24 @@
             }
           }
         },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Comparing the first and last bytes of %lld file…"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Comparing the first and last bytes of %lld files…"
+                }
+              }
+            }
+          }
+        },
         "es": {
           "variations": {
             "plural": {
@@ -18797,6 +18875,24 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "Gesamter Inhalt von %lld Dateien wird verglichen …"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Comparing the full contents of %lld file…"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Comparing the full contents of %lld files…"
                 }
               }
             }
@@ -34038,9 +34134,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Move %1$lld copies (%2$@) to Trash…"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Move %lld copy (%@) to Trash…"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Move %lld copies (%@) to Trash…"
+                }
+              }
+            }
           }
         },
         "es": {
@@ -34144,6 +34252,24 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld Kopien in den Papierkorb legen?"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Move %lld copy to the Trash?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Move %lld copies to the Trash?"
                 }
               }
             }
@@ -34880,9 +35006,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Moved %1$lld copies (%2$@) to the Trash. Empty the Trash to actually free the space."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Moved %lld copy (%@) to the Trash. Empty the Trash to actually free the space."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Moved %lld copies (%@) to the Trash. Empty the Trash to actually free the space."
+                }
+              }
+            }
           }
         },
         "es": {
@@ -36140,6 +36278,24 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "Seit %lld Tagen keine Sicherung"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "No backup for %lld day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "No backup for %lld days"
                 }
               }
             }
@@ -38463,9 +38619,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Now: %1$@ CPU across %2$lld Spotlight processes"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Now: %@ CPU in %lld Spotlight process"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Now: %@ CPU across %lld Spotlight processes"
+                }
+              }
+            }
           }
         },
         "es": {
@@ -38575,9 +38743,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Now: %1$@ CPU, %2$@ disk, %3$lld Spotlight processes"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Now: %@ CPU, %@ disk, %lld Spotlight process"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Now: %@ CPU, %@ disk, %lld Spotlight processes"
+                }
+              }
+            }
           }
         },
         "es": {
@@ -48258,6 +48438,24 @@
             }
           }
         },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Show %lld app"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Show all %lld apps"
+                }
+              }
+            }
+          }
+        },
         "es": {
           "variations": {
             "plural": {
@@ -48696,6 +48894,24 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "Mehr anzeigen (%lld weitere Gruppen)"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Show more (%lld more group)"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Show more (%lld more groups)"
                 }
               }
             }
@@ -54085,9 +54301,21 @@
           }
         },
         "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "The last Time Machine backup to %1$@ was %2$lld days ago."
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "The last Time Machine backup to %@ was %lld day ago."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "The last Time Machine backup to %@ was %lld days ago."
+                }
+              }
+            }
           }
         },
         "es": {
