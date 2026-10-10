@@ -147,6 +147,8 @@ final class DiskIndexModel {
         if !isCustomRoot {
             let standard: Set<String> = ["Library", "Desktop", "Documents", "Downloads", "Movies", "Music", "Pictures", "Public", "Applications"]
             if relative.count == 1, standard.contains(relative[0]) { return String(localized: "A folder macOS needs.") }
+            // Keys and the Trash itself: losing them by accident costs far more than the space they take.
+            if let first = relative.first, [".ssh", ".gnupg", ".Trash"].contains(first) { return String(localized: "Holds keys or the Trash itself.") }
             if relative.count == 2, relative[0] == "Library" { return String(localized: "A folder macOS needs.") }
         }
         return nil
