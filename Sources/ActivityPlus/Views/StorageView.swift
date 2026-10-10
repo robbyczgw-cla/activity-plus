@@ -65,6 +65,7 @@ struct StorageView: View {
             // Snapshot runs pick the tab: ACTIVITYPLUS_STORAGE_TAB=explore|systemData|biggest|cleanup|apps
             if let raw = ProcessInfo.processInfo.environment["ACTIVITYPLUS_STORAGE_TAB"], let pick = Tab(rawValue: raw) { tab = pick }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .storageShowCleanup)) { _ in tab = .cleanup }
         .confirmationDialog("Uninstall \(uninstalling?.name ?? "")?", isPresented: Binding(get: { uninstalling != nil }, set: { if !$0 { uninstalling = nil } }), presenting: uninstalling) { app in
             Button("Move to Trash", role: .destructive) { uninstall(app) }
             Button("Cancel", role: .cancel) {}

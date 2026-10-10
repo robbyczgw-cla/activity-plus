@@ -68,13 +68,14 @@ public enum CleanupPlan {
     // MARK: - Building entries
 
     /// Section for a System Data group, from its id and title.
+    /// Section for a `SystemDataBreakdown` group, by its stable id (titles are translated, so never match on them).
     public static func section(forGroupID id: String, title: String) -> CleanupSection {
-        let text = (id + " " + title).lowercased()
-        if text.contains("log") || text.contains("diagnostic") || text.contains("crash") { return .logs }
-        let developer = ["developer", "xcode", "simulator", "homebrew", "npm", "yarn", "pnpm", "cargo", "gradle",
-                         "docker", "derived", "package", "toolchain", "build"]
-        if developer.contains(where: text.contains) { return .developer }
-        return .caches
+        switch id {
+        case "developer": .developer
+        case "logs": .logs
+        case "backups": .largeOld
+        default: .caches
+        }
     }
 
     /// Items from `SystemDataBreakdown.measure()`. Never offers what macOS manages.

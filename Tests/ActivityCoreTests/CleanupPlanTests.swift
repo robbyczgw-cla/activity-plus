@@ -67,8 +67,9 @@ struct CleanupPlanTests {
 
     @Test func groupsMapToSections() {
         #expect(CleanupPlan.section(forGroupID: "logs", title: "Logs") == .logs)
-        #expect(CleanupPlan.section(forGroupID: "dev", title: "Xcode") == .developer)
-        #expect(CleanupPlan.section(forGroupID: "cache", title: "System caches") == .caches)
+        #expect(CleanupPlan.section(forGroupID: "developer", title: "Entwicklerdaten") == .developer)
+        #expect(CleanupPlan.section(forGroupID: "backups", title: "Backups") == .largeOld)
+        #expect(CleanupPlan.section(forGroupID: "caches", title: "Logs") == .caches)
     }
 
     @Test func breakdownDropsMacOSManagedAndContainers() {
