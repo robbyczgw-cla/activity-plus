@@ -53,7 +53,8 @@ Requires a Mac with Apple silicon and macOS 15 Sequoia or later. Developed and t
 - Memory pressure, swap, compression.
 - GPU load, clock (against the maximum) and power. **Find the app behind WindowServer**: most apps draw through WindowServer, so their GPU use shows up under its name. Activity+ hides your apps one at a time for a few seconds, measures how far WindowServer's GPU time drops, and shows them again.
 - **Every drive** with free space, throughput, SMART status and NVMe wear, temperature, hours and data written. Which apps write the most to the SSD, and how many years it lasts at that pace, from the drive's own wear counter. A warning when a USB drive that can do USB 3 runs at USB 2 speed (usually the cable).
-- Network throughput, interfaces, addresses, Wi-Fi signal, noise, channel and link speed. Your public IP is fetched only when you click for it.
+- Network throughput, interfaces, addresses, Wi-Fi signal, noise, channel and link speed. Your public IP is fetched only when you click for it. A network quality test with Apple's own `networkQuality` runs when you click.
+- **Backup and security**: when Time Machine last backed up (with an alert after seven days), FileVault, System Integrity Protection, Gatekeeper and the firewall, and which app uses the microphone or camera right now.
 - **Connection quality** (off until you turn it on): latency, jitter and packet loss to your router every 30 seconds, kept in the history, so a flaky connection is told apart from a slow one.
 - **Displays**: refresh rate, resolution, HDR and ProMotion per screen, with a warning when a cable or dock holds a monitor below the rate it can do.
 - **All sensors**: several hundred temperatures, voltages, currents and power readings, plus fans.
@@ -62,7 +63,7 @@ Requires a Mac with Apple silicon and macOS 15 Sequoia or later. Developed and t
 ![Disk](docs/screenshots/metric-disk.jpg)
 
 ### A menu bar that looks the way you want
-Add as many menu bar items as you like. Each shows one thing (CPU, memory, GPU, disk, network, temperature, fans, battery, power or a clock with time zones) in one of eleven styles: value, label and value, line chart, bar chart, bar per core, ring, gauge, dot, up/down speed, battery or icon. Colors can match the menu bar, go from green to red with the load, or use a color you pick. An item can hide itself until its value is high, and a battery item can show the charging watts instead of the percentage. While the Mac charges, a bolt appears in the battery symbol; a plug shows that it is on the adapter without charging. Right-click any item to switch modules on and off, pick a preset (minimal, balanced, everything) or put symbols next to the values; click it for a compact panel on the matching tab. When the items don't fit next to the notch, they become one item (or always, if you prefer), and a click on a value still opens its tab.
+Add as many menu bar items as you like. Each shows one thing (CPU, memory, GPU, disk, network, temperature, fans, battery, power or a clock with time zones) in one of eleven styles: value, label and value, line chart, bar chart, bar per core, ring, gauge, dot, up/down speed, battery or icon. Colors can match the menu bar, go from green to red with the load, or use a color you pick. An item can hide itself until its value is high, and a battery item can show the charging watts instead of the percentage. While the Mac charges, a bolt appears in the battery symbol; a plug shows that it is on the adapter without charging. Right-click any item to switch modules on and off, pick a preset (minimal, balanced, everything) or put symbols next to the values; click it for a compact panel on the matching tab. When the items don't fit next to the notch, they become one item (or always, if you prefer), and a click on a value still opens its tab. **The notch itself** shows live values when you rest the pointer on it, and short hints drop down when memory gets tight, the Mac gets hot, an app freezes or the charger is connected.
 
 <p align="center"><img src="docs/media/menubar.gif" alt="Menu bar items appearing one by one" width="720"></p>
 
@@ -75,12 +76,23 @@ Add as many menu bar items as you like. Each shows one thing (CPU, memory, GPU, 
 
 Everything that costs noticeable CPU has its own switch in **Settings → Performance**; with only the menu bar open, Activity+ uses about 1.4 % of one core.
 
-The rest is adjustable too: which pages the sidebar shows, which Overview cards appear and in which order, the accent color, °C or °F, bytes or bits for network speeds, the refresh interval, and which tabs the menu bar panel has.
+The rest is adjustable too: text size and density of the window, the page it opens with, how many minutes the charts show, which pages the sidebar shows, which Overview cards appear and in which order, the accent color, °C or °F, bytes or bits for network speeds, the refresh interval, and which tabs the menu bar panel has.
 
 ### Why is my Mac slow?
-One click gives a plain-language verdict: not enough memory, an app running flat out, heat throttling, a nearly full disk, Spotlight indexing, idle dev servers, a long uptime with heavy swap, a worn battery, a USB drive running at USB 2 speed. Each finding shows its evidence and offers the fix.
+One click gives a plain-language verdict: not enough memory, an app running flat out, heat throttling, a nearly full disk, Spotlight indexing, idle dev servers, a long uptime with heavy swap, a worn battery, a USB drive running at USB 2 speed, an app that keeps crashing. Each finding shows its evidence and offers the fix. The page also counts crashes per app (with the reason in plain words), shows Spotlight indexing while it runs, and names the apps that were busiest before the fans spun up.
 
 ![Diagnosis](docs/screenshots/diagnosis.jpg)
+
+### Where did my disk space go?
+- **Explore**: your home folder (or another drive, or the whole startup disk) read once into a map: the biggest folders as a list and a treemap, a breakdown by kind, click to go inside. The map is kept, so it opens instantly, and Activity+ shows **what grew** since the last scan.
+- **System Data explained**: the grey bar in Settings → Storage, split into developer data, caches, logs and what macOS manages itself, each with a reason and a safety badge.
+- **Clean up**: one ticked list of things that can go to the Trash, each with its reason. Caches of apps that are open stay locked.
+- **Biggest**: search the map as you type, with filters like `ext:dmg size:>1gb opened:>1y`.
+- **Duplicates**: files that exist more than once, compared by content; one copy always stays.
+- **Space Finder doesn't show**: purgeable space and APFS snapshots (local Time Machine backups, a prepared macOS update), explained, with the setting that deals with them.
+- **Storage by app**, including everything the app keeps in your Library, and **uninstall** an app together with its leftovers (shared data of other apps stays).
+
+Everything goes to the Trash after you confirm; nothing is deleted.
 
 ### History, alerts and insights
 - **30 days of history** in one small SQLite file: charts for 12 hours to 30 days, which apps used the most, data written and downloaded today and this week. Point at a spike to see the processes behind it: "Terminal" turns out to be `node vite` (command lines are shortened, and anything that looks like a token or password is blanked).
@@ -94,14 +106,11 @@ One click gives a plain-language verdict: not enough memory, an app running flat
 ### Let it take care of things
 - **Automations**: "stop dev servers that have been idle for a day", "quit an app when it uses more than 4 GB". Each rule asks first with a notification button, unless you explicitly allow it to act on its own.
 - **Dev servers by project**, with their ports and whether they are working, idle or barely used. Stop a forgotten one with one confirmed click.
-- **Startup items** grouped by app, with switches for the ones in your account.
-- **Storage by app**, including everything the app keeps in your Library, plus developer caches. Caches and logs can be moved to the Trash. **Uninstall** an app together with its leftovers (shared data of other apps stays).
-- **Space Finder doesn't show**: purgeable space and APFS snapshots (local Time Machine backups, a prepared macOS update), explained, with the setting that deals with them.
-- **Large and old files**: installers you already used, downloads you never opened again, huge files. Nothing is selected unless you choose it.
+- **Startup items** grouped by app, with switches for the ones in your account. Leftovers of apps you deleted are marked.
 - **Disk speed test**: sequential write and read speed of your SSD.
 - **Panel editor**: choose and order the tiles of the menu bar panel, how many busy apps it lists, and its theme.
 - **Menu bar, Dock or both**, and **settings export and import** for another Mac.
-- **Per-app volume** (beta), quit and force quit from any list, and a 1200 × 630 share card of your Mac's state.
+- **Per-app volume** (beta), quit, force quit, pause and resume from any list, and a 1200 × 630 share card of your Mac's state.
 
 Anything that quits a process, stops a server, changes a startup item or moves files asks first.
 

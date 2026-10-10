@@ -53,7 +53,8 @@ Voraussetzung ist ein Mac mit Apple silicon und macOS 15 Sequoia oder neuer. Ent
 - Speicherdruck, Swap, Komprimierung.
 - GPU-Auslastung, Takt (im Verhältnis zum Höchsttakt) und Leistung. **Die App hinter WindowServer finden**: Die meisten Apps zeichnen über WindowServer, ihre GPU-Last erscheint deshalb unter dessen Namen. Activity+ blendet Ihre Apps nacheinander für ein paar Sekunden aus, misst, wie stark die GPU-Zeit von WindowServer sinkt, und blendet sie wieder ein.
 - **Alle Laufwerke** mit freiem Platz, Durchsatz, SMART-Status sowie NVMe-Verschleiß, -Temperatur, Betriebsstunden und geschriebenen Daten. Welche Apps am meisten auf die SSD schreiben und wie viele Jahre sie bei diesem Tempo hält, nach dem Verschleißzähler des Laufwerks selbst. Eine Warnung, wenn ein USB-Laufwerk USB 3 kann, aber nur mit USB-2-Tempo läuft (meist liegt es am Kabel).
-- Netzwerk-Durchsatz, Schnittstellen, Adressen, WLAN-Signal, Rauschen, Kanal und Verbindungsgeschwindigkeit. Die öffentliche IP wird nur auf Klick abgefragt.
+- Netzwerk-Durchsatz, Schnittstellen, Adressen, WLAN-Signal, Rauschen, Kanal und Verbindungsgeschwindigkeit. Die öffentliche IP wird nur auf Klick abgefragt. Ein Netzwerk-Qualitätstest mit Apples eigenem `networkQuality` läuft auf Klick.
+- **Backup und Sicherheit**: wann Time Machine zuletzt gesichert hat (mit Warnung nach sieben Tagen), FileVault, Systemintegritätsschutz, Gatekeeper und Firewall, und welche App gerade Mikrofon oder Kamera nutzt.
 - **Verbindungsqualität** (aus, bis Sie sie einschalten): Latenz, Jitter und Paketverlust zum Router alle 30 Sekunden, im Verlauf gespeichert – so lässt sich eine wackelige von einer langsamen Verbindung unterscheiden.
 - **Bildschirme**: Bildrate, Auflösung, HDR und ProMotion pro Bildschirm, mit Warnung, wenn ein Kabel oder Dock einen Monitor unter seiner möglichen Bildrate hält.
 - **Alle Sensoren**: mehrere hundert Temperaturen, Spannungen, Ströme und Leistungswerte, dazu die Lüfter.
@@ -62,7 +63,7 @@ Voraussetzung ist ein Mac mit Apple silicon und macOS 15 Sequoia oder neuer. Ent
 ![Festplatte](docs/screenshots/metric-disk.jpg)
 
 ### Eine Menüleiste, wie Sie sie wollen
-Beliebig viele Menüleisten-Einträge. Jeder zeigt eine Sache (CPU, Speicher, GPU, Festplatte, Netzwerk, Temperatur, Lüfter, Akku, Leistung oder eine Uhr mit Zeitzonen) in einem von elf Stilen: Wert, Beschriftung und Wert, Liniendiagramm, Balkendiagramm, Balken pro Kern, Ring, Tacho, Punkt, Up/Down-Geschwindigkeit, Akku oder Symbol. Farben passen sich der Menüleiste an, gehen mit der Last von Grün nach Rot oder folgen einer selbst gewählten Farbe. Ein Eintrag kann sich ausblenden, bis sein Wert hoch ist, und ein Akku-Eintrag kann statt der Prozent die Ladeleistung in Watt zeigen. Lädt der Mac, erscheint ein Blitz im Akku-Symbol; ein Stecker zeigt, dass er am Netzteil hängt, ohne zu laden. Ein Rechtsklick auf einen Eintrag schaltet Module ein und aus, wählt eine Voreinstellung (minimal, ausgewogen, alles) oder setzt Symbole vor die Werte; ein Klick öffnet ein kompaktes Panel auf dem passenden Reiter. Passen die Einträge nicht neben die Notch, werden sie zu einem zusammengefasst (oder immer, wenn Sie das möchten); ein Klick auf einen Wert öffnet weiterhin seinen Reiter.
+Beliebig viele Menüleisten-Einträge. Jeder zeigt eine Sache (CPU, Speicher, GPU, Festplatte, Netzwerk, Temperatur, Lüfter, Akku, Leistung oder eine Uhr mit Zeitzonen) in einem von elf Stilen: Wert, Beschriftung und Wert, Liniendiagramm, Balkendiagramm, Balken pro Kern, Ring, Tacho, Punkt, Up/Down-Geschwindigkeit, Akku oder Symbol. Farben passen sich der Menüleiste an, gehen mit der Last von Grün nach Rot oder folgen einer selbst gewählten Farbe. Ein Eintrag kann sich ausblenden, bis sein Wert hoch ist, und ein Akku-Eintrag kann statt der Prozent die Ladeleistung in Watt zeigen. Lädt der Mac, erscheint ein Blitz im Akku-Symbol; ein Stecker zeigt, dass er am Netzteil hängt, ohne zu laden. Ein Rechtsklick auf einen Eintrag schaltet Module ein und aus, wählt eine Voreinstellung (minimal, ausgewogen, alles) oder setzt Symbole vor die Werte; ein Klick öffnet ein kompaktes Panel auf dem passenden Reiter. Passen die Einträge nicht neben die Notch, werden sie zu einem zusammengefasst (oder immer, wenn Sie das möchten); ein Klick auf einen Wert öffnet weiterhin seinen Reiter. **Die Notch selbst** zeigt Live-Werte, wenn der Zeiger auf ihr ruht, und kurze Hinweise klappen herunter, wenn der Speicher knapp wird, der Mac heiß wird, eine App hängt oder das Netzteil angesteckt wird.
 
 <p align="center"><img src="docs/media/menubar.gif" alt="Menüleisten-Einträge erscheinen nacheinander" width="720"></p>
 
@@ -75,12 +76,23 @@ Beliebig viele Menüleisten-Einträge. Jeder zeigt eine Sache (CPU, Speicher, GP
 
 Alles, was spürbar CPU kostet, hat einen eigenen Schalter unter **Einstellungen → Leistung**; nur mit der Menüleiste braucht Activity+ etwa 1,4 % eines Kerns.
 
-Auch der Rest lässt sich einstellen: welche Seiten die Seitenleiste zeigt, welche Übersichtskarten in welcher Reihenfolge erscheinen, die Akzentfarbe, °C oder °F, Bytes oder Bits für Netzwerk-Geschwindigkeiten, das Aktualisierungsintervall und die Reiter des Menüleisten-Panels.
+Auch der Rest lässt sich einstellen: Textgröße und Dichte des Fensters, die Seite beim Öffnen, wie viele Minuten die Diagramme zeigen, welche Seiten die Seitenleiste zeigt, welche Übersichtskarten in welcher Reihenfolge erscheinen, die Akzentfarbe, °C oder °F, Bytes oder Bits für Netzwerk-Geschwindigkeiten, das Aktualisierungsintervall und die Reiter des Menüleisten-Panels.
 
 ### Warum ist mein Mac langsam?
-Ein Klick liefert eine Antwort in klaren Worten: zu wenig Speicher, eine App unter Volllast, Drosselung wegen Hitze, fast volle Festplatte, Spotlight-Indizierung, untätige Dev-Server, lange Laufzeit mit viel Swap, verschlissener Akku, ein USB-Laufwerk mit USB-2-Tempo. Jeder Befund zeigt seine Belege und bietet die passende Abhilfe an.
+Ein Klick liefert eine Antwort in klaren Worten: zu wenig Speicher, eine App unter Volllast, Drosselung wegen Hitze, fast volle Festplatte, Spotlight-Indizierung, untätige Dev-Server, lange Laufzeit mit viel Swap, verschlissener Akku, ein USB-Laufwerk mit USB-2-Tempo, eine App, die immer wieder abstürzt. Jeder Befund zeigt seine Belege und bietet die passende Abhilfe an. Die Seite zählt außerdem Abstürze pro App (mit dem Grund in klaren Worten), zeigt die Spotlight-Indizierung, solange sie läuft, und nennt die Apps, die vor dem Hochdrehen der Lüfter am meisten zu tun hatten.
 
 ![Diagnose](docs/screenshots/diagnosis.jpg)
+
+### Wo ist mein Speicherplatz hin?
+- **Entdecken**: Ihr Home-Ordner (oder ein anderes Laufwerk oder das ganze Startvolume) wird einmal zu einer Karte gelesen: die größten Ordner als Liste und Kachelkarte, eine Aufteilung nach Dateiart, ein Klick führt hinein. Die Karte bleibt gespeichert und öffnet sofort, und Activity+ zeigt, **was seit dem letzten Scan gewachsen ist**.
+- **Systemdaten erklärt**: der graue Balken in Einstellungen → Speicher, aufgeteilt in Entwicklerdaten, Caches, Protokolle und das, was macOS selbst verwaltet – jeweils mit Begründung und Hinweis, wie vorsichtig man sein sollte.
+- **Aufräumen**: eine angehakte Liste von allem, was in den Papierkorb darf, jeweils mit Grund. Caches geöffneter Apps bleiben gesperrt.
+- **Größte**: die Karte beim Tippen durchsuchen, mit Filtern wie `ext:dmg size:>1gb opened:>1y`.
+- **Duplikate**: Dateien, die mehrfach vorhanden sind, nach Inhalt verglichen; eine Kopie bleibt immer.
+- **Platz, den der Finder nicht zeigt**: löschbarer Speicher und APFS-Snapshots (lokale Time-Machine-Backups, ein vorbereitetes macOS-Update), erklärt, mit der Einstellung, die sich darum kümmert.
+- **Speicherplatz pro App**, inklusive allem, was die App in der Library ablegt, und **Deinstallieren** samt Resten (gemeinsame Daten anderer Apps bleiben).
+
+Alles wandert nach Ihrer Bestätigung in den Papierkorb; gelöscht wird nichts.
 
 ### Verlauf, Warnungen und Auffälligkeiten
 - **30 Tage Verlauf** in einer kleinen SQLite-Datei: Diagramme von 12 Stunden bis 30 Tage, welche Apps am meisten verbraucht haben, heute und diese Woche geschriebene und geladene Daten. Auf einen Ausschlag zeigen verrät die Prozesse dahinter: aus „Terminal“ wird `node vite` (Befehlszeilen werden gekürzt, alles, was nach Token oder Passwort aussieht, wird geschwärzt).
@@ -94,14 +106,11 @@ Ein Klick liefert eine Antwort in klaren Worten: zu wenig Speicher, eine App unt
 ### Dinge erledigen lassen
 - **Automationen**: „Dev-Server stoppen, die seit einem Tag nichts tun“, „App beenden, wenn sie mehr als 4 GB braucht“. Jede Regel fragt zuerst per Mitteilung mit Knopf nach – außer Sie erlauben ausdrücklich, dass sie selbstständig handelt.
 - **Dev-Server nach Projekt**, mit Ports und Angabe, ob sie arbeiten, ruhen oder kaum genutzt werden. Einen vergessenen Server mit einem bestätigten Klick stoppen.
-- **Startobjekte** nach App gruppiert, mit Schaltern für die Einträge im eigenen Benutzerkonto.
-- **Speicherplatz pro App**, inklusive allem, was die App in der Library ablegt, dazu Entwickler-Caches. Caches und Logs lassen sich in den Papierkorb legen. **Deinstallieren** samt Resten (gemeinsame Daten anderer Apps bleiben).
-- **Platz, den der Finder nicht zeigt**: löschbarer Speicher und APFS-Snapshots (lokale Time-Machine-Backups, ein vorbereitetes macOS-Update), erklärt, mit der Einstellung, die sich darum kümmert.
-- **Große und alte Dateien**: benutzte Installer, nie wieder geöffnete Downloads, Riesendateien. Ausgewählt wird nur, was Sie wählen.
+- **Startobjekte** nach App gruppiert, mit Schaltern für die Einträge im eigenen Benutzerkonto. Reste gelöschter Apps sind markiert.
 - **Festplatten-Speedtest**: sequenzielle Schreib- und Leserate der SSD.
 - **Panel-Editor**: Kacheln des Menüleisten-Panels auswählen und sortieren, Anzahl der aktivsten Apps, Theme.
 - **Menüleiste, Dock oder beides** und **Einstellungen exportieren und importieren** für einen anderen Mac.
-- **Lautstärke pro App** (Beta), Beenden und sofort Beenden aus jeder Liste sowie eine Share-Card (1200 × 630) mit dem Zustand des Macs.
+- **Lautstärke pro App** (Beta), Beenden, sofort Beenden, Anhalten und Fortsetzen aus jeder Liste sowie eine Share-Card (1200 × 630) mit dem Zustand des Macs.
 
 Alles, was einen Prozess beendet, einen Server stoppt, ein Startobjekt ändert oder Dateien verschiebt, fragt vorher nach.
 
