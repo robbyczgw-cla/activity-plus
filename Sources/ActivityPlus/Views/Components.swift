@@ -111,12 +111,15 @@ struct CardHeader: View {
     let systemImage: String
     var tint: Color = .secondary
     var trailing: String?
+    /// Longer explanation behind an ⓘ; defaults to the entry for this title in `CardInfo`.
+    var info: String?
 
     var body: some View {
-        HStack {
+        HStack(spacing: 6) {
             Label(LocalizedStringKey(title), systemImage: systemImage)
                 .appFont(.headline)
                 .foregroundStyle(tint)
+            if let text = info ?? CardInfo.text(for: title) { InfoButton(text: text).appFont(.callout) }
             Spacer()
             if let trailing {
                 Text(LocalizedStringKey(trailing)).appFont(.caption).foregroundStyle(.secondary)
