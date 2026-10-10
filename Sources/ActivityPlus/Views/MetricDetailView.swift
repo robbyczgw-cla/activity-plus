@@ -144,6 +144,7 @@ struct MetricDetailView: View {
                 }
             }
             ConnectionQualityCard()
+            NetworkQualityCard()
         case .energy:
             Card {
                 CardHeader(title: "Energy", systemImage: "bolt", tint: metric.tint)

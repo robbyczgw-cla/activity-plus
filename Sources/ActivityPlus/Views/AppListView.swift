@@ -164,12 +164,16 @@ private struct ProcessRow: View {
     let scale: Double
     let onQuit: (Bool) -> Void
     @State private var inspecting = false
+    @State private var confirmPause = false
 
     var body: some View {
         HStack(spacing: 10) {
             Spacer().frame(width: 46)
             VStack(alignment: .leading, spacing: 1) {
-                Text(process.name).lineLimit(1).truncationMode(.middle)
+                HStack(spacing: 6) {
+                    Text(process.name).lineLimit(1).truncationMode(.middle)
+                    if process.isPaused { PausedTag() }
+                }
                 Text("pid \(process.pid)" + (process.hasDetails ? "" : String(localized: " · limited details")))
                     .font(.caption2).foregroundStyle(.tertiary)
             }
@@ -187,9 +191,20 @@ private struct ProcessRow: View {
         .contentShape(Rectangle())
         .onTapGesture(count: 2) { inspecting = true }
         .sheet(isPresented: $inspecting) { ProcessInspectorView(pid: process.pid, name: process.name) }
+        .confirmationDialog("Pause \(process.name)?", isPresented: $confirmPause, titleVisibility: .visible) {
+            Button("Pause") { pause() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("It stops running until you resume it or it quits. Paused apps don't respond.")
+        }
         .contextMenu {
             Button("Inspect…") { inspecting = true }
             Divider()
+            if process.isPaused {
+                Button("Resume \(process.name)") { ProcessPause.resume(process) }
+            } else if ProcessPause.block(process) == nil {
+                Button("Pause \(process.name)…") { confirmPause = true }
+            }
             Button("Quit Process…") { onQuit(false) }
             Button("Force Quit Process…") { onQuit(true) }
             if let path = process.path {
@@ -201,5 +216,11 @@ private struct ProcessRow: View {
                 }
             }
         }
+    }
+
+    private func pause() {
+        guard !ProcessPause.pause(process) else { return }
+        _ = Confirm.ask("Could not pause \(process.name)", "macOS did not allow Activity+ to pause it (pid \(process.pid)).",
+                        button: "OK", cancel: false)
     }
 }

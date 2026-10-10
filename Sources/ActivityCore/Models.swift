@@ -24,6 +24,8 @@ public struct ProcessSample: Sendable, Identifiable, Hashable {
     public var cpuTime: Double = 0
     /// False when the kernel refused detailed stats (root/system processes without a helper).
     public var hasDetails: Bool = true
+    /// Stopped with SIGSTOP (Activity+ pause, or another tool); from the kernel's process status.
+    public var isPaused: Bool = false
     /// Memory the process holds for the Neural Engine (Core ML, local models), in bytes.
     public var neuralMemory: UInt64 = 0
     /// CPU nanoseconds per second spent on performance cores (the rest ran on efficiency cores).
