@@ -10,8 +10,8 @@ struct CrashReportTests {
     """
 
     static let abort = """
-    {"app_name":"donsetch","timestamp":"2026-10-08 13:18:18.00 +0200","bundleID":"","bug_type":"309","name":"donsetch"}
-    {"procName":"donsetch","exception":{"type":"EXC_CRASH","signal":"SIGABRT"},"termination":{"flags":0,"code":6,"namespace":"SIGNAL","indicator":"Abort trap: 6"}}
+    {"app_name":"ExampleTool","timestamp":"2026-10-08 13:18:18.00 +0200","bundleID":"","bug_type":"309","name":"ExampleTool"}
+    {"procName":"ExampleTool","exception":{"type":"EXC_CRASH","signal":"SIGABRT"},"termination":{"flags":0,"code":6,"namespace":"SIGNAL","indicator":"Abort trap: 6"}}
     """
 
     static let legacy = """
@@ -41,7 +41,7 @@ struct CrashReportTests {
     }
 
     @Test func emptyBundleIDBecomesNilAndAbortIsExplained() throws {
-        let report = try #require(CrashReportParser.parse(path: "/x/donsetch-2026-10-08-131819.ips", text: Self.abort, modified: Date()))
+        let report = try #require(CrashReportParser.parse(path: "/x/ExampleTool-2026-10-08-131819.ips", text: Self.abort, modified: Date()))
         #expect(report.bundleID == nil)
         #expect(report.reason.hasPrefix("SIGABRT"))
     }

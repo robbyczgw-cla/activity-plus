@@ -11,7 +11,7 @@ struct SpotlightTests {
     \tIndexing enabled.
     /System/Volumes/Preboot:
     \tIndexing enabled.
-    /Users/robby/Library/Developer/CoreDevice/DeviceFS:
+    /Users/alex/Library/Developer/CoreDevice/DeviceFS:
     \tIndexing and searching disabled.
     /Volumes/Transcend:
     \tIndexing enabled.
