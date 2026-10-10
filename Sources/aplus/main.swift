@@ -49,6 +49,35 @@ if arguments.contains("--bench") {
     for (name, ms) in sampler.benchmark() { print(name.padding(toLength: 20, withPad: " ", startingAt: 0), String(format: "%7.1f ms", ms)) }
     exit(0)
 }
+if arguments.contains("--diskmap") {
+    // `aplus --diskmap <folder>`: builds the Explore size map of a folder, prints timing, the biggest folders and kinds.
+    let all = CommandLine.arguments
+    let path = all.firstIndex(of: "--diskmap").flatMap { all.index(after: $0) < all.count ? all[all.index(after: $0)] : nil } ?? FileManager.default.currentDirectoryPath
+    let start = Date()
+    let index = DiskIndex.build(root: URL(fileURLWithPath: path, isDirectory: true))
+    let built = Date().timeIntervalSince(start)
+    let rootNode = index.node(index.rootID)!
+    print(String(format: "%@: %@ in %d files, %d entries, built in %.2f s", path, Format.storage(rootNode.bytes), rootNode.fileCount, index.nodeCount, built))
+    let cache = FileManager.default.temporaryDirectory.appendingPathComponent("aplus-diskmap-\(getpid()).bin")
+    var mark = Date()
+    try? index.save(to: cache)
+    let saved = Date().timeIntervalSince(mark)
+    mark = Date()
+    let loaded = DiskIndex.load(from: cache)
+    let size = (try? FileManager.default.attributesOfItem(atPath: cache.path)[.size] as? Int) ?? 0
+    print(String(format: "cache %@: save %.3f s, load %.3f s (%@)", Format.storage(UInt64(size)), saved, Date().timeIntervalSince(mark), loaded == nil ? "FAILED" : "ok"))
+    try? FileManager.default.removeItem(at: cache)
+    for child in index.children(of: index.rootID).prefix(15) {
+        print(Format.storage(child.bytes).padding(toLength: 10, withPad: " ", startingAt: 0), String(child.fileCount).padding(toLength: 8, withPad: " ", startingAt: 0), child.kind.rawValue.padding(toLength: 10, withPad: " ", startingAt: 0), child.name)
+    }
+    mark = Date()
+    let kinds = index.kindTotals(under: index.rootID).sorted { $0.value > $1.value }
+    print(String(format: "kinds (%.3f s):", Date().timeIntervalSince(mark)), kinds.map { "\($0.key.rawValue) \(Format.storage($0.value))" }.joined(separator: ", "))
+    mark = Date()
+    let biggest = index.files(matching: FileQuery(), limit: 5)
+    print(String(format: "biggest files (%.3f s):", Date().timeIntervalSince(mark)), biggest.map { "\($0.name) \(Format.storage($0.bytes))" }.joined(separator: ", "))
+    exit(0)
+}
 _ = sampler.sample()                 // First sample only primes the counters.
 Thread.sleep(forTimeInterval: 2)
 let snapshot = sampler.sample()
