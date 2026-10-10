@@ -178,4 +178,18 @@ struct CleanupPlanTests {
         #expect(outcome.movedIDs.isEmpty)
         #expect(outcome.failures.count == 1)
     }
+
+    @Test func duplicateKeepsOwnerOfDroppedEntry() {
+        let url = URL(fileURLWithPath: "/Users/x/Library/Caches/Arc")
+        let system = CleanupEntry(item: ReclaimableItem(id: "sd:cache:Arc", title: "Arc", location: "~/Library/Caches/Arc", urls: [url],
+                                                        bytes: 100, safety: .safeToClear, reason: "r"), section: .caches)
+        let app = CleanupEntry(item: ReclaimableItem(id: "app:arc", title: "Arc · Cache", location: "~/Library/Caches/Arc", urls: [url],
+                                                     bytes: 100, safety: .safeToClear, reason: "r", bundleID: "company.thebrowser.Browser"),
+                               section: .appCaches, ownerName: "Arc")
+        let merged = CleanupPlan.merge([system, app])
+        #expect(merged.count == 1)
+        #expect(merged[0].item.bundleID == "company.thebrowser.Browser")
+        #expect(merged[0].ownerName == "Arc")
+        #expect(CleanupPlan.isBlocked(merged[0], running: ["company.thebrowser.Browser"]))
+    }
 }

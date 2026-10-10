@@ -219,7 +219,25 @@ public enum CleanupPlan {
             }
         }
 
-        let kept = entries.indices.filter { !covered($0) }.map { entries[$0] }
+        // A dropped duplicate may know the owning app (the app scan does, System Data often doesn't): keep that
+        // knowledge, or a cache of a running app would be offered for the Trash.
+        func owner(for index: Int) -> (bundleID: String, name: String?)? {
+            for (other, list) in paths.enumerated() where other != index {
+                guard let id = entries[other].item.bundleID, !id.isEmpty else { continue }
+                let inside = list.contains { path in paths[index].contains { path == $0 || path.hasPrefix($0 + "/") } }
+                if inside { return (id, entries[other].ownerName) }
+            }
+            return nil
+        }
+
+        let kept = entries.indices.filter { !covered($0) }.map { index -> CleanupEntry in
+            let entry = entries[index]
+            guard entry.item.bundleID?.isEmpty ?? true, let found = owner(for: index) else { return entry }
+            let item = entry.item
+            return CleanupEntry(item: ReclaimableItem(id: item.id, title: item.title, location: item.location, urls: item.urls,
+                                                      bytes: item.bytes, safety: item.safety, reason: item.reason, bundleID: found.bundleID),
+                                section: entry.section, ownerName: entry.ownerName ?? found.name)
+        }
         return kept.sorted { lhs, rhs in
             if lhs.section != rhs.section { return lhs.section < rhs.section }
             if lhs.item.bytes != rhs.item.bytes { return lhs.item.bytes > rhs.item.bytes }
