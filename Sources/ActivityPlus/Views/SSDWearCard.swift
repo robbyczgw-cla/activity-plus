@@ -23,16 +23,16 @@ struct SSDWearCard: View {
                     StatLine(label: "At this pace", value: years(projection.yearsLeft))
                     let written = String(format: "%.0f", locale: .current, health.dataWrittenTB ?? 0)
                     Text("The drive says \(health.percentageUsed ?? 0) % of its rated endurance is used after \(written) TB written. Reaching 100 % does not mean it fails that day; it is the point the maker rates it for.")
-                        .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        .appFont(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 } else if health.percentageUsed == 0 {
                     Text("The drive reports less than 1 % of its rated endurance used, too little to project from.")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .appFont(.caption).foregroundStyle(.secondary)
                 }
             }
             Divider()
             if writers.isEmpty {
                 Text("Per-app writes are counted from version 0.3 on. The list fills up while Activity+ runs.")
-                    .font(.callout).foregroundStyle(.secondary)
+                    .appFont(.callout).foregroundStyle(.secondary)
             } else {
                 let top = writers.first?.bytes ?? 1
                 ForEach(writers) { app in
@@ -45,12 +45,12 @@ struct SSDWearCard: View {
                         Text(app.name).lineLimit(1)
                         Spacer()
                         UsageBar(fraction: app.bytes / max(top, 1), tint: .brown).frame(width: 120)
-                        Text(Format.storage(UInt64(app.bytes))).monospacedDigit().frame(width: 80, alignment: .trailing)
+                        Text(Format.storage(UInt64(app.bytes))).monospacedDigit().textColumn(width: 80, alignment: .trailing)
                     }
-                    .font(.callout)
+                    .appFont(.callout)
                 }
                 if let countingSince, Date().timeIntervalSince(countingSince) < 29 * 86_400 {
-                    Text("Counted since \(countingSince.formatted(date: .abbreviated, time: .shortened)).").font(.caption).foregroundStyle(.tertiary)
+                    Text("Counted since \(countingSince.formatted(date: .abbreviated, time: .shortened)).").appFont(.caption).foregroundStyle(.tertiary)
                 }
             }
         }

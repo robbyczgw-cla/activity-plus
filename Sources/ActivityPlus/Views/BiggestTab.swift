@@ -6,6 +6,7 @@ import SwiftUI
 /// (`ext:dmg size:>300mb age:>90d invoice`). Searches the map built in Explore; nothing here deletes
 /// anything permanently, items go to the Trash after a confirmation.
 struct BiggestTab: View {
+    @Environment(\.density) private var density
     @Environment(AppServices.self) private var services
 
     /// One result row, decoupled from the index so it stays cheap to diff and easy to fake in previews.
@@ -46,7 +47,7 @@ struct BiggestTab: View {
     private var selectedBytes: UInt64 { selectedRows.reduce(0) { $0 + $1.bytes } }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: density.stack) {
             if hasIndex {
                 searchCard
                 resultsCard
@@ -74,12 +75,12 @@ struct BiggestTab: View {
                     ProgressView(value: fraction)
                     Button("Stop") { model.cancel() }
                 }
-                Text(item).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                Text(item).appFont(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
             } else {
                 Text("This tab searches the map of your home folder that Explore builds. Scan once and every search after that is instant.")
-                    .font(.callout).foregroundStyle(.secondary)
+                    .appFont(.callout).foregroundStyle(.secondary)
                 if case .failed(let reason) = model.state {
-                    Text(reason).font(.callout).foregroundStyle(.red)
+                    Text(reason).appFont(.callout).foregroundStyle(.red)
                 }
                 Button("Scan home folder") { model.scan() }
                     .buttonStyle(.borderedProminent)
@@ -95,7 +96,7 @@ struct BiggestTab: View {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                 TextField("Search by name, kind, size or age", text: $text)
                     .textFieldStyle(.plain)
-                    .font(.body)
+                    .appFont(.body)
                     .autocorrectionDisabled()
                 if !text.isEmpty {
                     Button { text = "" } label: { Image(systemName: "xmark.circle.fill") }
@@ -116,7 +117,7 @@ struct BiggestTab: View {
                     ForEach(Array(Self.chips.enumerated()), id: \.offset) { _, chip in
                         let active = text == chip.query
                         Button { text = active ? "" : chip.query } label: {
-                            Text(chip.title).font(.callout)
+                            Text(chip.title).appFont(.callout)
                                 .padding(.horizontal, 10).padding(.vertical, 4)
                                 .background(active ? Color.accentColor.opacity(0.18) : Color.primary.opacity(0.06), in: Capsule())
                                 .overlay(Capsule().strokeBorder(active ? Color.accentColor.opacity(0.6) : .clear))
@@ -130,7 +131,7 @@ struct BiggestTab: View {
 
     private var helpView: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Search syntax").font(.headline)
+            Text("Search syntax").appFont(.headline)
             Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 5) {
                 helpRow("invoice", "Words in the name; all must match")
                 helpRow("-draft", "Leave out names containing a word")
@@ -142,7 +143,7 @@ struct BiggestTab: View {
                 helpRow("opened:>180d", "Not opened for 180 days")
             }
             Text("Combine as you like: ext:mov size:>1gb age:>1y")
-                .font(.caption).foregroundStyle(.secondary)
+                .appFont(.caption).foregroundStyle(.secondary)
         }
         .padding(14)
         .frame(width: 400)
@@ -150,8 +151,8 @@ struct BiggestTab: View {
 
     private func helpRow(_ syntax: String, _ meaning: LocalizedStringKey) -> some View {
         GridRow {
-            Text(syntax).font(.system(.callout, design: .monospaced))
-            Text(meaning).font(.callout).foregroundStyle(.secondary)
+            Text(syntax).appFont(.callout, design: .monospaced)
+            Text(meaning).appFont(.callout).foregroundStyle(.secondary)
         }
     }
 
@@ -161,9 +162,9 @@ struct BiggestTab: View {
         Card {
             HStack {
                 Text(text.trimmingCharacters(in: .whitespaces).isEmpty ? "Largest files" : "Matches")
-                    .font(.headline)
+                    .appFont(.headline)
                 Spacer()
-                Text(summary).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                Text(summary).appFont(.caption).foregroundStyle(.secondary).monospacedDigit()
             }
             if rows.isEmpty {
                 Text(searching ? "Searching…" : "No files match.")
@@ -196,12 +197,12 @@ struct BiggestTab: View {
                 .resizable().frame(width: 28, height: 28)
             VStack(alignment: .leading, spacing: 2) {
                 Text(row.name).lineLimit(1).truncationMode(.middle)
-                Text(row.folder).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.head)
+                Text(row.folder).appFont(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.head)
             }
             Spacer(minLength: 8)
             VStack(alignment: .leading, spacing: 2) {
-                Text(Self.kindTitle(row.kind)).font(.caption)
-                Text(dateText(row)).font(.caption).foregroundStyle(.secondary)
+                Text(Self.kindTitle(row.kind)).appFont(.caption)
+                Text(dateText(row)).appFont(.caption).foregroundStyle(.secondary)
             }
             .frame(width: 150, alignment: .leading)
             VStack(alignment: .trailing, spacing: 4) {
@@ -235,9 +236,9 @@ struct BiggestTab: View {
             if !rows.isEmpty {
                 HStack {
                     if selected.isEmpty {
-                        Text("Select files to move them to the Trash.").font(.callout).foregroundStyle(.secondary)
+                        Text("Select files to move them to the Trash.").appFont(.callout).foregroundStyle(.secondary)
                     } else {
-                        Text("\(selected.count) selected · \(Format.storage(selectedBytes))").font(.callout)
+                        Text("\(selected.count) selected · \(Format.storage(selectedBytes))").appFont(.callout)
                     }
                     Spacer()
                     if !selected.isEmpty {
@@ -248,8 +249,8 @@ struct BiggestTab: View {
                         .disabled(selected.isEmpty)
                 }
             }
-            if let message { Text(message).font(.callout).foregroundStyle(.green) }
-            ForEach(failures, id: \.self) { Text($0).font(.caption).foregroundStyle(.red) }
+            if let message { Text(message).appFont(.callout).foregroundStyle(.green) }
+            ForEach(failures, id: \.self) { Text($0).appFont(.caption).foregroundStyle(.red) }
         }
         .padding(.top, 4)
     }

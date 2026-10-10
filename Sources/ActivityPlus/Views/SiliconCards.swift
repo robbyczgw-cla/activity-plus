@@ -13,7 +13,7 @@ struct CoreTypeCard: View {
         Card {
             CardHeader(title: "Performance and efficiency cores", systemImage: "cpu.fill", tint: .blue)
             Text("Performance cores are fast and draw more power; efficiency cores are slower and frugal. IPC is how many instructions an app gets through per clock cycle.")
-                .font(.caption).foregroundStyle(.secondary)
+                .appFont(.caption).foregroundStyle(.secondary)
             if busy.isEmpty {
                 Text("No app is busy right now.").foregroundStyle(.secondary)
             }
@@ -21,7 +21,7 @@ struct CoreTypeCard: View {
                 let share = app.pCoreShare ?? 0
                 HStack(spacing: 10) {
                     Image(nsImage: IconCache.icon(for: app)).resizable().frame(width: 18, height: 18)
-                    Text(app.name).lineLimit(1).frame(width: 170, alignment: .leading)
+                    Text(app.name).lineLimit(1).textColumn(width: 170, alignment: .leading)
                     GeometryReader { geo in
                         HStack(spacing: 0) {
                             Rectangle().fill(Color.blue).frame(width: geo.size.width * share)
@@ -30,11 +30,11 @@ struct CoreTypeCard: View {
                         .clipShape(RoundedRectangle(cornerRadius: 3))
                     }
                     .frame(height: 8)
-                    Text("P \(Int((share * 100).rounded())) %").monospacedDigit().frame(width: 56, alignment: .trailing)
+                    Text("P \(Int((share * 100).rounded())) %").monospacedDigit().textColumn(width: 56, alignment: .trailing)
                     Text(app.ipc.map { String(format: String(localized: "IPC %.2f"), $0) } ?? "–").monospacedDigit().foregroundStyle(.secondary)
-                        .frame(width: 70, alignment: .trailing)
+                        .textColumn(width: 70, alignment: .trailing)
                 }
-                .font(.callout)
+                .appFont(.callout)
                 .help(String(localized: "\(Format.percent(app.cpuPercent)) CPU · \(Int((share * 100).rounded())) % on performance cores"))
             }
             HStack(spacing: 14) {
@@ -43,7 +43,7 @@ struct CoreTypeCard: View {
                 Spacer()
                 Text("Only your own processes; system processes need the helper.").foregroundStyle(.tertiary)
             }
-            .font(.caption2)
+            .appFont(.caption2)
         }
     }
 }
@@ -67,7 +67,7 @@ struct NeuralEngineCard: View {
             }
             if users.isEmpty {
                 Text("No app holds Neural Engine memory right now. Apps that run Core ML or local models show up here.")
-                    .font(.callout).foregroundStyle(.secondary)
+                    .appFont(.callout).foregroundStyle(.secondary)
             }
             ForEach(users.prefix(8)) { app in
                 HStack(spacing: 10) {
@@ -76,7 +76,7 @@ struct NeuralEngineCard: View {
                     Spacer()
                     Text(Format.memory(app.neuralMemory)).monospacedDigit().foregroundStyle(.secondary)
                 }
-                .font(.callout)
+                .appFont(.callout)
             }
         }
     }

@@ -3,6 +3,7 @@ import SwiftUI
 
 /// What keeps the Mac awake, what woke it up, and which apps drained the battery while unplugged.
 struct SleepView: View {
+    @Environment(\.density) private var density
     @Environment(AppServices.self) private var services
     @State private var blockers: [SleepBlocker] = []
     @State private var events: [PowerEvent] = []
@@ -13,7 +14,7 @@ struct SleepView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: density.stack) {
                 Card {
                     CardHeader(title: "Keeping your Mac awake right now", systemImage: "cup.and.saucer", tint: .orange)
                     if blockers.isEmpty && !loading {
@@ -24,13 +25,13 @@ struct SleepView: View {
                             Image(systemName: blocker.preventsDisplaySleep ? "display" : "moon.zzz").frame(width: 20).foregroundStyle(.orange)
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(blocker.processName).fontWeight(.medium)
-                                Text(blocker.reason).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                                Text(blocker.reason).appFont(.caption).foregroundStyle(.secondary).lineLimit(1)
                             }
                             Spacer()
                             Text(blocker.preventsDisplaySleep ? "Keeps the display on" : "Prevents sleep")
-                                .font(.caption).foregroundStyle(.secondary)
+                                .appFont(.caption).foregroundStyle(.secondary)
                             if let since = blocker.since {
-                                Text("since \(since.formatted(date: .omitted, time: .shortened))").font(.caption).foregroundStyle(.tertiary)
+                                Text("since \(since.formatted(date: .omitted, time: .shortened))").appFont(.caption).foregroundStyle(.tertiary)
                             }
                         }
                     }
@@ -60,16 +61,16 @@ struct SleepView: View {
                             figure(String(localized: "Per hour"), Format.percent(drain.percentUsed / max(drain.hoursOnBattery, 0.1), decimals: 1))
                             if drain.energyWh > 0 { figure("Energy", String(format: String(localized: "%.0f Wh"), drain.energyWh)) }
                         }
-                        Text("Apps that used the most energy on battery").font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.top, 6)
+                        Text("Apps that used the most energy on battery").appFont(.caption, weight: .semibold).foregroundStyle(.secondary).padding(.top, 6)
                         let total = max(drainApps.reduce(0) { $0 + $1.energyWh }, 0.001)
                         ForEach(drainApps.prefix(8)) { app in
                             HStack {
                                 Text(app.name).lineLimit(1)
                                 Spacer()
                                 UsageBar(fraction: app.energyWh / total, tint: .green).frame(width: 120)
-                                Text(String(format: String(localized: "%.1f Wh"), app.energyWh)).monospacedDigit().frame(width: 70, alignment: .trailing)
+                                Text(String(format: String(localized: "%.1f Wh"), app.energyWh)).monospacedDigit().textColumn(width: 70, alignment: .trailing)
                             }
-                            .font(.callout)
+                            .appFont(.callout)
                         }
                     }
                 }
@@ -81,10 +82,10 @@ struct SleepView: View {
                     if !wakes.isEmpty {
                         let reasons = Dictionary(grouping: wakes) { SleepAnalyzer.explain($0.reason) }
                             .map { ($0.key, $0.value.count) }.sorted { $0.1 > $1.1 }.prefix(5)
-                        Text("Most common reasons it woke up").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                        Text("Most common reasons it woke up").appFont(.caption, weight: .semibold).foregroundStyle(.secondary)
                         ForEach(Array(reasons), id: \.0) { reason, count in
                             HStack { Text(reason).lineLimit(1); Spacer(); Text("\(count)×").monospacedDigit().foregroundStyle(.secondary) }
-                                .font(.callout)
+                                .appFont(.callout)
                         }
                         Divider()
                     }
@@ -92,17 +93,17 @@ struct SleepView: View {
                         HStack(alignment: .top, spacing: 10) {
                             Image(systemName: event.kind == .sleep ? "moon.fill" : (event.kind == .darkWake ? "moon.haze" : "sun.max.fill"))
                                 .foregroundStyle(event.kind == .sleep ? .indigo : .orange).frame(width: 18)
-                            Text(event.date.formatted(date: .abbreviated, time: .shortened)).monospacedDigit().frame(width: 150, alignment: .leading)
-                            Text(event.kind == .sleep ? "Sleep" : (event.kind == .darkWake ? "Woke briefly (screen off)" : "Woke up")).frame(width: 170, alignment: .leading)
+                            Text(event.date.formatted(date: .abbreviated, time: .shortened)).monospacedDigit().textColumn(width: 150, alignment: .leading)
+                            Text(event.kind == .sleep ? "Sleep" : (event.kind == .darkWake ? "Woke briefly (screen off)" : "Woke up")).textColumn(width: 170, alignment: .leading)
                             Text(SleepAnalyzer.explain(event.reason)).foregroundStyle(.secondary).lineLimit(2)
                             Spacer()
                             if let battery = event.batteryPercent { Text("\(battery) %").monospacedDigit().foregroundStyle(.tertiary) }
                         }
-                        .font(.callout)
+                        .appFont(.callout)
                     }
                 }
             }
-            .padding(20)
+            .padding(density.page)
         }
         .navigationTitle("Sleep & Battery Drain")
         .task(id: range) { await load() }
@@ -110,7 +111,7 @@ struct SleepView: View {
 
     private func figure(_ title: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(LocalizedStringKey(title)).font(.caption).foregroundStyle(.secondary)
+            Text(LocalizedStringKey(title)).appFont(.caption).foregroundStyle(.secondary)
             BigNumber(text: value, size: 22)
         }
     }

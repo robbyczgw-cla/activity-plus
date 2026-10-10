@@ -95,14 +95,14 @@ struct GPUCauseCard: View {
             let quiet = result.causes.filter { !$0.isMeasurable }.map(\.name)
             if !quiet.isEmpty {
                 Text("No measurable effect: \(quiet.joined(separator: ", ")).")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .appFont(.caption).foregroundStyle(.secondary)
             }
             if result.noise >= 3 {
                 Text("WindowServer's load wandered by about \(Format.percent(result.noise)) points on its own during the run, so smaller drops are not named.")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .appFont(.caption).foregroundStyle(.secondary)
             }
             HStack {
-                Text("Measured \(date.formatted(date: .omitted, time: .shortened))").font(.caption).foregroundStyle(.secondary)
+                Text("Measured \(date.formatted(date: .omitted, time: .shortened))").appFont(.caption).foregroundStyle(.secondary)
                 Spacer()
                 startButton(String(localized: "Measure Again"))
             }
@@ -119,7 +119,7 @@ struct GPUCauseCard: View {
                     Text(isRemainder ? Format.percent(drop) : "−\(Format.percent(drop))").monospacedDigit()
                 }
                 UsageBar(fraction: min(1, drop / scale), tint: isRemainder ? .gray : .purple)
-                Text(LocalizedStringKey(detail)).font(.caption).foregroundStyle(.secondary)
+                Text(LocalizedStringKey(detail)).appFont(.caption).foregroundStyle(.secondary)
             }
         }
     }

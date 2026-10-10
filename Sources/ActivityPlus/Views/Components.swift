@@ -11,12 +11,12 @@ struct BigNumber: View {
         let parts = Format.split(text)
         HStack(alignment: .firstTextBaseline, spacing: 3) {
             Text(parts.value)
-                .font(.system(size: size, weight: .semibold, design: .rounded))
+                .appFont(size: size, weight: .semibold, design: .rounded)
                 .monospacedDigit()
                 .contentTransition(.numericText())
             if !parts.unit.isEmpty {
                 Text(parts.unit)
-                    .font(.system(size: size * 0.5, weight: .medium, design: .rounded))
+                    .appFont(size: size * 0.5, weight: .medium, design: .rounded)
                     .foregroundStyle(.secondary)
             }
         }
@@ -89,16 +89,17 @@ struct StatLine: View {
             Spacer()
             Text(value).monospacedDigit().fontWeight(.medium)
         }
-        .font(.callout)
+        .appFont(.callout)
     }
 }
 
 struct Card<Content: View>: View {
+    @Environment(\.density) private var density
     @ViewBuilder var content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) { content }
-            .padding(16)
+        VStack(alignment: .leading, spacing: density.cardLines) { content }
+            .padding(density.card)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.background.secondary, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.separator.opacity(0.5)))
@@ -114,11 +115,11 @@ struct CardHeader: View {
     var body: some View {
         HStack {
             Label(LocalizedStringKey(title), systemImage: systemImage)
-                .font(.headline)
+                .appFont(.headline)
                 .foregroundStyle(tint)
             Spacer()
             if let trailing {
-                Text(LocalizedStringKey(trailing)).font(.caption).foregroundStyle(.secondary)
+                Text(LocalizedStringKey(trailing)).appFont(.caption).foregroundStyle(.secondary)
             }
         }
     }
@@ -149,6 +150,7 @@ struct LiveChart: View {
     var format: (Double) -> String
     var maxValue: Double?
     var interval: TimeInterval
+    @Environment(\.uiScale) private var scale
 
     var body: some View {
         Chart {
@@ -176,7 +178,7 @@ struct LiveChart: View {
         .chartYAxis {
             AxisMarks(position: .trailing, values: .automatic(desiredCount: 4)) { value in
                 AxisGridLine()
-                AxisValueLabel { if let v = value.as(Double.self) { Text(format(v)) } }
+                AxisValueLabel { if let v = value.as(Double.self) { axisText(Text(format(v))) } }
             }
         }
         .chartXAxis {
@@ -184,12 +186,17 @@ struct LiveChart: View {
                 AxisGridLine()
                 AxisValueLabel {
                     if let v = value.as(Double.self) {
-                        Text(v == 0 ? "now" : (abs(v) < 120 ? "\(Int(-v))s" : "\(Int(-v / 60))m"))
+                        axisText(Text(v == 0 ? "now" : (abs(v) < 120 ? "\(Int(-v))s" : "\(Int(-v / 60))m")))
                     }
                 }
             }
         }
         .chartLegend(lines.count > 1 ? .visible : .hidden)
         .chartForegroundStyleScale(domain: lines.map(\.name), range: lines.map(\.color))
+    }
+
+    /// Axis labels keep the Charts default at Standard and follow the text size otherwise.
+    private func axisText(_ text: Text) -> Text {
+        scale == 1 ? text : text.font(.system(size: AppFont.pointSize(.caption2) * scale))
     }
 }

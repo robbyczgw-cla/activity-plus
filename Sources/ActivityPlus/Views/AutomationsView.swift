@@ -2,6 +2,7 @@ import ActivityCore
 import SwiftUI
 
 struct AutomationsView: View {
+    @Environment(\.density) private var density
     @Environment(AppServices.self) private var services
     @Environment(Monitor.self) private var monitor
     @State private var editing: AutomationRule?
@@ -10,7 +11,7 @@ struct AutomationsView: View {
     var body: some View {
         @Bindable var services = services
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: density.stack) {
                 Text("Rules that act for you. Each rule either asks first with a notification button, or — only if you switch it to automatic — acts on its own.")
                     .foregroundStyle(.secondary)
 
@@ -21,7 +22,7 @@ struct AutomationsView: View {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(match.rule.summary).fontWeight(.medium)
-                                    Text(match.reason).font(.callout).foregroundStyle(.secondary)
+                                    Text(match.reason).appFont(.callout).foregroundStyle(.secondary)
                                 }
                                 Spacer()
                                 Button("Not now") { services.dismiss(match.id) }
@@ -33,7 +34,7 @@ struct AutomationsView: View {
 
                 Card {
                     HStack {
-                        Text("Rules").font(.headline)
+                        Text("Rules").appFont(.headline)
                         Spacer()
                         Menu("Add Rule") {
                             Button("Stop dev servers idle for a day") { add(.init(trigger: .devServerIdle(hours: 24), action: .stopDevServer)) }
@@ -72,12 +73,12 @@ struct AutomationsView: View {
                                 Text(entry.date, format: .dateTime.hour().minute()).monospacedDigit().foregroundStyle(.secondary)
                                 Text(entry.text)
                             }
-                            .font(.callout)
+                            .appFont(.callout)
                         }
                     }
                 }
             }
-            .padding(20)
+            .padding(density.page)
         }
         .navigationTitle("Automations")
         .confirmationDialog("Let this rule act without asking?", isPresented: Binding(get: { confirmAutomatic != nil }, set: { if !$0 { confirmAutomatic = nil } }), presenting: confirmAutomatic) { rule in
@@ -121,7 +122,7 @@ private struct RuleRow: View {
                         .labelsHidden().fixedSize()
                     }
                 }
-                .font(.callout)
+                .appFont(.callout)
             }
             Spacer()
             Button(role: .destructive, action: onDelete) { Image(systemName: "trash") }.buttonStyle(.borderless)

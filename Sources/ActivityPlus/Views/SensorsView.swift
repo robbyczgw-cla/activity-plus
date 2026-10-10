@@ -2,13 +2,14 @@ import ActivityCore
 import SwiftUI
 
 struct SensorsView: View {
+    @Environment(\.density) private var density
     @Environment(Monitor.self) private var monitor
 
     var body: some View {
         let sensors = monitor.snapshot.sensors
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 14)], spacing: 14) {
+            VStack(alignment: .leading, spacing: density.stack) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: density.grid)], spacing: density.grid) {
                     if let t = sensors.cpuTemperature { temperatureCard("CPU", t, "cpu") }
                     if let t = sensors.gpuTemperature { temperatureCard("GPU", t, "square.stack.3d.up") }
                     if let t = sensors.batteryTemperature { temperatureCard("Battery", t, "battery.75percent") }
@@ -16,7 +17,7 @@ struct SensorsView: View {
                         CardHeader(title: "Thermal state", systemImage: "thermometer.medium", tint: .orange)
                         BigNumber(text: monitor.snapshot.thermal.rawValue, size: 26)
                         Text(monitor.snapshot.thermal == .nominal ? "macOS is not slowing anything down." : "macOS is reducing performance to cool down.")
-                            .font(.caption).foregroundStyle(.secondary)
+                            .appFont(.caption).foregroundStyle(.secondary)
                     }
                 }
                 if monitor.history.cpuTemperature.values.count > 2 {
@@ -41,12 +42,12 @@ struct SensorsView: View {
                             if let max = fan.maxRPM, max > 0 {
                                 UsageBar(fraction: (fan.rpm - (fan.minRPM ?? 0)) / (max - (fan.minRPM ?? 0)), tint: .blue).frame(width: 140)
                             }
-                            Text("\(Int(fan.rpm)) rpm").monospacedDigit().frame(width: 90, alignment: .trailing)
+                            Text("\(Int(fan.rpm)) rpm").monospacedDigit().textColumn(width: 90, alignment: .trailing)
                         }
                     }
                 }
             }
-            .padding(20)
+            .padding(density.page)
         }
         .navigationTitle("Temperatures")
         .onAppear { monitor.sensorListWanted = true }
@@ -94,7 +95,7 @@ struct SensorListCard: View {
             }
             let groups = Dictionary(grouping: filtered, by: \.group).sorted { $0.key < $1.key }
             ForEach(groups, id: \.key) { group, items in
-                Text(group).font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.top, 4)
+                Text(group).appFont(.caption, weight: .semibold).foregroundStyle(.secondary).padding(.top, 4)
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 230), spacing: 8)], spacing: 4) {
                     ForEach(items.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }) { reading in
                         HStack {
@@ -102,7 +103,7 @@ struct SensorListCard: View {
                             Spacer()
                             Text(format(reading)).monospacedDigit().foregroundStyle(.secondary)
                         }
-                        .font(.callout)
+                        .appFont(.callout)
                     }
                 }
             }

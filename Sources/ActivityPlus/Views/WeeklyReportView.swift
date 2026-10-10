@@ -2,6 +2,7 @@ import ActivityCore
 import SwiftUI
 
 struct WeeklyReportView: View {
+    @Environment(\.density) private var density
     @Environment(AppServices.self) private var services
     @State private var report: WeeklyReport?
     @State private var current = false
@@ -9,7 +10,7 @@ struct WeeklyReportView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: density.stack) {
                 HStack {
                     Picker("", selection: $current) {
                         Text("Last week").tag(false)
@@ -21,14 +22,14 @@ struct WeeklyReportView: View {
                 }
                 if let report {
                     Text("\(report.start.formatted(date: .abbreviated, time: .omitted)) – \(report.end.addingTimeInterval(-1).formatted(date: .abbreviated, time: .omitted))")
-                        .font(.title2.weight(.semibold))
+                        .appFont(.title2, weight: .semibold)
                     if report.topEnergy.isEmpty {
                         ContentUnavailableView("Not enough history yet", systemImage: "calendar",
                                                description: Text("The report fills up while Activity+ runs. Check back after a few days."))
                     } else {
                         totals(report)
                         if !report.biggestIncreases.isEmpty { increases(report) }
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 14)], spacing: 14) {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: density.grid)], spacing: density.grid) {
                             ranking(String(localized: "Most energy"), "bolt", .green, report.topEnergy) { String(format: String(localized: "%.1f Wh"), $0.energyWh) }
                             ranking(String(localized: "Most memory (average)"), "memorychip", .purple, report.topMemory) { Format.memory(UInt64($0.averageMemory)) }
                             ranking(String(localized: "Most CPU (average)"), "cpu", .blue, report.topCPU) { Format.percent($0.averageCPU, decimals: 1) }
@@ -39,14 +40,14 @@ struct WeeklyReportView: View {
                     ProgressView().frame(maxWidth: .infinity, minHeight: 200)
                 }
             }
-            .padding(20)
+            .padding(density.page)
         }
         .navigationTitle("Weekly Report")
         .task(id: current) { report = await services.weeklyReport(current: current) }
     }
 
     private func totals(_ r: WeeklyReport) -> some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 12)], spacing: 12) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: density.space(12))], spacing: density.space(12)) {
             comparison("Energy", String(format: String(localized: "%.0f Wh"), r.totals.energyWh), r.totals.energyWh, r.previousTotals.energyWh, r.hasPreviousWeek)
             comparison(String(localized: "Written to disk"), Format.storage(UInt64(r.totals.diskWritten)), r.totals.diskWritten, r.previousTotals.diskWritten, r.hasPreviousWeek)
             comparison(String(localized: "Downloaded"), Format.storage(UInt64(r.totals.received)), r.totals.received, r.previousTotals.received, r.hasPreviousWeek)
@@ -56,12 +57,12 @@ struct WeeklyReportView: View {
 
     private func comparison(_ title: String, _ value: String, _ now: Double, _ before: Double, _ hasBefore: Bool) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(LocalizedStringKey(title)).font(.caption).foregroundStyle(.secondary)
+            Text(LocalizedStringKey(title)).appFont(.caption).foregroundStyle(.secondary)
             BigNumber(text: value, size: 22)
             if hasBefore, before > 0 {
                 let change = (now - before) / before * 100
                 Text((change >= 0 ? "▲ " : "▼ ") + Format.percent(abs(change)) + String(localized: " vs. week before"))
-                    .font(.caption).foregroundStyle(change > 10 ? .orange : .secondary)
+                    .appFont(.caption).foregroundStyle(change > 10 ? .orange : .secondary)
             }
         }
         .padding(12)
@@ -88,13 +89,13 @@ struct WeeklyReportView: View {
             CardHeader(title: title, systemImage: symbol, tint: tint)
             ForEach(Array(apps.enumerated()), id: \.element.id) { index, app in
                 HStack(spacing: 8) {
-                    Text("\(index + 1)").font(.caption.monospacedDigit()).foregroundStyle(.tertiary).frame(width: 14)
+                    Text("\(index + 1)").appFont(.caption, monospacedDigit: true).foregroundStyle(.tertiary).textColumn(width: 14)
                     icon(app.bundlePath)
                     Text(app.name).lineLimit(1)
                     Spacer()
                     Text(value(app)).monospacedDigit().foregroundStyle(.secondary)
                 }
-                .font(.callout)
+                .appFont(.callout)
             }
         }
     }

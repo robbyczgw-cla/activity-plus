@@ -22,19 +22,19 @@ struct ConnectionQualityCard: View {
             }
             if !enabled {
                 Text("Pings your router every 30 seconds and keeps latency, jitter and packet loss in the history, so you can tell a slow connection from a dropping one. Nothing leaves your network unless you add a host below.")
-                    .font(.callout).foregroundStyle(.secondary)
+                    .appFont(.callout).foregroundStyle(.secondary)
             } else {
                 HStack(spacing: 24) {
                     ForEach(services.pings, id: \.target) { ping in
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(ping.target == gateway ? "Router (\(ping.target))" : ping.target).font(.caption).foregroundStyle(.secondary)
+                            Text(ping.target == gateway ? "Router (\(ping.target))" : ping.target).appFont(.caption).foregroundStyle(.secondary)
                             if ping.isOutage {
-                                Text("No answer").font(.title3.weight(.semibold)).foregroundStyle(.red)
+                                Text("No answer").appFont(.title3, weight: .semibold).foregroundStyle(.red)
                             } else {
-                                Text(ping.averageMs.map { String(format: String(localized: "%.0f ms"), $0) } ?? "–").font(.title3.weight(.semibold)).monospacedDigit()
+                                Text(ping.averageMs.map { String(format: String(localized: "%.0f ms"), $0) } ?? "–").appFont(.title3, weight: .semibold).monospacedDigit()
                             }
                             Text("jitter \(ping.jitterMs.map { String(format: "%.0f ms", $0) } ?? "–") · loss \(Int(ping.lossPercent.rounded())) %")
-                                .font(.caption).foregroundStyle(ping.lossPercent > 0 ? .orange : .secondary).monospacedDigit()
+                                .appFont(.caption).foregroundStyle(ping.lossPercent > 0 ? .orange : .secondary).monospacedDigit()
                         }
                     }
                     if services.pings.isEmpty { Text("First measurement in a moment…").foregroundStyle(.secondary) }
@@ -63,7 +63,7 @@ struct ConnectionQualityCard: View {
                     let lossy = series.filter { $0.lossPercent > 0 && !$0.isOutage }.count
                     (outages == 0 && lossy == 0 ? Text("No lost packets in this period.")
                         : Text("\(outages) outages") + Text(verbatim: ", ") + Text("\(lossy) rounds with packet loss in this period (red and orange points)."))
-                        .font(.caption).foregroundStyle(outages > 0 ? .red : .secondary)
+                        .appFont(.caption).foregroundStyle(outages > 0 ? .red : .secondary)
                 }
                 HStack {
                     TextField("Also ping a host (optional, e.g. 1.1.1.1)", text: $draft)
@@ -73,9 +73,9 @@ struct ConnectionQualityCard: View {
                     if !target.isEmpty { Button("Remove") { draft = ""; saveTarget() } }
                 }
                 Text(target.isEmpty ? "Only your router is pinged." : "\(target) is pinged every 30 seconds and sees your IP address.")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .appFont(.caption).foregroundStyle(.secondary)
                 if !draft.isEmpty && !ConnectionProbe.isValidTarget(draft) {
-                    Text("Enter a host name or an IP address.").font(.caption).foregroundStyle(.red)
+                    Text("Enter a host name or an IP address.").appFont(.caption).foregroundStyle(.red)
                 }
             }
         }

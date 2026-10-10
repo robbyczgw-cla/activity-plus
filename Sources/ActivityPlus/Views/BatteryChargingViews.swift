@@ -16,22 +16,22 @@ struct BatteryHeroCard: View {
                 BigNumber(text: Format.percent(battery.percent), size: 40)
                 if let rate = battery.chargeRate, abs(rate) >= 0.5 {
                     Text(String(format: "%+.0f %%/h", rate))
-                        .font(.title3.weight(.semibold)).monospacedDigit()
+                        .appFont(.title3, weight: .semibold).monospacedDigit()
                         .foregroundStyle(rate > 0 ? .green : .secondary)
                 }
                 Spacer()
             }
             UsageBar(fraction: battery.percent / 100, tint: battery.percent < 20 ? .red : .green)
-            Text(headline).font(.callout.weight(.medium))
+            Text(headline).appFont(.callout, weight: .medium)
             if let hold = battery.hold {
                 Label(BatteryText.explanation(hold), systemImage: BatteryText.symbol(hold))
-                    .font(.caption).foregroundStyle(hold == .adapterTooWeak ? .orange : .secondary)
+                    .appFont(.caption).foregroundStyle(hold == .adapterTooWeak ? .orange : .secondary)
             } else if let slow = battery.slowCharging {
                 Label(BatteryText.explanation(slow), systemImage: "tortoise")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .appFont(.caption).foregroundStyle(.secondary)
             } else if let note = BatteryText.loadNote(battery) {
                 Label(note, systemImage: "tortoise")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .appFont(.caption).foregroundStyle(.secondary)
             }
         }
     }
@@ -79,7 +79,7 @@ struct PowerFlowCard: View {
             }
             if let loss = battery.adapterLoss, loss > 0.05, battery.isPluggedIn {
                 Text("\(Format.watts(loss)) turn into heat converting the adapter's voltage.")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .appFont(.caption).foregroundStyle(.secondary)
             }
         }
     }
@@ -93,15 +93,15 @@ struct PowerFlowCard: View {
 
     private var arrow: some View {
         Image(systemName: "arrow.right")
-            .font(.title3.weight(.semibold)).foregroundStyle(.tertiary)
+            .appFont(.title3, weight: .semibold).foregroundStyle(.tertiary)
             .frame(width: 36)
     }
 
     private func node(_ title: String, watts: Double?, symbol: String, tint: Color, note: String?) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            Label(LocalizedStringKey(title), systemImage: symbol).font(.caption.weight(.semibold)).foregroundStyle(tint)
+            Label(LocalizedStringKey(title), systemImage: symbol).appFont(.caption, weight: .semibold).foregroundStyle(tint)
             BigNumber(text: watts.map(Format.watts) ?? "–", size: 22)
-            if let note { Text(note).font(.caption2).foregroundStyle(.secondary) }
+            if let note { Text(note).appFont(.caption2).foregroundStyle(.secondary) }
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -128,7 +128,7 @@ struct ChargerCard: View {
                 StatLine(label: "Drawing now", value: Format.watts(input))
             }
             if !battery.adapterProfiles.isEmpty {
-                Text("Offers").font(.caption).foregroundStyle(.secondary)
+                Text("Offers").appFont(.caption).foregroundStyle(.secondary)
                 FlowChips(profiles: battery.adapterProfiles, active: battery.adapterVoltage)
             }
             if battery.thermallyLimitedSeconds > 0 {
@@ -147,7 +147,7 @@ private struct FlowChips: View {
             ForEach(profiles, id: \.self) { p in
                 let on = active.map { abs($0 - p.volts) < 0.5 } ?? false
                 Text(String(format: "%.0f V · %.0f W", p.volts, p.watts))
-                    .font(.caption.monospacedDigit())
+                    .appFont(.caption, monospacedDigit: true)
                     .padding(.horizontal, 7).padding(.vertical, 3)
                     .background(on ? Color.yellow.opacity(0.25) : Color.secondary.opacity(0.12), in: Capsule())
                     .fontWeight(on ? .semibold : .regular)
@@ -184,7 +184,7 @@ struct BatteryHealthCard: View {
                 StatLine(label: "Voltage · current", value: String(format: String(localized: "%.2f V · %+.0f mA"), battery.voltage, battery.amperage))
             }
             Text("Health is what a full charge holds today compared with the battery when new.")
-                .font(.caption).foregroundStyle(.secondary)
+                .appFont(.caption).foregroundStyle(.secondary)
         }
     }
 
@@ -194,7 +194,7 @@ struct BatteryHealthCard: View {
             Text(LocalizedStringKey(label)).foregroundStyle(.secondary)
             Text(mAh.map { "\($0.formatted()) mAh" } ?? "–").monospacedDigit()
         }
-        .font(.caption)
+        .appFont(.caption)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
@@ -267,7 +267,7 @@ struct ChargeSessionCard: View {
                     Label("Charge", systemImage: "circle.fill").foregroundStyle(.green)
                     Label("Watts into the battery", systemImage: "square.fill").foregroundStyle(.yellow)
                 }
-                .font(.caption).labelStyle(.titleAndIcon)
+                .appFont(.caption).labelStyle(.titleAndIcon)
             }
         }
     }
@@ -276,8 +276,8 @@ struct ChargeSessionCard: View {
 
     private func figure(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(LocalizedStringKey(label)).font(.caption).foregroundStyle(.secondary)
-            Text(value).font(.title3.weight(.semibold)).monospacedDigit()
+            Text(LocalizedStringKey(label)).appFont(.caption).foregroundStyle(.secondary)
+            Text(value).appFont(.title3, weight: .semibold).monospacedDigit()
         }
     }
 }

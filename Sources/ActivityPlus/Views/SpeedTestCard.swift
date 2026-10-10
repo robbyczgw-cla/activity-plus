@@ -16,7 +16,7 @@ struct SpeedTestCard: View {
                 Spacer()
                 if running {
                     ProgressView(value: progress.0).frame(width: 140)
-                    Text(progress.1).font(.caption).foregroundStyle(.secondary).frame(width: 60, alignment: .leading)
+                    Text(progress.1).appFont(.caption).foregroundStyle(.secondary).textColumn(width: 60, alignment: .leading)
                     Button("Stop") { benchmark?.cancel() }
                 } else {
                     Button("Run Test") { run() }
@@ -28,23 +28,23 @@ struct SpeedTestCard: View {
                     figure(String(localized: "Write"), latest.writeMBps)
                     figure(String(localized: "Read"), latest.readMBps)
                     Spacer()
-                    Text("Measured \(latest.date.formatted(date: .abbreviated, time: .shortened))").font(.caption).foregroundStyle(.secondary)
+                    Text("Measured \(latest.date.formatted(date: .abbreviated, time: .shortened))").appFont(.caption).foregroundStyle(.secondary)
                 }
                 if results.count > 1 {
                     Text(String(localized: "Earlier: ") + results.dropFirst().prefix(4).map { String(format: String(localized: "%.0f / %.0f MB/s"), $0.writeMBps, $0.readMBps) }.joined(separator: ", "))
-                        .font(.caption).foregroundStyle(.tertiary)
+                        .appFont(.caption).foregroundStyle(.tertiary)
                 }
             } else if !running {
                 Text("Measures how fast your SSD writes and reads large files. Takes a few seconds and writes 1 GB, which is removed afterwards.")
-                    .font(.callout).foregroundStyle(.secondary)
+                    .appFont(.callout).foregroundStyle(.secondary)
             }
-            if let error { Text(error).font(.callout).foregroundStyle(.red) }
+            if let error { Text(error).appFont(.callout).foregroundStyle(.red) }
         }
     }
 
     private func figure(_ title: String, _ mbps: Double) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(LocalizedStringKey(title)).font(.caption).foregroundStyle(.secondary)
+            Text(LocalizedStringKey(title)).appFont(.caption).foregroundStyle(.secondary)
             BigNumber(text: mbps >= 1000 ? String(format: String(localized: "%.2f GB/s"), mbps / 1000) : String(format: String(localized: "%.0f MB/s"), mbps), size: 26)
         }
     }

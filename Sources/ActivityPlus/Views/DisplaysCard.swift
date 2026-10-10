@@ -59,13 +59,13 @@ struct DisplaysCard: View {
                         if d.variableRefresh { Text("ProMotion / variable refresh") }
                         if d.hdr { Text("HDR") }
                     }
-                    .font(.caption).foregroundStyle(.secondary)
+                    .appFont(.caption).foregroundStyle(.secondary)
                     if d.isHeldBack {
                         Label(d.bestRefresh - d.refresh > 5
                               ? String(format: String(localized: "Running at %.0f Hz, %.0f Hz is available at this resolution. Check the cable, adapter or dock, or pick the rate in System Settings → Displays."), d.refresh, d.bestRefresh)
                               : String(format: String(localized: "Only %.0f Hz: often a cable or adapter that cannot carry more at this resolution."), d.refresh),
                               systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption).foregroundStyle(.orange)
+                            .appFont(.caption).foregroundStyle(.orange)
                     }
                 }
                 .padding(.vertical, 2)

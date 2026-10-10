@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 
 /// Record a build, a render or a slowdown at full rate, compare it with another one, export it.
 struct SessionsView: View {
+    @Environment(\.density) private var density
     @Environment(AppServices.self) private var services
     @State private var sessions: [RecordingSession] = []
     @State private var selected: Int64?
@@ -14,7 +15,7 @@ struct SessionsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: density.stack) {
                 RecorderCard(newName: $newName)
                 if sessions.isEmpty {
                     Card {
@@ -29,7 +30,7 @@ struct SessionsView: View {
                                        select: { selected = session.id; if compare == session.id { compare = nil } },
                                        toggleCompare: { compare = compare == session.id ? nil : session.id })
                         }
-                        Text("Click a session to see it; tick a second one to compare.").font(.caption).foregroundStyle(.tertiary)
+                        Text("Click a session to see it; tick a second one to compare.").appFont(.caption).foregroundStyle(.tertiary)
                     }
                 }
                 if let session = sessions.first(where: { $0.id == selected }) {
@@ -37,7 +38,7 @@ struct SessionsView: View {
                         .id("\(session.id)-\(compare ?? 0)-\(services.sessionsRevision)")
                 }
             }
-            .padding(20)
+            .padding(density.page)
         }
         .navigationTitle("Sessions")
         .task(id: services.sessionsRevision) { reload() }
@@ -63,10 +64,10 @@ private struct RecorderCard: View {
                 HStack(spacing: 12) {
                     Circle().fill(.red).frame(width: 12, height: 12)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(recording.name).font(.headline)
+                        Text(recording.name).appFont(.headline)
                         TimelineView(.periodic(from: .now, by: 1)) { _ in
                             Text("Recording · \(Format.elapsed(recording.duration)) · CPU \(Format.percent(monitor.snapshot.cpu.total)) · memory \(Format.memory(monitor.snapshot.memory.used))")
-                                .font(.callout).foregroundStyle(.secondary).monospacedDigit()
+                                .appFont(.callout).foregroundStyle(.secondary).monospacedDigit()
                         }
                     }
                     Spacer()
@@ -75,7 +76,7 @@ private struct RecorderCard: View {
                 }
             } else {
                 HStack(spacing: 12) {
-                    Image(systemName: "record.circle").font(.title2).foregroundStyle(.red)
+                    Image(systemName: "record.circle").appFont(.title2).foregroundStyle(.red)
                     TextField("Name, e.g. \"Xcode clean build\"", text: $newName)
                         .textFieldStyle(.roundedBorder)
                         .onSubmit(start)
@@ -83,7 +84,7 @@ private struct RecorderCard: View {
                         .buttonStyle(.borderedProminent).tint(.red)
                 }
                 Text("Measures every \(Format.elapsed(monitor.interval)) until you stop it. You can also start and stop from the menu bar (right-click).")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .appFont(.caption).foregroundStyle(.secondary)
             }
         }
     }
@@ -112,15 +113,15 @@ private struct SessionRow: View {
                     Text(session.name).fontWeight(selected ? .semibold : .regular).lineLimit(1)
                 }
                 Text("\(session.started.formatted(date: .abbreviated, time: .shortened)) · \(Format.elapsed(session.duration))")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .appFont(.caption).foregroundStyle(.secondary)
             }
             Spacer()
             Group {
-                Text("⌀ \(Format.percent(session.averageCPU))").frame(width: 80, alignment: .trailing)
-                Text(Format.memory(UInt64(session.peakMemory))).frame(width: 80, alignment: .trailing)
-                Text(session.energyWh > 0 ? String(format: String(localized: "%.1f Wh"), session.energyWh) : "–").frame(width: 70, alignment: .trailing)
+                Text("⌀ \(Format.percent(session.averageCPU))").textColumn(width: 80, alignment: .trailing)
+                Text(Format.memory(UInt64(session.peakMemory))).textColumn(width: 80, alignment: .trailing)
+                Text(session.energyWh > 0 ? String(format: String(localized: "%.1f Wh"), session.energyWh) : "–").textColumn(width: 70, alignment: .trailing)
             }
-            .font(.callout).monospacedDigit().foregroundStyle(.secondary)
+            .appFont(.callout).monospacedDigit().foregroundStyle(.secondary)
         }
         .padding(.vertical, 5).padding(.horizontal, 8)
         .background(selected ? Color.accentColor.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 6))
@@ -130,6 +131,7 @@ private struct SessionRow: View {
 }
 
 private struct SessionDetail: View {
+    @Environment(\.density) private var density
     @Environment(AppServices.self) private var services
     let session: RecordingSession
     let other: RecordingSession?
@@ -141,7 +143,7 @@ private struct SessionDetail: View {
     @State private var name = ""
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: density.stack) {
             Card {
                 HStack {
                     CardHeader(title: session.name, systemImage: "waveform.path.ecg", tint: .red,
@@ -170,27 +172,27 @@ private struct SessionDetail: View {
                     CardHeader(title: "Apps during this session", systemImage: "square.stack.3d.up", tint: .blue)
                     HStack {
                         Text("App").frame(maxWidth: .infinity, alignment: .leading)
-                        Text("⌀ CPU").frame(width: 70, alignment: .trailing)
-                        Text("Peak CPU").frame(width: 80, alignment: .trailing)
-                        Text("Peak memory").frame(width: 100, alignment: .trailing)
-                        Text("Energy").frame(width: 70, alignment: .trailing)
+                        Text("⌀ CPU").textColumn(width: 70, alignment: .trailing)
+                        Text("Peak CPU").textColumn(width: 80, alignment: .trailing)
+                        Text("Peak memory").textColumn(width: 100, alignment: .trailing)
+                        Text("Energy").textColumn(width: 70, alignment: .trailing)
                     }
-                    .font(.caption).foregroundStyle(.secondary)
+                    .appFont(.caption).foregroundStyle(.secondary)
                     ForEach(apps.prefix(12)) { app in
                         HStack {
                             VStack(alignment: .leading, spacing: 0) {
                                 Text(app.name).lineLimit(1)
                                 if let top = app.topProcess, top != app.name {
-                                    Text("mostly \(top)").font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                                    Text("mostly \(top)").appFont(.caption2).foregroundStyle(.secondary).lineLimit(1)
                                 }
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(Format.percent(app.averageCPU)).frame(width: 70, alignment: .trailing)
-                            Text(Format.percent(app.peakCPU)).frame(width: 80, alignment: .trailing)
-                            Text(Format.memory(UInt64(app.peakMemory))).frame(width: 100, alignment: .trailing)
-                            Text(app.energyWh > 0.005 ? String(format: String(localized: "%.2f Wh"), app.energyWh) : "–").frame(width: 70, alignment: .trailing)
+                            Text(Format.percent(app.averageCPU)).textColumn(width: 70, alignment: .trailing)
+                            Text(Format.percent(app.peakCPU)).textColumn(width: 80, alignment: .trailing)
+                            Text(Format.memory(UInt64(app.peakMemory))).textColumn(width: 100, alignment: .trailing)
+                            Text(app.energyWh > 0.005 ? String(format: String(localized: "%.2f Wh"), app.energyWh) : "–").textColumn(width: 70, alignment: .trailing)
                         }
-                        .font(.callout).monospacedDigit()
+                        .appFont(.callout).monospacedDigit()
                     }
                 }
             }
@@ -215,7 +217,7 @@ private struct SessionDetail: View {
 
     private func summary(_ s: RecordingSession, title: String?, reference: RecordingSession? = nil) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            if let title { Text(LocalizedStringKey(title)).font(.caption.weight(.semibold)).foregroundStyle(.secondary) }
+            if let title { Text(LocalizedStringKey(title)).appFont(.caption, weight: .semibold).foregroundStyle(.secondary) }
             line(String(localized: "Duration"), Format.elapsed(s.duration), reference.map { delta(s.duration, $0.duration, format: Format.duration) })
             line(String(localized: "Average CPU"), Format.percent(s.averageCPU), reference.map { delta(s.averageCPU, $0.averageCPU) { Format.percent($0) } })
             line("Peak CPU", Format.percent(s.peakCPU), nil)
@@ -232,9 +234,9 @@ private struct SessionDetail: View {
             Text(LocalizedStringKey(label)).foregroundStyle(.secondary)
             Spacer()
             Text(value).monospacedDigit()
-            if let change { change.font(.caption).monospacedDigit() }
+            if let change { change.appFont(.caption).monospacedDigit() }
         }
-        .font(.callout)
+        .appFont(.callout)
     }
 
     /// How the compared session differs: "+12 %" style, green when it is lower (less time, less load).
@@ -247,7 +249,7 @@ private struct SessionDetail: View {
 
     private func chart(title: String, unit: String, value: KeyPath<SessionSample, Double>, scale: Double = 1) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("\(title) (\(unit))").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+            Text("\(title) (\(unit))").appFont(.caption, weight: .semibold).foregroundStyle(.secondary)
             Chart {
                 ForEach(Array(samples.enumerated()), id: \.offset) { _, s in
                     LineMark(x: .value("Seconds", s.date.timeIntervalSince(session.started)), y: .value(title, s[keyPath: value] * scale),

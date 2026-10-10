@@ -30,13 +30,15 @@ enum OverviewCard: String, CaseIterable, Identifiable {
 }
 
 struct OverviewView: View {
+    @Environment(\.density) private var density
+    @Environment(\.uiScale) private var uiScale
     @Environment(Monitor.self) private var monitor
     @Environment(AppServices.self) private var services
     @Binding var selection: SidebarItem?
     @AppStorage("overviewCards") private var cardOrder = OverviewCard.defaultOrder
     @AppStorage("hiddenOverviewCards") private var hiddenCards = ""
 
-    private let columns = [GridItem(.adaptive(minimum: 250, maximum: 420), spacing: 14)]
+    private var columns: [GridItem] { [GridItem(.adaptive(minimum: 250 * uiScale, maximum: 420 * uiScale), spacing: density.grid)] }
 
     private var visible: [OverviewCard] {
         let hidden = Set(hiddenCards.split(separator: ",").map(String.init))
@@ -45,8 +47,8 @@ struct OverviewView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                LazyVGrid(columns: columns, spacing: 14) {
+            VStack(alignment: .leading, spacing: density.space(18)) {
+                LazyVGrid(columns: columns, spacing: density.grid) {
                     ForEach(visible.filter { $0 != .busiest && $0 != .insights }) { card in tile(card) }
                 }
                 if visible.contains(.insights), !services.anomalies.isEmpty {
@@ -60,7 +62,7 @@ struct OverviewView: View {
                     }
                 }
             }
-            .padding(20)
+            .padding(density.page)
         }
     }
 
@@ -172,7 +174,7 @@ struct InsightsCard: View {
                         .foregroundStyle(.purple).frame(width: 18)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(anomaly.title).fontWeight(.medium)
-                        Text(anomaly.detail).font(.callout).foregroundStyle(.secondary)
+                        Text(anomaly.detail).appFont(.callout).foregroundStyle(.secondary)
                     }
                 }
             }
@@ -185,7 +187,7 @@ struct PressureBadge: View {
 
     var body: some View {
         Text(pressure.label)
-            .font(.caption.weight(.semibold))
+            .appFont(.caption, weight: .semibold)
             .padding(.horizontal, 8).padding(.vertical, 3)
             .background(color.opacity(0.15), in: Capsule())
             .foregroundStyle(color)

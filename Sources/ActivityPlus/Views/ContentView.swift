@@ -53,6 +53,7 @@ struct ContentView: View {
     @SceneStorage("sidebarSelection") private var stored = "overview"
     @AppStorage("hiddenPages") private var hiddenPages = ""
     @AppStorage("accentColor") private var accent = "system"
+    @Environment(\.uiScale) private var uiScale
 
     private let sections = ["", String(localized: "Resources"), String(localized: "Tools"), String(localized: "Maintenance")]
 
@@ -68,6 +69,7 @@ struct ContentView: View {
 
     @ViewBuilder private func row(_ page: SidebarItem.Page) -> some View {
         Label(LocalizedStringKey(page.title), systemImage: page.icon)
+            .scaledBaseFont()
             .badge(badge(for: page.item))
             .tag(page.item)
     }
@@ -86,12 +88,12 @@ struct ContentView: View {
                     }
                 }
             }
-            .navigationSplitViewColumnWidth(min: 190, ideal: 210)
+            .navigationSplitViewColumnWidth(min: 190 * uiScale, ideal: 210 * uiScale)
         } detail: {
             // A hidden or fully covered window renders nothing: charts would otherwise redraw every sample.
             if monitor.windowVisible {
                 // An opaque window background (instead of the translucent default) also keeps snapshots faithful.
-                detail.background(Color(nsColor: .windowBackgroundColor))
+                detail.scaledBaseFont().background(Color(nsColor: .windowBackgroundColor))
             } else {
                 Color.clear
             }
@@ -117,7 +119,7 @@ struct ContentView: View {
             }
             ToolbarItem(placement: .status) {
                 Text("\(monitor.snapshot.processCount) processes · up \(Format.duration(monitor.snapshot.uptime))")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .appFont(.caption).foregroundStyle(.secondary)
             }
         }
         .frame(minWidth: 820, minHeight: 560)

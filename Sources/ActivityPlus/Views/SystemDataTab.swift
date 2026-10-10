@@ -59,10 +59,11 @@ final class SystemDataModel {
 }
 
 struct SystemDataTab: View {
+    @Environment(\.density) private var density
     @State private var model = SystemDataModel.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: density.stack) {
             overviewCard
             if let groups = model.groups {
                 ForEach(groups) { GroupCard(group: $0) }
@@ -85,16 +86,16 @@ struct SystemDataTab: View {
                 }
             }
             Text("macOS shows one grey bar called System Data. This names its parts and says which ones are safe to clear. Activity+ only measures here and changes nothing.")
-                .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                .appFont(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
 
             if model.measuring {
                 ProgressView(value: model.progress)
-                Text(verbatim: model.current).font(.caption).foregroundStyle(.tertiary).lineLimit(1)
+                Text(verbatim: model.current).appFont(.caption).foregroundStyle(.tertiary).lineLimit(1)
             }
 
             if let groups = model.groups {
                 if groups.isEmpty {
-                    Text("Nothing found in the usual places.").font(.callout).foregroundStyle(.secondary)
+                    Text("Nothing found in the usual places.").appFont(.callout).foregroundStyle(.secondary)
                 } else {
                     StackedBar(groups: groups)
                     ForEach(groups) { group in
@@ -104,12 +105,12 @@ struct SystemDataTab: View {
                     totals(groups)
                     if let at = model.measuredAt {
                         Text("Measured \(at.formatted(date: .omitted, time: .shortened)). Sizes are space actually used on disk.")
-                            .font(.caption).foregroundStyle(.tertiary)
+                            .appFont(.caption).foregroundStyle(.tertiary)
                     }
                 }
             } else if !model.measuring {
                 Text("Measuring walks a few folders and takes a few seconds, longer if Xcode simulators or big caches are present.")
-                    .font(.caption).foregroundStyle(.tertiary)
+                    .appFont(.caption).foregroundStyle(.tertiary)
             }
         }
     }
@@ -189,11 +190,11 @@ private struct GroupCard: View {
                        trailing: Format.storage(group.distinctBytes))
             HStack(spacing: 8) {
                 Text(badge.text)
-                    .font(.caption.weight(.semibold))
+                    .appFont(.caption, weight: .semibold)
                     .padding(.horizontal, 8).padding(.vertical, 2)
                     .foregroundStyle(badge.tint)
                     .background(badge.tint.opacity(0.15), in: Capsule())
-                Text(blurb).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(blurb).appFont(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
             }
             ForEach(Array(group.items.enumerated()), id: \.element.id) { index, item in
@@ -231,20 +232,20 @@ private struct ItemRow: View {
                 if item.bytes > 0 {
                     Text(Format.storage(item.bytes)).monospacedDigit().fontWeight(.medium)
                 } else {
-                    Text("Size not reported").font(.caption).foregroundStyle(.tertiary)
+                    Text("Size not reported").appFont(.caption).foregroundStyle(.tertiary)
                 }
             }
             if item.bytes > 0 && item.id != SystemDataBreakdown.purgeableID {
                 UsageBar(fraction: Double(item.bytes) / Double(groupBytes), tint: tint)
             }
-            Text(item.reason).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Text(item.reason).appFont(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             HStack {
-                Text(verbatim: item.location).font(.caption.monospaced()).foregroundStyle(.tertiary)
+                Text(verbatim: item.location).appFont(.caption, monospaced: true).foregroundStyle(.tertiary)
                     .lineLimit(1).truncationMode(.middle)
                 Spacer()
                 if let url = revealTarget {
                     Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
-                        .buttonStyle(.link).font(.caption)
+                        .buttonStyle(.link).appFont(.caption)
                 }
             }
         }

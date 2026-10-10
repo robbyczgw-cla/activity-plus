@@ -346,9 +346,24 @@ private struct WindowSettings: View {
     @AppStorage("hiddenPages") private var hiddenPages = ""
     @AppStorage("overviewCards") private var cardOrder = OverviewCard.defaultOrder
     @AppStorage("hiddenOverviewCards") private var hiddenCards = ""
+    @AppStorage("textSize") private var textSize = TextSize.standard.rawValue
+    @AppStorage("density") private var density = Density.normal.rawValue
 
     var body: some View {
         Form {
+            Section {
+                Picker("Text size", selection: $textSize) {
+                    ForEach(TextSize.allCases) { Text($0.title).tag($0.rawValue) }
+                }
+                Picker("Density", selection: $density) {
+                    ForEach(Density.allCases) { Text($0.title).tag($0.rawValue) }
+                }
+            } header: {
+                Text("Appearance")
+            } footer: {
+                Text("Applies to the main window. The menu bar panel and share cards keep their size.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             Section("Sidebar") {
                 ForEach(SidebarItem.customizable, id: \.key) { page in
                     Toggle(page.title, isOn: toggle(key: page.key, in: $hiddenPages))
