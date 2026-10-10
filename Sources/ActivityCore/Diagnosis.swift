@@ -45,6 +45,10 @@ public struct DiagnosisInput: Sendable {
     public var lowPowerMode: Bool = ProcessInfo.processInfo.isLowPowerModeEnabled
     /// USB drives that can do USB 3 but are connected at USB 2 speed.
     public var slowUSB: [USBLinkCheck.SlowLink] = []
+    /// Crash and freeze history per app (from the diagnostic reports).
+    public var crashSummaries: [CrashSummary] = []
+    /// True when the page shows its own Spotlight card, so the generic Spotlight finding is left out.
+    public var spotlightCardShown = false
 
     public init(snapshot: SystemSnapshot, recentCPU: [Double], recentAppCPU: [String: [Double]]) {
         self.snapshot = snapshot
@@ -167,7 +171,7 @@ public enum Diagnostician {
         // Spotlight and kernel_task tell their own stories.
         let processes = s.apps.flatMap(\.processes)
         let spotlight = processes.filter { $0.name.hasPrefix("mds") || $0.name.hasPrefix("mdworker") }.reduce(0) { $0 + $1.cpuPercent }
-        if spotlight > 40 {
+        if spotlight > 40, !input.spotlightCardShown {
             findings.append(.init(id: "spotlight", severity: .info, title: String(localized: "Spotlight is indexing"),
                                   detail: String(localized: "Spotlight is reading new or changed files so search can find them. It finishes on its own."),
                                   evidence: [String(localized: "Spotlight processes: \(Format.percent(spotlight))")], action: nil))
@@ -176,6 +180,16 @@ public enum Diagnostician {
             findings.append(.init(id: "kernel-task", severity: .warning, title: String(localized: "macOS is holding the CPU back"),
                                   detail: String(localized: "kernel_task uses CPU time on purpose to keep the processor cool, which usually means the Mac is hot or charging with a weak adapter."),
                                   evidence: [String(localized: "kernel_task: \(Format.percent(kernel.cpuPercent))")], action: nil))
+        }
+
+        // Apps that keep crashing
+        for crash in input.crashSummaries where crash.crashes7 >= 3 {
+            findings.append(.init(
+                id: "crashes-\(crash.appName)", severity: .info,
+                title: String(localized: "\(crash.appName) crashed \(crash.crashes7) times this week"),
+                detail: String(localized: "Repeated crashes often come from a damaged setting, a faulty extension or an app version that does not suit this macOS. An update, or a reinstall, usually helps."),
+                evidence: [crash.lastReason, String(localized: "Last report: \(crash.lastDate.formatted(date: .abbreviated, time: .shortened))")],
+                action: nil))
         }
 
         // GPU

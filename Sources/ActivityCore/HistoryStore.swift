@@ -438,6 +438,8 @@ public final class HistoryStore: @unchecked Sendable {
         exec("ALTER TABLE system ADD COLUMN wifi_noise REAL")
         // v0.3: bytes each app wrote, apart from reads, for SSD wear.
         exec("ALTER TABLE apps ADD COLUMN disk_w REAL")
+        // v0.3: the fastest fan in the minute (rpm), to find out which app spun the fans up.
+        exec("ALTER TABLE system ADD COLUMN fan_rpm REAL")
         let version = query("PRAGMA user_version") { sqlite3_column_int($0, 0) }.first ?? 0
         if version < 3 { exec("PRAGMA user_version = 3") }
     }
@@ -446,7 +448,7 @@ public final class HistoryStore: @unchecked Sendable {
         guard a.count > 0, a.seconds > 0 else { return }
         let n = a.seconds   // time-weighted sums ÷ covered seconds = averages
         var statement: OpaquePointer?
-        let sql = "INSERT INTO system (ts, secs, cpu, mem, gpu, disk_r, disk_w, net_in, net_out, battery, power, on_battery, battery_watts, adapter_watts, thermal, pressure, wifi_rssi, wifi_noise) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+        let sql = "INSERT INTO system (ts, secs, cpu, mem, gpu, disk_r, disk_w, net_in, net_out, battery, power, on_battery, battery_watts, adapter_watts, thermal, pressure, wifi_rssi, wifi_noise, fan_rpm) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { return }
         defer { sqlite3_finalize(statement) }
         sqlite3_bind_int64(statement, 1, Int64(date.timeIntervalSince1970))
@@ -467,6 +469,7 @@ public final class HistoryStore: @unchecked Sendable {
         sqlite3_bind_int(statement, 16, Int32(a.pressure))
         if a.wifiCount > 0 { sqlite3_bind_double(statement, 17, a.wifiRSSI / Double(a.wifiCount)) }
         if a.noiseCount > 0 { sqlite3_bind_double(statement, 18, a.wifiNoise / Double(a.noiseCount)) }
+        if let fan = a.fanRPM { sqlite3_bind_double(statement, 19, fan) }
         sqlite3_step(statement)
     }
 
@@ -545,6 +548,8 @@ private struct Accumulator {
     var thermal = 0, pressure = 1
     var wifiRSSI = 0.0, wifiCount = 0
     var wifiNoise = 0.0, noiseCount = 0
+    /// Fastest fan at any moment of the minute; nil when the Mac reports no fans.
+    var fanRPM: Double?
 
     /// Values are weighted by the time each sample covers: foreground (1–2 s) and background
     /// (5–15 s) samples mix within one minute, and a plain mean would count them equally.
@@ -561,6 +566,7 @@ private struct Accumulator {
         netOut += s.network.outRate * dt
         // Worst moment of the minute: a short spell of heat or pressure is what explains a stall.
         thermal = max(thermal, s.thermal.level)
+        if let fastest = s.sensors.fans.map(\.rpm).max() { fanRPM = max(fanRPM ?? 0, fastest) }
         pressure = max(pressure, s.memory.pressure.rawValue)
         if let rssi = s.wifi?.rssi, rssi != 0 { wifiRSSI += Double(rssi); wifiCount += 1 }
         if let noise = s.wifi?.noise, noise != 0 { wifiNoise += Double(noise); noiseCount += 1 }

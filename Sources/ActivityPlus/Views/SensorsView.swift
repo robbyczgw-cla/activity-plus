@@ -46,6 +46,7 @@ struct SensorsView: View {
                         }
                     }
                 }
+                FanSpinUpsCard()
             }
             .padding(density.page)
         }
