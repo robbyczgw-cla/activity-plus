@@ -33,8 +33,8 @@ struct SpotlightCard: View {
                 HStack(spacing: 6) {
                     Image(systemName: "magnifyingglass.circle").foregroundStyle(.secondary)
                     Group { if status.indexedVolumes.isEmpty { Text("Spotlight indexing is turned off") } else { Text("Spotlight index: up to date") } }
-                        .font(.callout).foregroundStyle(.secondary)
-                    if rebuildStarted { Text("· a rebuild was started and runs in the background").font(.callout).foregroundStyle(.secondary) }
+                        .appFont(.callout).foregroundStyle(.secondary)
+                    if rebuildStarted { Text("· a rebuild was started and runs in the background").appFont(.callout).foregroundStyle(.secondary) }
                 }
                 .padding(.horizontal, 4)
             }
@@ -71,7 +71,7 @@ struct SpotlightCard: View {
                     Text("Now: \(Format.percent(status.cpuPercent)) CPU across \(status.processCount) Spotlight processes")
                 }
             }
-            .font(.callout).monospacedDigit()
+            .appFont(.callout).monospacedDigit()
             HStack {
                 Button("Rebuild the index…") { confirmRebuild = true }
                     .help("Only for a broken search: needs an administrator password and takes hours")

@@ -16,7 +16,7 @@ struct FanSpinUpsCard: View {
             Card {
                 CardHeader(title: "Fan spin-ups today", systemImage: "fan.badge.automatic", tint: .blue, trailing: loaded ? nil : "reading…")
                 Text("When the fans sped up, and which apps were busiest in the ten minutes before. Heavy apps usually make a Mac warm; the fans follow a little later.")
-                    .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .appFont(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 if loaded && spinUps.isEmpty {
                     if hasData {
                         Label("The fans stayed quiet today.", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
@@ -44,10 +44,10 @@ struct FanSpinUpsCard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Up to \(Int(spinUp.peakRPM)) rpm for \(Format.duration(spinUp.end.timeIntervalSince(spinUp.start) + 60))").monospacedDigit()
                 if spinUp.topApps.isEmpty {
-                    Text("No single app stood out.").font(.callout).foregroundStyle(.secondary)
+                    Text("No single app stood out.").appFont(.callout).foregroundStyle(.secondary)
                 } else {
                     Text("Busiest before: " + spinUp.topApps.map(describe).joined(separator: ", "))
-                        .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        .appFont(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
             }
             Spacer()

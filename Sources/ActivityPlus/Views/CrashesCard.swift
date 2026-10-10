@@ -35,7 +35,7 @@ struct CrashesCard: View {
             CardHeader(title: "Crashes and freezes", systemImage: "exclamationmark.bubble", tint: .orange,
                        trailing: store.loaded ? nil : "reading…")
             Text("Reports macOS writes when an app quits unexpectedly or stops responding, for the last 30 days. Reports written within seconds of each other count once.")
-                .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                .appFont(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             if store.loaded && store.summaries.isEmpty {
                 Label("No crashes or freezes in the last 30 days.", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
@@ -63,14 +63,14 @@ private struct CrashRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(summary.appName).fontWeight(.semibold)
                 if summary.crashes30 > 0 {
-                    Text("Crashes: \(summary.crashes7) in 7 days, \(summary.crashes30) in 30 days").font(.callout).monospacedDigit()
+                    Text("Crashes: \(summary.crashes7) in 7 days, \(summary.crashes30) in 30 days").appFont(.callout).monospacedDigit()
                 }
                 if summary.hangs30 > 0 {
-                    Text("Freezes: \(summary.hangs7) in 7 days, \(summary.hangs30) in 30 days").font(.callout).monospacedDigit()
+                    Text("Freezes: \(summary.hangs7) in 7 days, \(summary.hangs30) in 30 days").appFont(.callout).monospacedDigit()
                 }
                 Text("Last \(summary.lastKind == .hang ? String(localized: "freeze") : String(localized: "crash")): \(summary.lastDate.formatted(date: .abbreviated, time: .shortened))")
-                    .font(.caption).foregroundStyle(.secondary)
-                Text(summary.lastReason).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .appFont(.caption).foregroundStyle(.secondary)
+                Text(summary.lastReason).appFont(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             Button("Show report") { CrashStore.show(summary.latestReportPath) }

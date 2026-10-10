@@ -26,13 +26,13 @@ struct OrphanNote: View {
     var body: some View {
         if let orphan = item.orphan {
             VStack(alignment: .leading, spacing: 4) {
-                Label(orphan.badge, systemImage: "exclamationmark.triangle.fill").font(.caption.weight(.semibold)).foregroundStyle(.orange)
-                Text(orphan.explanation).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Label(orphan.badge, systemImage: "exclamationmark.triangle.fill").appFont(.caption, weight: .semibold).foregroundStyle(.orange)
+                Text(orphan.explanation).appFont(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 HStack {
                     if OrphanedItems.canRemove(item) {
                         Button("Move to Trash…") { trash(item) }.controlSize(.small)
                     } else {
-                        Text("Removing it needs an administrator.").font(.caption).foregroundStyle(.secondary)
+                        Text("Removing it needs an administrator.").appFont(.caption).foregroundStyle(.secondary)
                     }
                     if let plist = item.plistPath {
                         Button("Show in Finder") { ProcessActions.reveal(plist) }.controlSize(.small)
