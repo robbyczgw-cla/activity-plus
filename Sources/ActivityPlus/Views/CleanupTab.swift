@@ -82,7 +82,7 @@ final class CleanupModel {
                 Task { @MainActor in CleanupModel.shared.report(fraction * 0.55, item) }
             })
             let system = CleanupPlan.entries(from: groups) + CleanupPlan.macOSInstallers()
-            var large: [CleanupEntry] = []
+            let large: [CleanupEntry]
             if !skipLarge, !cancel.isCancelled {
                 let scanner = LargeFilesScanner()
                 cancel.attach(scanner)
@@ -90,6 +90,8 @@ final class CleanupModel {
                     Task { @MainActor in CleanupModel.shared.report(0.55 + fraction * 0.45, item) }
                 }
                 large = CleanupPlan.entries(from: found)
+            } else {
+                large = []
             }
             await MainActor.run {
                 let model = CleanupModel.shared
