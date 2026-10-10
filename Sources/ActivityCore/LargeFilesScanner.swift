@@ -150,37 +150,46 @@ public final class LargeFilesScanner: @unchecked Sendable {
 
         // Depth-first over the map with the walk's rules: hidden items, ~/Library and build folders are skipped,
         // packages count as one item, and a stale folder at the top of Downloads counts as one old download.
-        var stack: [(DiskIndex.NodeID, Int)] = [(index.rootID, 0)]
+        // Most of a home folder is small files, so size and extension decide before any path is built.
+        struct Place { let id: DiskIndex.NodeID; let level: Int; let inDownloads: Bool; let installerPlace: Bool }
+        var stack = [Place(id: index.rootID, level: 0, inDownloads: false, installerPlace: false)]
         var visited = 0
-        while let (id, level) = stack.popLast() {
+        while let place = stack.popLast() {
             visited += 1
             if visited & 1023 == 0, isCancelled { return [] }
-            for child in index.children(of: id) where child.bytes > 0 {
+            for child in index.children(of: place.id) where child.bytes > 0 {
                 let name = child.name
                 if name.hasPrefix(".") || Self.skippedDirectoryNames.contains(name.lowercased()) { continue }
-                if level == 0, name == "Library" { continue }
+                if place.level == 0, name == "Library" { continue }
+                let ext = (name as NSString).pathExtension.lowercased()
+                let installer = place.installerPlace && Self.installerExtensions.contains(ext)
+                let mayCount = installer || ext == "xcarchive" || child.bytes >= minimumLargeFileBytes
+                    || (place.inDownloads && child.bytes >= Self.oldDownloadMinimum)
+                if child.isDirectory {
+                    let package = !ext.isEmpty && (mayCount || ext == "app")
+                        && (ext == "app" || (try? index.url(of: child.id).resourceValues(forKeys: [.isPackageKey]))?.isPackage == true)
+                    if package || (place.level == 1 && place.inDownloads && child.bytes >= Self.oldDownloadMinimum
+                                   && isStale(child.accessed, child.modified)) {
+                        let url = index.url(of: child.id)
+                        let kind = package ? classify(url: url, bytes: child.bytes, lastOpened: child.accessed, modified: child.modified,
+                                                      home: home, downloads: downloads, minimum: minimumLargeFileBytes) : .oldDownload
+                        if let kind { insert(candidate(child, url, kind), into: &found) }
+                        continue
+                    }
+                    // Nothing below a folder smaller than the smallest candidate can count, unless installers live there.
+                    guard child.bytes >= Self.oldDownloadMinimum || place.installerPlace || place.level == 0 else { continue }
+                    let top = place.level == 0
+                    stack.append(Place(id: child.id, level: place.level + 1,
+                                       inDownloads: top ? name == "Downloads" : place.inDownloads,
+                                       installerPlace: top ? ["Downloads", "Desktop", "Documents"].contains(name) : place.installerPlace))
+                    continue
+                }
+                guard mayCount else { continue }
                 let url = index.url(of: child.id)
-                guard child.isDirectory else {
-                    if let kind = classify(url: url, bytes: child.bytes, lastOpened: child.accessed, modified: child.modified,
-                                           home: home, downloads: downloads, minimum: minimumLargeFileBytes) {
-                        insert(candidate(child, url, kind), into: &found)
-                    }
-                    continue
+                if let kind = classify(url: url, bytes: child.bytes, lastOpened: child.accessed, modified: child.modified,
+                                       home: home, downloads: downloads, minimum: minimumLargeFileBytes) {
+                    insert(candidate(child, url, kind), into: &found)
                 }
-                if !(name as NSString).pathExtension.isEmpty,
-                   (try? url.resourceValues(forKeys: [.isPackageKey]))?.isPackage == true || url.pathExtension.lowercased() == "app" {
-                    if let kind = classify(url: url, bytes: child.bytes, lastOpened: child.accessed, modified: child.modified,
-                                           home: home, downloads: downloads, minimum: minimumLargeFileBytes) {
-                        insert(candidate(child, url, kind), into: &found)
-                    }
-                    continue
-                }
-                if url.deletingLastPathComponent().standardizedFileURL.path == downloads.path,
-                   child.bytes >= Self.oldDownloadMinimum, isStale(child.accessed, child.modified) {
-                    insert(candidate(child, url, .oldDownload), into: &found)
-                    continue
-                }
-                stack.append((child.id, level + 1))
             }
         }
 
