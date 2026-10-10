@@ -93,6 +93,7 @@ struct AlertsView: View {
         case .weekly: "calendar"
         case .power: "powerplug"
         case .vpn: "lock.open"
+        case .backup: "externaldrive.badge.timemachine"
         }
     }
 
