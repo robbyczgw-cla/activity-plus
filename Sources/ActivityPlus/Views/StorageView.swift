@@ -13,13 +13,14 @@ struct StorageView: View {
     @SceneStorage("storageTab") private var tab = Tab.explore
 
     enum Tab: String, CaseIterable {
-        case explore, systemData, biggest, cleanup, apps
+        case explore, systemData, biggest, duplicates, cleanup, apps
 
         var title: LocalizedStringKey {
             switch self {
             case .explore: "Explore"
             case .systemData: "System Data"
             case .biggest: "Biggest"
+            case .duplicates: "Duplicates"
             case .cleanup: "Clean up"
             case .apps: "Apps"
             }
@@ -57,6 +58,7 @@ struct StorageView: View {
                 case .explore: ExploreTab()
                 case .systemData: SystemDataTab()
                 case .biggest: BiggestTab()
+                case .duplicates: DuplicatesTab()
                 case .cleanup: CleanupTab()
                 case .apps: appsTab
                 }
@@ -65,7 +67,7 @@ struct StorageView: View {
         }
         .navigationTitle("Storage")
         .onAppear {
-            // Snapshot runs pick the tab: ACTIVITYPLUS_STORAGE_TAB=explore|systemData|biggest|cleanup|apps
+            // Snapshot runs pick the tab: ACTIVITYPLUS_STORAGE_TAB=explore|systemData|biggest|duplicates|cleanup|apps
             if let raw = ProcessInfo.processInfo.environment["ACTIVITYPLUS_STORAGE_TAB"], let pick = Tab(rawValue: raw) { tab = pick }
         }
         .onReceive(NotificationCenter.default.publisher(for: .storageShowCleanup)) { _ in tab = .cleanup }

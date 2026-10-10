@@ -24,6 +24,8 @@ public final class DiskIndex: @unchecked Sendable {
         public let accessed: Date?
         /// For files: by extension. For folders: the kind with the most bytes below.
         public let kind: FileKind
+        /// A folder that could not be opened (no permission, privacy protection, gone), so its size is unknown.
+        public let isUnread: Bool
     }
 
     public let root: URL
@@ -47,8 +49,14 @@ public final class DiskIndex: @unchecked Sendable {
 
         static let directory: UInt8 = 1
         static let removed: UInt8 = 2
-        /// Folder whose contents were deliberately not read (see `skippedFolders`).
+        /// Folder whose contents were deliberately not read (see `skippedFolders`, mount points).
         static let skipped: UInt8 = 4
+        /// Folder the walk tried to open but could not.
+        static let unread: UInt8 = 8
+        /// While walking only: a mount point (another volume sits on it).
+        static let mountPoint: UInt8 = 16
+        /// While walking only: left out of the map (`ScanOptions.excluded`).
+        static let excluded: UInt8 = 32
 
         var isDirectory: Bool { flags & Self.directory != 0 }
         var isRemoved: Bool { flags & Self.removed != 0 }
@@ -249,7 +257,7 @@ public final class DiskIndex: @unchecked Sendable {
                     isDirectory: r.isDirectory, bytes: r.bytes, fileCount: Int(r.fileCount),
                     modified: Date(timeIntervalSince1970: TimeInterval(r.modified)),
                     accessed: r.accessed > 0 ? Date(timeIntervalSince1970: TimeInterval(r.accessed)) : nil,
-                    kind: Self.kinds[Int(r.kind)])
+                    kind: Self.kinds[Int(r.kind)], isUnread: r.isDirectory && r.flags & Record.unread != 0)
     }
 
     private func lookup(_ url: URL) -> NodeID? {
@@ -316,9 +324,33 @@ public final class DiskIndex: @unchecked Sendable {
     }
 
     /// Like `build(root:isCancelled:progress:)`; `expectedEntries` (the previous map's `nodeCount`) makes the progress fraction steadier.
-    public static func build(root: URL, expectedEntries: Int?, isCancelled: @escaping @Sendable () -> Bool = { false },
+    public static func build(root: URL, expectedEntries: Int?, options: ScanOptions = ScanOptions(),
+                             isCancelled: @escaping @Sendable () -> Bool = { false },
                              progress: @escaping @Sendable (Double, String) -> Void = { _, _ in }) -> DiskIndex {
-        Builder(root: root.standardizedFileURL, expected: expectedEntries, isCancelled: isCancelled, progress: progress).run()
+        Builder(root: root.standardizedFileURL, expected: expectedEntries, options: options, isCancelled: isCancelled, progress: progress).run()
+    }
+
+    /// Where the walk may go besides the root's own volume. By default it stays on that volume and never
+    /// opens a mount point inside the tree (an external drive, a disk image, a network share).
+    public struct ScanOptions: Sendable, Equatable {
+        /// Mount points (absolute paths) the walk enters anyway; their volumes count as part of the tree.
+        public var mountPoints: Set<String> = []
+        /// Absolute paths left out of the map entirely.
+        public var excluded: Set<String> = []
+
+        public init(mountPoints: Set<String> = [], excluded: Set<String> = []) {
+            self.mountPoints = mountPoints
+            self.excluded = excluded
+        }
+
+        /// The whole startup disk from "/": the system and data volumes (one volume group, joined by firmlinks),
+        /// plus the swap and boot volumes. Left out: the data volume's own mount point (its folders already
+        /// appear through the firmlinks, it would count twice), the Update volume (a second view of the system),
+        /// and the virtual folders that show the whole disk again (/.nofollow, /.resolve, /.vol).
+        public static var startupDisk: ScanOptions {
+            ScanOptions(mountPoints: ["/System/Volumes/VM", "/System/Volumes/Preboot"],
+                        excluded: ["/System/Volumes/Data", "/System/Volumes/Update", "/.nofollow", "/.resolve", "/.vol", "/dev"])
+        }
     }
 
     /// Folders whose contents are never read. Since macOS 14, opening another app's container raises
@@ -356,10 +388,17 @@ public final class DiskIndex: @unchecked Sendable {
             var names: [UInt8] = []
             /// Inode and entry index of hard-linked files (more than one link).
             var links: [(index: Int, inode: UInt64)] = []
+            var device: dev_t = 0
+        }
+
+        struct LinkKey: Hashable {
+            let device: dev_t
+            let inode: UInt64
         }
 
         let root: URL
         let expected: Int?
+        let options: ScanOptions
         let isCancelled: @Sendable () -> Bool
         let progress: @Sendable (Double, String) -> Void
         let skipped: Set<String>
@@ -370,17 +409,19 @@ public final class DiskIndex: @unchecked Sendable {
         var chunks: [Chunk?] = []
         var busy = 0
         var stopped = false
-        var seenLinks: Set<UInt64> = []
+        var seenLinks: Set<LinkKey> = []
         var entriesRead = 0
         var topCount = 0
         var topOutstanding: [Int] = []
         var topDone = 0
         var lastReport = Date.distantPast
-        var rootDevice: dev_t = 0
+        /// Volumes the walk may read: the root's, plus those of `options.mountPoints`.
+        var devices: Set<dev_t> = []
 
-        init(root: URL, expected: Int?, isCancelled: @escaping @Sendable () -> Bool, progress: @escaping @Sendable (Double, String) -> Void) {
+        init(root: URL, expected: Int?, options: ScanOptions, isCancelled: @escaping @Sendable () -> Bool, progress: @escaping @Sendable (Double, String) -> Void) {
             self.root = root
             self.expected = expected.flatMap { $0 > 1000 ? $0 : nil }
+            self.options = options
             self.isCancelled = isCancelled
             self.progress = progress
             skipped = Set(DiskIndex.skippedFolders)
@@ -392,7 +433,11 @@ public final class DiskIndex: @unchecked Sendable {
             rootRecord.kind = DiskIndex.otherKind
             var info = stat()
             guard stat(root.path, &info) == 0 else { return assemble(rootRecord) }
-            rootDevice = info.st_dev
+            devices = [info.st_dev]
+            for mount in options.mountPoints {
+                var mountInfo = stat()
+                if stat(mount, &mountInfo) == 0 { devices.insert(mountInfo.st_dev) }
+            }
             rootRecord.modified = UInt32(clamping: info.st_mtimespec.tv_sec)
             rootRecord.accessed = UInt32(clamping: info.st_atimespec.tv_sec)
             chunks = [nil]
@@ -430,12 +475,21 @@ public final class DiskIndex: @unchecked Sendable {
                     return
                 }
                 // Read and prepare outside the lock: paths of the subfolders to descend into.
-                var chunk = reader.read(job, rootDevice: rootDevice)
+                var chunk = reader.read(job, devices: devices)
                 var childPaths: [Int: (path: String, inherited: UInt8?)] = [:]
                 if var read = chunk {
                     for index in read.entries.indices where read.entries[index].isDirectory {
                         let entry = read.entries[index]
                         let path = job.path + "/" + Reader.name(at: entry.name, in: read.names)
+                        if options.excluded.contains(path) {
+                            read.entries[index].flags |= Record.excluded
+                            continue
+                        }
+                        // Another volume sits here: never opened (no prompts for removable or network volumes).
+                        if entry.flags & Record.mountPoint != 0, !options.mountPoints.contains(path) {
+                            read.entries[index].flags |= Record.skipped
+                            continue
+                        }
                         if entry.flags & Record.skipped != 0 || skipped.contains(path) {
                             read.entries[index].flags |= Record.skipped
                             continue
@@ -447,8 +501,10 @@ public final class DiskIndex: @unchecked Sendable {
 
                 condition.lock()
                 if var read = chunk {
-                    // Hard links: count the data once (the walk never leaves the volume, so the inode is unique).
-                    for link in read.links where !seenLinks.insert(link.inode).inserted { read.entries[link.index].bytes = 0 }
+                    // Hard links: count the data once (an inode is unique per volume).
+                    for link in read.links where !seenLinks.insert(LinkKey(device: read.device, inode: link.inode)).inserted {
+                        read.entries[link.index].bytes = 0
+                    }
                     read.links = []
                     var jobs: [Job] = []
                     for index in read.entries.indices {
@@ -511,18 +567,24 @@ public final class DiskIndex: @unchecked Sendable {
             }
             var first = rootRecord
             first.name = intern(root.lastPathComponent)
+            if chunks.isEmpty { first.flags |= Record.unread }
             records.append(first)
             var queue: [(chunk: Int32, node: Int32)] = chunks.isEmpty ? [] : [(0, 0)]
             var head = 0
             while head < queue.count {
                 let (chunkID, node) = queue[head]
                 head += 1
-                guard let chunk = chunks[Int(chunkID)] else { continue }   // unreadable or cancelled
+                guard let chunk = chunks[Int(chunkID)] else {   // unreadable or cancelled
+                    records[Int(node)].flags |= Record.unread
+                    continue
+                }
                 chunks[Int(chunkID)] = nil
+                let kept = chunk.entries.filter { $0.flags & Record.excluded == 0 }
                 records[Int(node)].firstChild = Int32(records.count)
-                records[Int(node)].childCount = Int32(chunk.entries.count)
-                for entry in chunk.entries {
+                records[Int(node)].childCount = Int32(kept.count)
+                for entry in kept {
                     var record = entry
+                    record.flags &= ~Record.mountPoint
                     record.parent = node
                     record.name = intern(Reader.name(at: entry.name, in: chunk.names))
                     record.firstChild = 0
@@ -596,6 +658,8 @@ public final class DiskIndex: @unchecked Sendable {
         static let cmnFileID: UInt32 = 0x0200_0000
         static let cmnError: UInt32 = 0x2000_0000
         static let cmnReturnedAttrs: UInt32 = 0x8000_0000
+        static let dirMountStatus: UInt32 = 0x0000_0004
+        static let mountStatusMountPoint: UInt32 = 0x0000_0001   // DIR_MNTSTATUS_MNTPOINT
         static let fileLinkCount: UInt32 = 0x0000_0001
         static let fileAllocSize: UInt32 = 0x0000_0004
         static let dataless: UInt32 = 0x4000_0000   // SF_DATALESS
@@ -609,20 +673,22 @@ public final class DiskIndex: @unchecked Sendable {
         }
 
         /// nil when the folder cannot be opened (permissions, privacy protection, gone) or is on another volume.
-        func read(_ job: Builder.Job, rootDevice: dev_t) -> Builder.Chunk? {
+        func read(_ job: Builder.Job, devices: Set<dev_t>) -> Builder.Chunk? {
             let fd = open(job.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC)
             guard fd >= 0 else { return nil }
             defer { close(fd) }
             var info = stat()
             // Never cross into another volume (mount points inside the tree).
-            guard fstat(fd, &info) == 0, info.st_dev == rootDevice else { return nil }
+            guard fstat(fd, &info) == 0, devices.contains(info.st_dev) else { return nil }
 
             var request = attrlist()
             request.bitmapcount = u_short(ATTR_BIT_MAP_COUNT)
             request.commonattr = Self.cmnReturnedAttrs | Self.cmnName | Self.cmnError | Self.cmnObjType
                 | Self.cmnModTime | Self.cmnAccTime | Self.cmnFlags | Self.cmnFileID
+            request.dirattr = Self.dirMountStatus
             request.fileattr = Self.fileLinkCount | Self.fileAllocSize
             var chunk = Builder.Chunk()
+            chunk.device = info.st_dev
             while true {
                 let count = getattrlistbulk(fd, &request, buffer, bufferSize, 0)
                 if count <= 0 { break }   // 0 = done, -1 = unreadable: keep what was read
@@ -660,6 +726,9 @@ public final class DiskIndex: @unchecked Sendable {
             if returned.commonattr & Self.cmnFlags != 0 { flags = field.loadUnaligned(as: UInt32.self); field += 4 }
             var fileID: UInt64 = 0
             if returned.commonattr & Self.cmnFileID != 0 { fileID = field.loadUnaligned(as: UInt64.self); field += 8 }
+            // Directory attributes come before file attributes in the buffer.
+            var mountStatus: UInt32 = 0
+            if returned.dirattr & Self.dirMountStatus != 0 { mountStatus = field.loadUnaligned(as: UInt32.self); field += 4 }
             var links: UInt32 = 1
             if returned.fileattr & Self.fileLinkCount != 0 { links = field.loadUnaligned(as: UInt32.self); field += 4 }
             var allocated: Int64 = 0
@@ -677,6 +746,7 @@ public final class DiskIndex: @unchecked Sendable {
                 record.flags = Record.directory
                 // Evicted iCloud folders: reading them would ask the File Provider to fetch the listing.
                 if flags & Self.dataless != 0 { record.flags |= Record.skipped }
+                if mountStatus & Self.mountStatusMountPoint != 0 { record.flags |= Record.mountPoint }
                 // A folder with a telling name or extension (Caches, node_modules, Foo.app, X.sparsebundle)
                 // passes its kind to everything below.
                 let name = String(decoding: nameBytes, as: UTF8.self)
