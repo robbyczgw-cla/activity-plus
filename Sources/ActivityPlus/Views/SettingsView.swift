@@ -272,6 +272,7 @@ private struct MenuBarSettings: View {
             .frame(minHeight: 260)
 
             Toggle("Turn the first item into a warning sign while the Mac is under strain", isOn: $warn)
+            NotchSettingsSection()
         }
         .padding(16)
         .onAppear { selection = selection ?? items.first?.id }
