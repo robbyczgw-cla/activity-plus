@@ -36,6 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             HelperClient.shared.attach(to: Monitor.shared)
             Monitor.shared.start()
             StatusItemsController.shared.start()
+            if !SnapshotRunner.isActive || ProcessInfo.processInfo.environment["ACTIVITYPLUS_NOTCH_DEMO"] != nil { NotchController.shared.start() }
             SnapshotRunner.runIfRequested()
             // Started at login (or asked not to): stay in the menu bar only.
             let hidden = ProcessInfo.processInfo.environment["ACTIVITYPLUS_HIDDEN"] != nil

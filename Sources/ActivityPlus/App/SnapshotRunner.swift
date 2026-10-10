@@ -83,6 +83,7 @@ enum SnapshotRunner {
                     try? png.write(to: URL(fileURLWithPath: "\(dir)/sharecard-\(dark ? "dark" : "light").png"))
                 }
             }
+            NotchController.renderSnapshots(to: dir)
             NSApp.terminate(nil)
         }
     }
