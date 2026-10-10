@@ -39,11 +39,9 @@ struct BiggestTab: View {
         ("Not opened for a year", "opened:>1y"),
     ]
 
-    // PREVIEW ONLY: ACTIVITYPLUS_FAKE_BIGGEST=1 shows made-up rows instead of querying the index (layout snapshots). Safe to remove.
-    private static let fake = ProcessInfo.processInfo.environment["ACTIVITYPLUS_FAKE_BIGGEST"] == "1"
 
     private var model: DiskIndexModel { services.diskIndex }
-    private var hasIndex: Bool { Self.fake || model.index != nil }
+    private var hasIndex: Bool { model.index != nil }
     private var selectedRows: [Row] { rows.filter { selected.contains($0.id) } }
     private var selectedBytes: UInt64 { selectedRows.reduce(0) { $0 + $1.bytes } }
 
@@ -266,10 +264,6 @@ struct BiggestTab: View {
 
     private func trash(_ items: [Row]) {
         defer { pendingTrash = [] }
-        guard !Self.fake else {
-            message = String(localized: "Preview mode: nothing was moved.")
-            return
-        }
         let result = model.trash(items.map(\.url))
         selected = []
         message = String(localized: "Moved \(Format.storage(result.freed)) to the Trash")
@@ -286,11 +280,6 @@ struct BiggestTab: View {
     }
 
     private func runQuery() async {
-        if Self.fake {
-            rows = BiggestFake.rows(matching: text)
-            matchSeconds = 0.0032
-            return
-        }
         guard let index = model.index else { rows = []; return }
         let query = text
         if !query.isEmpty {
@@ -354,42 +343,5 @@ private enum BiggestIcons {
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
         try? process.run()
-    }
-}
-
-// PREVIEW ONLY (ACTIVITYPLUS_FAKE_BIGGEST=1): made-up rows for layout snapshots. Safe to remove with the switch above.
-private enum BiggestFake {
-    static func rows(matching text: String) -> [BiggestTab.Row] {
-        let samples: [(String, String, FileKind, UInt64, Int)] = [
-            ("Final Cut Library 2025.fcpbundle", "~/Movies", .video, 48_200_000_000, 12),
-            ("Windows 11 ARM.pvm", "~/Parallels", .other, 31_700_000_000, 40),
-            ("Xcode_27_beta.xip", "~/Downloads", .archive, 9_800_000_000, 400),
-            ("Wedding 4K master.mov", "~/Movies/Projects", .video, 7_400_000_000, 700),
-            ("macOS Tahoe Installer.dmg", "~/Downloads", .archive, 5_900_000_000, 300),
-            ("Lightroom Catalog.lrcat", "~/Pictures/Lightroom", .dataCache, 4_100_000_000, 3),
-            ("backup-2024-03.tar.gz", "~/Documents/Backups", .archive, 3_300_000_000, 600),
-            ("Session Drums.wav", "~/Music/Logic", .audio, 2_200_000_000, 90),
-            ("node_modules.zip", "~/Projects/old-shop", .archive, 1_600_000_000, 520),
-            ("Trip Iceland RAW 0412.dng", "~/Pictures/Iceland", .image, 1_200_000_000, 200),
-            ("Annual report 2023 final.pdf", "~/Documents/Hifiteam", .document, 940_000_000, 650),
-            ("ubuntu-24.04.iso", "~/Downloads", .archive, 780_000_000, 410),
-            ("Podcast 41.m4a", "~/Music/Podcast", .audio, 620_000_000, 120),
-            ("train.sqlite", "~/Projects/ml/data", .dataCache, 540_000_000, 20),
-            ("Screen Recording 2025-11-02.mov", "~/Desktop", .video, 480_000_000, 340),
-            ("Keynote Sales Kick-off.key", "~/Documents/Slides", .document, 360_000_000, 500),
-            ("Budget export.csv", "~/Documents/Finance", .document, 210_000_000, 800),
-            ("libtorch.dylib", "~/Projects/ml/venv/lib", .code, 180_000_000, 30),
-            ("IMG_4021.HEIC", "~/Pictures", .image, 120_000_000, 15),
-            ("notes-backup.zip", "~/Documents", .archive, 96_000_000, 900),
-        ]
-        let words = text.lowercased().split(separator: " ").map(String.init).filter { !$0.contains(":") }
-        return samples.enumerated().compactMap { i, s in
-            if !words.isEmpty, !words.allSatisfy({ s.0.lowercased().contains($0) }) { return nil }
-            let modified = Date().addingTimeInterval(-Double(s.4) * 86_400)
-            let folder = s.1
-            return BiggestTab.Row(id: Int32(i), name: s.0, folder: folder,
-                                  url: URL(fileURLWithPath: NSHomeDirectory() + "/" + s.0), kind: s.2, bytes: s.3,
-                                  modified: modified, accessed: modified.addingTimeInterval(86_400 * 5))
-        }
     }
 }

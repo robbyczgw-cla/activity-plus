@@ -1723,6 +1723,7 @@
         }
       }
     },
+    "%@ cache": {},
     "%@ can do USB 3 but is connected at USB 2 speed, up to ten times slower. Usually the cable is a USB 2 or charging cable, or a hub or port in between only does USB 2. Try another cable or plug it straight into the Mac.": {
       "localizations": {
         "de": {
@@ -2213,6 +2214,16 @@
         }
       }
     },
+    "%@ in %lld items move to the Trash. The space is only freed when you empty the Trash. Items of apps that are open are left alone.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ in %2$lld items move to the Trash. The space is only freed when you empty the Trash. Items of apps that are open are left alone."
+          }
+        }
+      }
+    },
     "%@ in %lld processes": {
       "localizations": {
         "de": {
@@ -2449,6 +2460,7 @@
         }
       }
     },
+    "%@ is open": {},
     "%@ is pinged every 30 seconds and sees your IP address.": {
       "localizations": {
         "de": {
@@ -2771,6 +2783,7 @@
         }
       }
     },
+    "%@ move to the Trash. You can put them back from the Trash until you empty it.": {},
     "%@ moves to the Trash. Quit the apps first so they do not recreate their caches right away. Empty the Trash to actually free the space.": {
       "localizations": {
         "de": {
@@ -2818,6 +2831,7 @@
       }
     },
     "%@ moves to the Trash. You can put everything back from the Trash until you empty it.": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -2863,6 +2877,7 @@
         }
       }
     },
+    "%@ moves to the Trash. You can put it back from the Trash until you empty it.": {},
     "%@ now; normally about %@.": {
       "localizations": {
         "de": {
@@ -2915,6 +2930,7 @@
         }
       }
     },
+    "%@ of this folder": {},
     "%@ on average for %lld minutes.": {
       "localizations": {
         "de": {
@@ -3782,6 +3798,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@：%@"
+          }
+        }
+      }
+    },
+    "%@: %@ in %lld files": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@: %2$@ in %3$lld files"
           }
         }
       }
@@ -5106,6 +5132,7 @@
         }
       }
     },
+    "%lld files": {},
     "%lld h powered on": {
       "localizations": {
         "de": {
@@ -6170,6 +6197,16 @@
         }
       }
     },
+    "%lld of %lld ticked": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld of %2$lld ticked"
+          }
+        }
+      }
+    },
     "%lld other snapshots": {
       "localizations": {
         "de": {
@@ -7136,6 +7173,16 @@
         }
       }
     },
+    "%lld selected · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld selected · %2$@"
+          }
+        }
+      }
+    },
     "%lld system processes show only CPU and memory.": {
       "localizations": {
         "de": {
@@ -7256,6 +7303,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld个系统进程仅显示CPU和内存。"
+          }
+        }
+      }
+    },
+    "%lld things found, %@ in all. %@ is ticked.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld things found, %2$@ in all. %3$@ is ticked."
           }
         }
       }
@@ -8823,6 +8880,7 @@
         }
       }
     },
+    "<1 ms": {},
     "A USB device or USB activity woke the Mac.": {
       "localizations": {
         "de": {
@@ -8869,6 +8927,10 @@
         }
       }
     },
+    "A copy of memory macOS keeps so it can restore your session after a power loss while asleep; its size follows your RAM.": {},
+    "A folder macOS needs.": {},
+    "A full copy of an iPhone or iPad; removing it means that device can no longer be restored from this Mac.": {},
+    "A full copy of this device made on %@; removing it means the device can no longer be restored from this Mac to that state.": {},
     "A restart clears swap, leaked memory and stuck background processes. It is the cheapest fix there is.": {
       "localizations": {
         "de": {
@@ -8961,6 +9023,9 @@
         }
       }
     },
+    "A tool's download or build cache in your home folder; it downloads or rebuilds what it needs.": {},
+    "AI models and datasets downloaded by Python tools; they download again the next time a tool asks for them, which can take a while.": {},
+    "APFS snapshots": {},
     "Above %g GB": {
       "localizations": {
         "de": {
@@ -9330,6 +9395,7 @@
         }
       }
     },
+    "Activity+ reads your home folder once and shows which folders and kinds of files take the most space; nothing is moved or removed without asking.": {},
     "Adapter": {
       "extractionState": "manual",
       "localizations": {
@@ -9976,6 +10042,8 @@
         }
       }
     },
+    "Android system images": {},
+    "Android virtual devices": {},
     "Animations and video may stutter.": {
       "localizations": {
         "de": {
@@ -10068,6 +10136,8 @@
         }
       }
     },
+    "App builds you archived for the App Store or TestFlight; once removed they cannot be re-uploaded or symbolicated, so keep the releases you still support.": {},
+    "App caches": {},
     "App data": {
       "localizations": {
         "de": {
@@ -10160,6 +10230,7 @@
         }
       }
     },
+    "App logs": {},
     "App memory": {
       "extractionState": "manual",
       "localizations": {
@@ -10305,6 +10376,7 @@
         }
       }
     },
+    "Apps and tools rebuild these when needed.": {},
     "Apps appear here while they play sound.": {
       "localizations": {
         "de": {
@@ -10768,6 +10840,8 @@
         }
       }
     },
+    "Archive": {},
+    "Archives": {},
     "Around %@ (5-minute window)": {
       "localizations": {
         "de": {
@@ -11091,6 +11165,7 @@
         }
       }
     },
+    "Audio": {},
     "Automatically": {
       "localizations": {
         "de": {
@@ -11508,6 +11583,9 @@
         }
       }
     },
+    "Backup of %@": {},
+    "Backup of an iPhone or iPad; keep it if it is the only copy.": {},
+    "Backups and installers": {},
     "Balanced (CPU, memory, network, temperature)": {
       "localizations": {
         "de": {
@@ -12061,6 +12139,10 @@
         }
       }
     },
+    "Biggest": {},
+    "Biggest files": {
+      "extractionState": "manual"
+    },
     "Bits (Mbit/s), like internet plans": {
       "localizations": {
         "de": {
@@ -12153,6 +12235,7 @@
         }
       }
     },
+    "Browsers Playwright uses for tests; it downloads them again when you run a test (about 1 GB).": {},
     "Busiest apps": {
       "localizations": {
         "de": {
@@ -12431,6 +12514,8 @@
         }
       }
     },
+    "Cache": {},
+    "Cache the app rebuilds when it needs it.": {},
     "Cached files": {
       "extractionState": "manual",
       "localizations": {
@@ -12524,6 +12609,8 @@
         }
       }
     },
+    "Caches of your apps are only listed after the app scan.": {},
+    "Caches, logs and leftovers that can go to the Trash, each with the reason. Safe items are ticked; items that need a look first are not. Apps that are open are left alone. Nothing moves until you confirm.": {},
     "Calculating…": {
       "localizations": {
         "de": {
@@ -12616,6 +12703,7 @@
         }
       }
     },
+    "Cargo registry": {},
     "Celsius (°C)": {
       "localizations": {
         "de": {
@@ -13263,6 +13351,7 @@
         }
       }
     },
+    "Clean up": {},
     "Clear": {
       "localizations": {
         "de": {
@@ -13309,6 +13398,8 @@
         }
       }
     },
+    "Clear selection": {},
+    "Click a folder to look inside. Colors show the kind of files that take most of each folder.": {},
     "Click a menu bar item for the panel, or use the Dock icon for the window.": {
       "localizations": {
         "de": {
@@ -13494,6 +13585,7 @@
         }
       }
     },
+    "Code": {},
     "Color": {
       "localizations": {
         "de": {
@@ -13540,6 +13632,7 @@
         }
       }
     },
+    "Combine as you like: ext:mov size:>1gb age:>1y": {},
     "Combine when they don't fit": {
       "localizations": {
         "de": {
@@ -13770,6 +13863,7 @@
         }
       }
     },
+    "Compiled Go packages; the next build is slower while Go fills it again.": {},
     "Compressed": {
       "extractionState": "manual",
       "localizations": {
@@ -14424,6 +14518,7 @@
         }
       }
     },
+    "Could not be moved:": {},
     "Could not change it": {
       "localizations": {
         "de": {
@@ -14562,6 +14657,7 @@
         }
       }
     },
+    "Crash and diagnostic reports": {},
     "Critical": {
       "localizations": {
         "de": {
@@ -14655,6 +14751,10 @@
         }
       }
     },
+    "Data": {},
+    "Data & caches": {},
+    "Debug symbols Xcode copied from Apple Watches you connected; it copies them again the next time you connect that watchOS version.": {},
+    "Debug symbols Xcode copied from iPhones you connected; it copies them again the next time you connect that iOS version.": {},
     "Decimals": {
       "localizations": {
         "de": {
@@ -14931,6 +15031,8 @@
         }
       }
     },
+    "Developer data": {},
+    "Device backup": {},
     "Disk": {
       "localizations": {
         "de": {
@@ -15115,6 +15217,7 @@
         }
       }
     },
+    "Dismiss": {},
     "Display": {
       "extractionState": "manual",
       "localizations": {
@@ -15348,6 +15451,8 @@
         }
       }
     },
+    "Document": {},
+    "Documents": {},
     "Done": {
       "localizations": {
         "de": {
@@ -15486,6 +15591,7 @@
         }
       }
     },
+    "Download you have not opened for 90 days.": {},
     "Downloaded": {
       "localizations": {
         "de": {
@@ -15532,6 +15638,7 @@
         }
       }
     },
+    "Downloaded or built data the tool fetches or rebuilds on the next run.": {},
     "Downloaded today": {
       "localizations": {
         "de": {
@@ -15672,6 +15779,7 @@
       }
     },
     "Downloads not opened for 90 days": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -16042,6 +16150,7 @@
         }
       }
     },
+    "Each simulated iPhone or iPad keeps its own apps and data; Xcode can create new devices, but test data on the old ones is gone.": {},
     "Earlier: ": {
       "localizations": {
         "de": {
@@ -16180,6 +16289,7 @@
         }
       }
     },
+    "Emulators you created in Android Studio, with their apps and data; you can create new ones, but the data on these is lost.": {},
     "Energy": {
       "localizations": {
         "de": {
@@ -16410,6 +16520,7 @@
         }
       }
     },
+    "Everything else": {},
     "Exact figures for system processes": {
       "localizations": {
         "de": {
@@ -16502,6 +16613,7 @@
         }
       }
     },
+    "Explore": {},
     "Export": {
       "localizations": {
         "de": {
@@ -16917,7 +17029,9 @@
         }
       }
     },
+    "File extension": {},
     "Find Large Files": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -17009,6 +17123,7 @@
         }
       }
     },
+    "Find things to clean up": {},
     "Finds how much space each app takes with everything it stores in your Library, plus developer caches. Nothing is removed without asking; removed files go to the Trash.": {
       "localizations": {
         "de": {
@@ -17055,6 +17170,7 @@
         }
       }
     },
+    "Finished builds Xcode keeps for some workflows; a new build recreates them.": {},
     "First measurement in a moment…": {
       "localizations": {
         "de": {
@@ -18069,6 +18185,8 @@
         }
       }
     },
+    "Go build cache": {},
+    "Gradle caches": {},
     "Graphite": {
       "localizations": {
         "de": {
@@ -18991,6 +19109,8 @@
         }
       }
     },
+    "Home": {},
+    "Homebrew downloads": {},
     "Host names": {
       "localizations": {
         "de": {
@@ -19037,6 +19157,7 @@
         }
       }
     },
+    "Hugging Face models": {},
     "IOReport, only while a window or the panel is open.": {
       "localizations": {
         "de": {
@@ -19498,6 +19619,9 @@
         }
       }
     },
+    "Image": {},
+    "Images": {},
+    "Images the Android emulator boots from; Android Studio downloads them again when an emulator needs one.": {},
     "Import Settings…": {
       "localizations": {
         "de": {
@@ -19636,6 +19760,7 @@
         }
       }
     },
+    "Inside an app. Remove the whole app instead.": {},
     "Inspect…": {
       "localizations": {
         "de": {
@@ -19728,7 +19853,10 @@
         }
       }
     },
+    "Installer you most likely used already; download it again if you need it.": {},
+    "Installers": {},
     "Installers (.dmg, .pkg)": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -19774,6 +19902,7 @@
         }
       }
     },
+    "Installers Homebrew downloaded earlier; `brew cleanup` removes the same files, and Homebrew downloads again what it needs.": {},
     "Instructions per cycle": {
       "localizations": {
         "de": {
@@ -20658,6 +20787,7 @@
       }
     },
     "Large files": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -20702,6 +20832,11 @@
           }
         }
       }
+    },
+    "Larger (or <) than a size": {},
+    "Largest files": {},
+    "Largest items": {
+      "extractionState": "manual"
     },
     "Last 24 hours": {
       "localizations": {
@@ -20934,6 +21069,7 @@
         }
       }
     },
+    "Leave out names containing a word": {},
     "Leave the Mac alone meanwhile, or the measurement gets noisy.": {
       "localizations": {
         "de": {
@@ -20980,6 +21116,7 @@
         }
       }
     },
+    "Left alone because the app is open: %@": {},
     "Left by macOS updates so the system can be restored. macOS removes them on its own.": {
       "localizations": {
         "de": {
@@ -21119,6 +21256,7 @@
         }
       }
     },
+    "Libraries and build output Gradle downloaded; it downloads them again on the next build, which needs internet and takes longer.": {},
     "Line": {
       "localizations": {
         "de": {
@@ -21305,6 +21443,8 @@
         }
       }
     },
+    "Local snapshots": {},
+    "Log files; the app writes new ones.": {},
     "Login Items…": {
       "localizations": {
         "de": {
@@ -21443,6 +21583,7 @@
         }
       }
     },
+    "Logs and diagnostics": {},
     "Look": {
       "localizations": {
         "de": {
@@ -21489,6 +21630,8 @@
         }
       }
     },
+    "Look again": {},
+    "Look first": {},
     "Look up": {
       "localizations": {
         "de": {
@@ -21674,6 +21817,7 @@
       }
     },
     "Looks through Downloads, Desktop, Documents and Movies for installers you already used, downloads you never opened again and very large files. Nothing is selected or removed unless you choose it.": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -22042,6 +22186,11 @@
         }
       }
     },
+    "Managed by macOS": {},
+    "Many small cache folders, each under 50 MB; apps rebuild them as they need them.": {},
+    "Map": {
+      "extractionState": "manual"
+    },
     "Match macOS": {
       "localizations": {
         "de": {
@@ -22134,6 +22283,7 @@
         }
       }
     },
+    "Matches": {},
     "Measure": {
       "localizations": {
         "de": {
@@ -22226,6 +22376,7 @@
         }
       }
     },
+    "Measure again": {},
     "Measured %@": {
       "localizations": {
         "de": {
@@ -22272,6 +22423,7 @@
         }
       }
     },
+    "Measured %@. Sizes are space actually used on disk.": {},
     "Measured by the kernel's per-process energy counters, not estimated. Processes owned by macOS are not included.": {
       "localizations": {
         "de": {
@@ -22502,6 +22654,7 @@
         }
       }
     },
+    "Measuring walks a few folders and takes a few seconds, longer if Xcode simulators or big caches are present.": {},
     "Measuring with every window visible": {
       "localizations": {
         "de": {
@@ -22686,6 +22839,7 @@
         }
       }
     },
+    "Memory macOS moved to disk when RAM filled up; it grows and shrinks on its own and goes away at restart.": {},
     "Memory pressure": {
       "extractionState": "manual",
       "localizations": {
@@ -23193,6 +23347,8 @@
         }
       }
     },
+    "Modified %@": {},
+    "Modified more than 90 days ago": {},
     "Monday notification": {
       "localizations": {
         "de": {
@@ -23470,6 +23626,7 @@
       }
     },
     "Mounted disk images": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -23557,6 +23714,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "将“%@”移到废纸篓…"
+          }
+        }
+      }
+    },
+    "Move %lld items (%@) to Trash…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Move %1$lld items (%2$@) to Trash…"
           }
         }
       }
@@ -23731,6 +23898,20 @@
         }
       }
     },
+    "Move to Trash…": {},
+    "Move “%@” to the Trash?": {},
+    "Moved %@ in %lld items to the Trash. Empty the Trash to free the space.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Moved %1$@ in %2$lld items to the Trash. Empty the Trash to free the space."
+          }
+        }
+      }
+    },
+    "Moved %@ to the Trash": {},
+    "Moved %@ to the Trash. Empty the Trash to actually free the space.": {},
     "Moves %@ and everything it keeps in your Library to the Trash": {
       "localizations": {
         "de": {
@@ -24976,6 +25157,7 @@
         }
       }
     },
+    "No files match.": {},
     "No lost packets in this period.": {
       "localizations": {
         "de": {
@@ -25943,6 +26125,9 @@
         }
       }
     },
+    "Not opened for 180 days": {},
+    "Not opened for a year": {},
+    "Not read: macOS protects other apps' data": {},
     "Not running": {
       "localizations": {
         "de": {
@@ -26081,6 +26266,7 @@
         }
       }
     },
+    "Nothing found in the usual places.": {},
     "Nothing is playing": {
       "localizations": {
         "de": {
@@ -26174,6 +26360,7 @@
       }
     },
     "Nothing large or forgotten found.": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -26219,6 +26406,7 @@
         }
       }
     },
+    "Nothing to clean up right now.": {},
     "Nothing. Your Mac can sleep when idle.": {
       "localizations": {
         "de": {
@@ -26496,6 +26684,7 @@
         }
       }
     },
+    "One shared copy of the packages your projects use; pnpm downloads them again, and projects keep working until you reinstall.": {},
     "Only %.0f Hz: often a cable or adapter that cannot carry more at this resolution.": {
       "localizations": {
         "de": {
@@ -26778,6 +26967,7 @@
         }
       }
     },
+    "Open": {},
     "Open Activity+": {
       "localizations": {
         "de": {
@@ -27054,6 +27244,7 @@
         }
       }
     },
+    "Open windows the app restores on launch; it starts fresh without them.": {},
     "Opening files and apps waits for the disk right now.": {
       "localizations": {
         "de": {
@@ -27146,6 +27337,7 @@
         }
       }
     },
+    "Other caches": {},
     "Other open ports (%lld)": {
       "localizations": {
         "de": {
@@ -27192,6 +27384,9 @@
         }
       }
     },
+    "Outside the scanned folder.": {},
+    "Outside your home folder or protected.": {},
+    "Over 1 GB": {},
     "Overview": {
       "localizations": {
         "de": {
@@ -27515,6 +27710,8 @@
         }
       }
     },
+    "Packages Yarn downloaded earlier; it downloads them again when a project needs them.": {},
+    "Packages npm downloaded earlier; it downloads them again when a project needs them.": {},
     "Panel": {
       "localizations": {
         "de": {
@@ -28161,6 +28358,7 @@
         }
       }
     },
+    "Playwright browsers": {},
     "Plugged in": {
       "localizations": {
         "de": {
@@ -28253,6 +28451,7 @@
         }
       }
     },
+    "Pods and spec files CocoaPods downloaded earlier; `pod install` downloads them again.": {},
     "Point at the chart to see which processes were behind a spike.": {
       "localizations": {
         "de": {
@@ -28809,6 +29008,11 @@
         }
       }
     },
+    "Purgeable space": {},
+    "Python packages pip downloaded earlier; it downloads them again when needed.": {},
+    "Python packages uv downloaded earlier; it downloads them again when a project needs them.": {},
+    "Python packages uv downloaded; it fetches them again when a project needs them.": {},
+    "Quick Look": {},
     "Quit": {
       "localizations": {
         "de": {
@@ -29508,6 +29712,9 @@
         }
       }
     },
+    "Reading your home folder": {
+      "extractionState": "manual"
+    },
     "Reads about 60 sensors every 10 seconds.": {
       "localizations": {
         "de": {
@@ -29840,6 +30047,7 @@
         }
       }
     },
+    "Removable, but may hold something you want.": {},
     "Remove": {
       "localizations": {
         "de": {
@@ -30162,6 +30370,7 @@
         }
       }
     },
+    "Reports macOS wrote when apps crashed or hung; removing them loses nothing but the history.": {},
     "Rescan": {
       "localizations": {
         "de": {
@@ -30576,6 +30785,7 @@
         }
       }
     },
+    "Restore points from Time Machine and macOS updates; macOS removes them on its own and does not report their size.": {},
     "Review": {
       "localizations": {
         "de": {
@@ -30622,6 +30832,7 @@
         }
       }
     },
+    "Review in Clean up": {},
     "Right now": {
       "localizations": {
         "de": {
@@ -31135,6 +31346,7 @@
         }
       }
     },
+    "Rust crates Cargo downloaded earlier; it downloads them again on the next build.": {},
     "SSD": {
       "localizations": {
         "de": {
@@ -31181,6 +31393,7 @@
         }
       }
     },
+    "Safe to clear": {},
     "Save": {
       "localizations": {
         "de": {
@@ -31365,6 +31578,7 @@
         }
       }
     },
+    "Saved state": {},
     "Saved window state": {
       "localizations": {
         "de": {
@@ -31412,6 +31626,7 @@
       }
     },
     "Scan Again": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -31549,6 +31764,8 @@
         }
       }
     },
+    "Scan home folder": {},
+    "Scanned %@": {},
     "Search": {
       "localizations": {
         "de": {
@@ -31641,6 +31858,7 @@
         }
       }
     },
+    "Search by name, kind, size or age": {},
     "Search startup items": {
       "localizations": {
         "de": {
@@ -31687,6 +31905,8 @@
         }
       }
     },
+    "Search syntax": {},
+    "Searching…": {},
     "Seconds": {
       "localizations": {
         "de": {
@@ -31778,6 +31998,9 @@
           }
         }
       }
+    },
+    "See what takes the space": {
+      "extractionState": "manual"
     },
     "Select all caches": {
       "localizations": {
@@ -31871,6 +32094,7 @@
         }
       }
     },
+    "Select files to move them to the Trash.": {},
     "Select none": {
       "localizations": {
         "de": {
@@ -32516,6 +32740,7 @@
         }
       }
     },
+    "Show fewer": {},
     "Show in Finder": {
       "localizations": {
         "de": {
@@ -32655,6 +32880,7 @@
         }
       }
     },
+    "Show more (%lld items)": {},
     "Show servers": {
       "localizations": {
         "de": {
@@ -32697,6 +32923,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "显示服务器"
+          }
+        }
+      }
+    },
+    "Show the %lld largest of %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Show the %1$lld largest of %2$lld"
           }
         }
       }
@@ -32747,6 +32983,7 @@
         }
       }
     },
+    "Shown for understanding only. macOS manages these itself.": {},
     "Shows": {
       "localizations": {
         "de": {
@@ -32978,6 +33215,11 @@
         }
       }
     },
+    "Simulator caches": {},
+    "Simulator devices": {},
+    "Simulator runtimes": {},
+    "Size between two values": {},
+    "Size not reported": {},
     "Sleep": {
       "localizations": {
         "de": {
@@ -33117,6 +33359,7 @@
         }
       }
     },
+    "Sleep image": {},
     "Slowed by heat": {
       "extractionState": "manual",
       "localizations": {
@@ -33349,6 +33592,7 @@
         }
       }
     },
+    "Space macOS frees by itself when something needs it; it overlaps with the caches and snapshots above, so it is not added to the bar.": {},
     "Space you can't see in Finder": {
       "extractionState": "manual",
       "localizations": {
@@ -33443,6 +33687,7 @@
         }
       }
     },
+    "Speeds up launching simulators; Xcode rebuilds it, and the next launch is slower.": {},
     "Spotlight is indexing": {
       "localizations": {
         "de": {
@@ -34370,6 +34615,7 @@
         }
       }
     },
+    "Swap files": {},
     "Swap used": {
       "extractionState": "manual",
       "localizations": {
@@ -34602,6 +34848,8 @@
         }
       }
     },
+    "System Data": {},
+    "System Data by group": {},
     "System daemon": {
       "localizations": {
         "de": {
@@ -35062,6 +35310,9 @@
         }
       }
     },
+    "Temporary files %@ keeps to start and load faster; it rebuilds them as it needs them.": {},
+    "Temporary files kept by an app or tool to run faster; it rebuilds them as it needs them.": {},
+    "Text logs apps write while they run; new ones are created when needed.": {},
     "The %lld W adapter": {
       "localizations": {
         "de": {
@@ -35896,6 +36147,8 @@
         }
       }
     },
+    "The iOS, watchOS and tvOS versions the simulators run; remove old ones in Xcode Settings > Components, and download again when needed.": {},
+    "The installer you downloaded for a macOS version; you can download it again from Apple when you need it.": {},
     "The lid was opened.": {
       "localizations": {
         "de": {
@@ -36588,6 +36841,8 @@
         }
       }
     },
+    "This folder is empty or could not be read.": {},
+    "This is a file.": {},
     "This is what slows your Mac down the most right now; details and a fix are below.": {
       "localizations": {
         "de": {
@@ -36681,6 +36936,8 @@
         }
       }
     },
+    "This tab searches the map of your home folder that Explore builds. Scan once and every search after that is instant.": {},
+    "This takes a moment the first time. The map is kept, so it opens instantly next time.": {},
     "This week so far": {
       "localizations": {
         "de": {
@@ -36727,6 +36984,7 @@
         }
       }
     },
+    "Tick or untick everything in this group": {},
     "Time": {
       "localizations": {
         "de": {
@@ -38854,6 +39112,10 @@
         }
       }
     },
+    "Very large file; check that you still need it.": {},
+    "Video": {},
+    "Videos": {},
+    "View": {},
     "Voltage · current": {
       "extractionState": "manual",
       "localizations": {
@@ -39361,6 +39623,9 @@
           }
         }
       }
+    },
+    "What is in System Data": {
+      "extractionState": "manual"
     },
     "What keeps WindowServer busy": {
       "extractionState": "manual",
@@ -40293,6 +40558,7 @@
         }
       }
     },
+    "Words in the name; all must match": {},
     "Write": {
       "localizations": {
         "de": {
@@ -40666,7 +40932,10 @@
         }
       }
     },
+    "Xcode Archives": {},
+    "Xcode archive of an old build; you only need it to submit that build again or to read its crash reports.": {},
     "Xcode archives": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -40712,6 +40981,9 @@
         }
       }
     },
+    "Xcode build products": {},
+    "Xcode rebuilds this the next time you build; the first build is slower.": {},
+    "Yarn cache": {},
     "Yes": {
       "localizations": {
         "de": {
@@ -42055,6 +42327,7 @@
       }
     },
     "iPhone and iPad backups": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -42574,6 +42847,7 @@
         }
       }
     },
+    "macOS installer you downloaded; the App Store or Software Update gets it again.": {},
     "macOS is compressing memory. It still copes, but quitting unused apps gives it room.": {
       "localizations": {
         "de": {
@@ -42942,6 +43216,7 @@
         }
       }
     },
+    "macOS shows one grey bar called System Data. This names its parts and says which ones are safe to clear. Activity+ only measures here and changes nothing.": {},
     "measured since Activity+ started, ": {
       "extractionState": "manual",
       "localizations": {
@@ -43081,6 +43356,7 @@
         }
       }
     },
+    "modified %@": {},
     "more than 50 years": {
       "localizations": {
         "de": {
@@ -43357,6 +43633,7 @@
         }
       }
     },
+    "npm cache": {},
     "of %@": {
       "localizations": {
         "de": {
@@ -43403,6 +43680,9 @@
         }
       }
     },
+    "opened %@": {},
+    "pip cache": {},
+    "pnpm store": {},
     "poor, expect dropouts": {
       "localizations": {
         "de": {
@@ -44049,6 +44329,7 @@
         }
       }
     },
+    "uv cache": {},
     "v": {
       "localizations": {
         "de": {
@@ -44095,6 +44376,7 @@
         }
       }
     },
+    "video, image, audio, archive, code, document, app": {},
     "weak": {
       "localizations": {
         "de": {
@@ -44275,6 +44557,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "–"
+          }
+        }
+      }
+    },
+    "“%@” could not be moved to the Trash: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "“%1$@” could not be moved to the Trash: %2$@"
           }
         }
       }
