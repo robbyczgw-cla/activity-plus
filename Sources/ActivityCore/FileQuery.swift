@@ -52,10 +52,13 @@ public struct FileQuery: Sendable, Equatable {
     public func matches(name: String, bytes: UInt64, modified: Date, accessed: Date?, kind: FileKind, now: Date = Date()) -> Bool {
         let ageDays = now.timeIntervalSince(modified) / 86_400
         let openedDays = accessed.map { now.timeIntervalSince($0) / 86_400 }
+        // Folding is the expensive part on a million names: do it once, and only when a word needs it.
+        let needsText = terms.contains { if case .text = $0.criterion { true } else { false } }
+        let folded = needsText ? FileQuery.fold(name) : ""
         return terms.allSatisfy { term in
             let hit: Bool
             switch term.criterion {
-            case .text(let needle): hit = FileQuery.fold(name).contains(needle)
+            case .text(let needle): hit = folded.contains(needle)
             case .ext(let exts): hit = exts.contains(FileQuery.extensionOf(name))
             case .kind(let kinds): hit = kinds.contains(kind)
             case .size(let range): hit = range.contains(Double(bytes))
