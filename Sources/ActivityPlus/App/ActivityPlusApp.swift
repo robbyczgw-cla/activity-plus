@@ -22,6 +22,7 @@ struct ActivityPlusApp: App {
         Settings {
             SettingsView().environment(monitor).environment(AppServices.shared)
         }
+        .windowResizability(.contentMinSize)
     }
 }
 

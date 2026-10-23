@@ -17,8 +17,8 @@ struct SettingsView: View {
             PerformanceSettings().tabItem { Label("Performance", systemImage: "gauge.with.dots.needle.33percent") }.tag("performance")
             UpdatesSettings().tabItem { Label("Updates", systemImage: "arrow.down.circle") }.tag("updates")
         }
-        .frame(width: 640)
-        .frame(minHeight: 460)
+        // Resizable: the Menu Bar tab in particular has more in it than fits a small window.
+        .frame(minWidth: 640, idealWidth: 720, maxWidth: .infinity, minHeight: 460, idealHeight: 640, maxHeight: .infinity)
     }
 }
 
@@ -183,6 +183,7 @@ private struct MenuBarSettings: View {
     }
 
     var body: some View {
+        ScrollView {
         VStack(alignment: .leading, spacing: 12) {
             if !AppPresence.current.showsMenuBar {
                 Label("The menu bar is off (General → Show Activity+ in → Dock only). These items appear once you turn it back on.",
@@ -269,12 +270,14 @@ private struct MenuBarSettings: View {
                 }
                 .frame(minWidth: 320)
             }
-            .frame(minHeight: 260)
+            // Inside a scroll view the split view needs a height of its own.
+            .frame(height: 340)
 
             Toggle("Turn the first item into a warning sign while the Mac is under strain", isOn: $warn)
             NotchSettingsSection()
         }
         .padding(16)
+        }
         .onAppear { selection = selection ?? items.first?.id }
     }
 

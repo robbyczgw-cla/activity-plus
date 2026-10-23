@@ -61,6 +61,15 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.retryLayout() }
         }
+        // Space next to the notch can come back: after waking, unlocking, or when another app's items go away.
+        // Then try all items again instead of staying reduced for good.
+        let center = NSWorkspace.shared.notificationCenter
+        for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification,
+                     NSWorkspace.sessionDidBecomeActiveNotification, NSWorkspace.didTerminateApplicationNotification] {
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.retryIfReduced(after: name == NSWorkspace.didTerminateApplicationNotification ? 1 : 3) }
+            }
+        }
         // The clock must tick even when sampling is slow.
         Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
@@ -128,6 +137,26 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in self?.checkFit() }
     }
 
+    /// Only when Activity+ had to combine or shorten its items: give them another try once things settle.
+    private func retryIfReduced(after seconds: Double) {
+        let status = MenuBarLayoutStatus.shared
+        guard status.autoCombined || status.combinedShowing != nil else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { [weak self] in
+            guard Self.canJudgeFit else { return }
+            self?.retryLayout()
+        }
+    }
+
+    /// Whether the menu bar can be judged right now. While the display sleeps, the screen is locked or a full-screen
+    /// app hides the menu bar, status items have no place on screen; that says nothing about whether they fit.
+    static var canJudgeFit: Bool {
+        guard NSMenu.menuBarVisible() else { return false }
+        if CGDisplayIsAsleep(CGMainDisplayID()) != 0 { return false }
+        if let session = CGSessionCopyCurrentDictionary() as? [String: Any],
+           session["CGSSessionScreenIsLocked"] as? Bool == true { return false }
+        return true
+    }
+
     /// Back to separate items (in automatic mode) and look again whether they fit.
     private func retryLayout() {
         MenuBarLayoutStatus.shared.autoCombined = false
@@ -136,13 +165,23 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
 
     /// Counts items macOS could not show. Items that do not fit are piled up at one spot next to the
     /// notch (on top of each other) or moved under it; on a screen without a notch they leave the screen.
-    private func checkFit() {
+    /// Acts only on a result seen twice, two seconds apart: right after waking or a display change, items are
+    /// still being placed and look hidden for a moment.
+    private func checkFit(confirming: Bool = false) {
         let debug = ProcessInfo.processInfo.environment["ACTIVITYPLUS_DEBUG_MENUBAR"] != nil
+        guard Self.canJudgeFit else {
+            if debug { NSLog("menubar fit: can't judge now (asleep, locked or full screen)") }
+            return
+        }
+        let confirm = { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { self?.checkFit(confirming: true) }
+        }
         if let combined {
-            let hidden = Self.isHidden(combined, among: [])
+            guard let hidden = Self.isHidden(combined, among: []) else { return }
             if debug { NSLog("menubar fit: combined (%ld values) window %@ hidden %d", segments.count, combined.button?.window.map { NSStringFromRect($0.frame) } ?? "none", hidden ? 1 : 0) }
             // Even one item is too wide: show fewer values until it fits; the panel has them all.
             if hidden, segments.count > 1 {
+                guard confirming else { return confirm() }
                 combinedLimit = max(1, segments.count - max(1, segments.count / 3))
                 MenuBarLayoutStatus.shared.combinedShowing = combinedLimit
                 refresh()
@@ -151,7 +190,10 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
             return
         }
         let shown = entries.map(\.item).filter(\.isVisible)   // items below their threshold are hidden on purpose
-        let hidden = shown.filter { Self.isHidden($0, among: shown) }.count
+        let results = shown.map { Self.isHidden($0, among: shown) }
+        guard !results.contains(nil) else { return }   // not placed yet: no verdict
+        let hidden = results.filter { $0 == true }.count
+        if hidden > 0, !confirming, MenuBarLayout.current == .automatic { return confirm() }
         MenuBarLayoutStatus.shared.hidden = hidden
         if debug {
             for entry in entries {
@@ -165,10 +207,11 @@ final class StatusItemsController: NSObject, NSPopoverDelegate {
         }
     }
 
-    static func isHidden(_ item: NSStatusItem, among others: [NSStatusItem]) -> Bool {
-        guard let window = item.button?.window else { return true }
+    /// `nil` when it can't be told (no window or no screen yet), which is not the same as hidden.
+    static func isHidden(_ item: NSStatusItem, among others: [NSStatusItem]) -> Bool? {
+        guard let window = item.button?.window else { return nil }
         let frame = window.frame
-        guard let screen = window.screen ?? NSScreen.screens.first(where: { $0.frame.intersects(frame) }) else { return true }
+        guard let screen = window.screen ?? NSScreen.screens.first(where: { $0.frame.intersects(frame) }) else { return nil }
         if frame.maxX <= screen.frame.minX || frame.minX >= screen.frame.maxX { return true }
         if let right = screen.auxiliaryTopRightArea {
             // The area right of the notch; read as global or as screen-relative, whichever lies on this screen.
