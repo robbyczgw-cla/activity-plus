@@ -29,10 +29,11 @@ Get the latest notarized build from **[activityplus.xyz](https://activityplus.xy
 Or with [Homebrew](https://github.com/robbyczgw-cla/homebrew-tap):
 
 ```sh
+brew trust --cask robbyczgw-cla/tap/activity-plus
 brew install robbyczgw-cla/tap/activity-plus
 ```
 
-This also puts the `aplus` command line tool on your path.
+Homebrew only loads casks from taps you have trusted, hence the first line. This also puts the `aplus` command line tool on your path.
 
 Requires a Mac with Apple silicon and macOS 15 Sequoia or later. Developed and tested on an M1 Max. The app follows your Mac's language: English, German, French, Spanish, Italian, Portuguese (Brazil), Japanese or Simplified Chinese.
 
