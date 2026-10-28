@@ -8,14 +8,10 @@ import IOKit.ps
 final class CPUSampler {
     private var previousTotal: [UInt32]?
     private var previousCores: [[UInt32]] = []
-    private let efficiencyCores: Int = {
-        guard (Sys.sysctlInt("hw.nperflevels") ?? 1) > 1 else { return 0 }
-        return Sys.sysctlInt("hw.perflevel1.logicalcpu") ?? 0
-    }()
+    private let topology = CoreTopology.current
 
     func sample() -> CPUStats {
         var stats = CPUStats()
-        stats.efficiencyCores = efficiencyCores
 
         if let ticks = Self.totalTicks() {
             if let prev = previousTotal {
@@ -43,6 +39,7 @@ final class CPUSampler {
             stats.perCore = Array(repeating: 0, count: cores.count)
         }
         previousCores = cores
+        stats.clusters = topology.fitted(to: cores.count).clusters
 
         var loads = [Double](repeating: 0, count: 3)
         if getloadavg(&loads, 3) == 3 { stats.loadAverage = (loads[0], loads[1], loads[2]) }

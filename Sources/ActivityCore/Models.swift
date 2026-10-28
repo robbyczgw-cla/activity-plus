@@ -37,7 +37,7 @@ public struct ProcessSample: Sendable, Identifiable, Hashable {
     public var cycleRate: Double = 0
 
     /// Share of CPU time on performance cores (0…1), nil while idle.
-    public var pCoreShare: Double? { cpuNanosRate > 1_000_000 ? min(1, pCoreNanosRate / cpuNanosRate) : nil }
+    public var pCoreShare: Double? { CoreTopology.current.isClassic && cpuNanosRate > 1_000_000 ? min(1, pCoreNanosRate / cpuNanosRate) : nil }
     /// Instructions per cycle, nil while idle.
     public var ipc: Double? { cycleRate > 1_000_000 ? instructionRate / cycleRate : nil }
 
@@ -110,7 +110,7 @@ public struct AppGroup: Sendable, Identifiable, Hashable {
         let pNanos = processes.reduce(0) { $0 + $1.pCoreNanosRate }
         let instructions = processes.reduce(0) { $0 + $1.instructionRate }
         let cycles = processes.reduce(0) { $0 + $1.cycleRate }
-        pCoreShare = cpuNanos > 1_000_000 ? min(1, pNanos / cpuNanos) : nil
+        pCoreShare = CoreTopology.current.isClassic && cpuNanos > 1_000_000 ? min(1, pNanos / cpuNanos) : nil
         ipc = cycles > 1_000_000 ? instructions / cycles : nil
     }
 }
@@ -120,7 +120,10 @@ public struct CPUStats: Sendable, Hashable {
     public var system: Double = 0
     public var idle: Double = 100
     public var perCore: [Double] = []   // 0…100 each
-    public var efficiencyCores: Int = 0 // The first N entries of perCore are E-cores on Apple silicon
+    /// Clusters by CPU number (the entries of perCore), empty before the first sample.
+    public var clusters: [CoreCluster] = []
+    /// The first N entries of perCore are E-cores on Apple silicon.
+    public var efficiencyCores: Int { clusters.filter { $0.kind == .efficiency }.reduce(0) { $0 + $1.count } }
     public var loadAverage: (Double, Double, Double) = (0, 0, 0)
     public var total: Double { user + system }
 

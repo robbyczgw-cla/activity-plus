@@ -5,15 +5,24 @@ import SwiftUI
 struct CoreTypeCard: View {
     let apps: [AppGroup]
 
+    /// Only on a performance + efficiency chip is the kernel's P-core time known to mean what the bar says.
+    /// With super or unknown clusters the split is hidden and only IPC is shown.
+    private let attributed = CoreTopology.current.isClassic
+
     private var busy: [AppGroup] {
-        apps.filter { $0.pCoreShare != nil && $0.cpuPercent >= 1 }.sorted { $0.cpuPercent > $1.cpuPercent }.prefix(8).map { $0 }
+        apps.filter { (attributed ? $0.pCoreShare != nil : $0.ipc != nil) && $0.cpuPercent >= 1 }.sorted { $0.cpuPercent > $1.cpuPercent }.prefix(8).map { $0 }
     }
 
     var body: some View {
         Card {
-            CardHeader(title: "Performance and efficiency cores", systemImage: "cpu.fill", tint: .blue)
+            CardHeader(title: attributed ? "Performance and efficiency cores" : "Instructions per cycle", systemImage: "cpu.fill", tint: .blue)
+            if attributed {
             Text("Performance cores are fast and draw more power; efficiency cores are slower and frugal. IPC is how many instructions an app gets through per clock cycle.")
                 .appFont(.caption).foregroundStyle(.secondary)
+            } else {
+                Text("IPC is how many instructions an app gets through per clock cycle. This chip has more than two kinds of cores, so the split by core type is not shown.")
+                    .appFont(.caption).foregroundStyle(.secondary)
+            }
             if busy.isEmpty {
                 Text("No app is busy right now.").foregroundStyle(.secondary)
             }
@@ -22,6 +31,7 @@ struct CoreTypeCard: View {
                 HStack(spacing: 10) {
                     Image(nsImage: IconCache.icon(for: app)).resizable().frame(width: 18, height: 18)
                     Text(app.name).lineLimit(1).textColumn(width: 170, alignment: .leading)
+                    if attributed {
                     GeometryReader { geo in
                         HStack(spacing: 0) {
                             Rectangle().fill(Color.blue).frame(width: geo.size.width * share)
@@ -31,15 +41,20 @@ struct CoreTypeCard: View {
                     }
                     .frame(height: 8)
                     Text("P \(Int((share * 100).rounded())) %").monospacedDigit().textColumn(width: 56, alignment: .trailing)
+                    } else {
+                        Spacer()
+                    }
                     Text(app.ipc.map { String(format: String(localized: "IPC %.2f"), $0) } ?? "–").monospacedDigit().foregroundStyle(.secondary)
                         .textColumn(width: 70, alignment: .trailing)
                 }
                 .appFont(.callout)
-                .help(String(localized: "\(Format.percent(app.cpuPercent)) CPU · \(Int((share * 100).rounded())) % on performance cores"))
+                .help(attributed ? String(localized: "\(Format.percent(app.cpuPercent)) CPU · \(Int((share * 100).rounded())) % on performance cores") : Format.percent(app.cpuPercent))
             }
             HStack(spacing: 14) {
-                Label("Performance cores", systemImage: "square.fill").foregroundStyle(.blue)
-                Label("Efficiency cores", systemImage: "square.fill").foregroundStyle(.teal)
+                if attributed {
+                    Label("Performance cores", systemImage: "square.fill").foregroundStyle(.blue)
+                    Label("Efficiency cores", systemImage: "square.fill").foregroundStyle(.teal)
+                }
                 Spacer()
                 Text("Only your own processes; system processes need the helper.").foregroundStyle(.tertiary)
             }

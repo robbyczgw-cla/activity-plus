@@ -49,6 +49,7 @@ public final class IOReportSampler {
     private let stateName: StateName?
     private let stateResidency: StateResidency?
     private let unitLabel: UnitLabel?
+    private let topology = CoreTopology.current
     private var channels: CFDictionary?
     private var subscription: AnyObject?
     private var previous: CFDictionary?
@@ -129,6 +130,8 @@ public final class IOReportSampler {
                 else if name.hasPrefix("DRAM") { energy["dram", default: 0] += joules }
             case "CPU Stats" where subgroup == "CPU Complex Performance States":
                 // ECPU = efficiency cluster; PCPU, PCPU1, … = performance clusters (ECPM/PCPM are power managers, skip).
+                // The tables are known for the classic layout only; with a super or unknown cluster the clocks are hidden, not guessed.
+                guard topology.isClassic else { break }
                 if name == "ECPU", let f = averageFrequency(record, table: frequencies.efficiency) {
                     output.efficiencyMHz = f.mhz
                 } else if name.hasPrefix("PCPU"), let f = averageFrequency(record, table: frequencies.performance) {
