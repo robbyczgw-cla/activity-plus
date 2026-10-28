@@ -9,6 +9,7 @@ export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Develope
 swift build -c release --product ActivityPlus
 swift build -c release --product aplus
 swift build -c release --product ActivityPlusHelper
+swift build -c release --product ActivityPlusWidgets
 BIN="$(swift build -c release --show-bin-path)"
 
 APP="dist/Activity+.app"
@@ -34,8 +35,30 @@ fi
 # Sparkle ships as a binary framework; the executable finds it through @executable_path/../Frameworks.
 mkdir -p "$APP/Contents/Frameworks"
 ditto .build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework "$APP/Contents/Frameworks/Sparkle.framework"
-codesign --force --sign - --timestamp=none --identifier at.hifiteam.activityplus.helper "$APP/Contents/MacOS/ActivityPlusHelper"
-codesign --force --sign - --timestamp=none "$APP"
+# Desktop / Notification Center widgets: a WidgetKit app extension with its own Info.plist (versions follow
+# the app's), the app's translations and the App Intents metadata for its configuration.
+APPEX="$APP/Contents/PlugIns/ActivityPlusWidgets.appex"
+mkdir -p "$APPEX/Contents/MacOS" "$APPEX/Contents/Resources"
+cp "$BIN/ActivityPlusWidgets" "$APPEX/Contents/MacOS/"
+cp Resources/Widgets/Info.plist "$APPEX/Contents/"
+for key in CFBundleShortVersionString CFBundleVersion; do
+  /usr/libexec/PlistBuddy -c "Set $key $(/usr/libexec/PlistBuddy -c "Print $key" Resources/Info.plist)" "$APPEX/Contents/Info.plist"
+done
+plutil -replace CFBundleLocalizations -json "$(plutil -extract CFBundleLocalizations json -o - Resources/Info.plist)" "$APPEX/Contents/Info.plist"
+# An extension's id must start with its app's id, so test builds use the .dev one here too.
+[[ "${RELEASE_BUILD:-}" != "1" ]] && /usr/libexec/PlistBuddy -c "Set CFBundleIdentifier at.hifiteam.activityplus.dev.widgets" "$APPEX/Contents/Info.plist"
+[[ -f Resources/Localizable.xcstrings ]] && xcrun xcstringstool compile Resources/Localizable.xcstrings --output-directory "$APPEX/Contents/Resources" >/dev/null
+scripts/widget-metadata.sh "$BIN" "$APPEX/Contents/Resources"
+# SIGN_IDENTITY="Apple Development" signs with your team instead of ad hoc: only then does macOS let the app
+# and the widget share the App Group container, so use it to try the widgets locally.
+SIGN="${SIGN_IDENTITY:--}"
+codesign --force --sign "$SIGN" --timestamp=none --entitlements Resources/Widgets/ActivityPlusWidgets.entitlements "$APPEX"
+codesign --force --sign "$SIGN" --timestamp=none --identifier at.hifiteam.activityplus.helper "$APP/Contents/MacOS/ActivityPlusHelper"
+if [[ "$SIGN" == "-" ]]; then
+  codesign --force --sign - --timestamp=none "$APP"
+else
+  codesign --force --sign "$SIGN" --timestamp=none --entitlements Resources/ActivityPlus.entitlements "$APP"
+fi
 echo "Built $APP"
 
 if [[ "${1:-}" == "--run" ]]; then

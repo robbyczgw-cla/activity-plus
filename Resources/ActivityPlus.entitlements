@@ -11,5 +11,10 @@
 	<!-- The Wi-Fi scan needs Location access for network names; the hardened runtime wants this entitlement. -->
 	<key>com.apple.security.personal-information.location</key>
 	<true/>
+	<!-- Shares the widget snapshot with the widget extension (Contents/PlugIns/ActivityPlusWidgets.appex). -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>P35939S43T.at.hifiteam.activityplus</string>
+	</array>
 </dict>
 </plist>
