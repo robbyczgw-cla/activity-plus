@@ -145,6 +145,7 @@ struct MetricDetailView: View {
                     .frame(height: 150)
                 }
             }
+            WiFiScanCard()
             ConnectionQualityCard()
             NetworkQualityCard()
         case .energy:
