@@ -5,7 +5,7 @@ import Foundation
 public enum SettingsBackup {
     public static let format = "Activity+ settings"
     static let excludedPrefixes = ["NS", "SU", "Apple", "com.apple", "WebKit", "AppleLanguages"]
-    static let excludedKeys: Set<String> = ["settingsTab", "menuBarPanelTab", "insightNotified", "sidebarSelection"]
+    static let excludedKeys: Set<String> = ["settingsTab", "menuBarPanelTab", "insightNotified", "sidebarSelection", "shareThisMac"]
 
     public static func isPortable(_ key: String) -> Bool {
         !excludedKeys.contains(key) && !excludedPrefixes.contains { key.hasPrefix($0) }

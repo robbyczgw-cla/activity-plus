@@ -135,7 +135,9 @@ public struct NodeExporterReading: Sendable, Equatable {
     }
 
     /// Interfaces that only carry traffic between containers or the host itself: counting them would count bytes twice.
-    static let virtualInterfacePrefixes = ["lo", "veth", "docker", "br-", "virbr", "cni", "flannel", "cali", "lxc", "tap", "vnet", "kube"]
+    /// VPN tunnels too: their traffic also crosses the physical interface.
+    static let virtualInterfacePrefixes = ["lo", "veth", "docker", "br-", "virbr", "cni", "flannel", "cali", "lxc", "tap", "vnet", "kube",
+                                           "tun", "utun", "wg", "tailscale", "awdl", "llw", "bridge"]
 
     public init(samples: [PrometheusText.Sample]) {
         var busy = 0.0, total = 0.0, sawCPU = false
@@ -144,6 +146,8 @@ public struct NodeExporterReading: Sendable, Equatable {
         var hottest: Double?
         var thermalZone: Double?
         var rootSize: UInt64?, rootAvail: UInt64?
+        // macOS and BSD node_exporter have no MemAvailable: free + inactive + purgeable is what can be handed out.
+        var bsdTotal: UInt64?, bsdAvailable: UInt64 = 0, sawBSDMemory = false
         for sample in samples {
             switch sample.name {
             case "node_cpu_seconds_total":
@@ -157,6 +161,11 @@ public struct NodeExporterReading: Sendable, Equatable {
                 memoryTotal = Self.bytes(sample.value)
             case "node_memory_MemAvailable_bytes":
                 memoryAvailable = Self.bytes(sample.value)
+            case "node_memory_total_bytes", "node_memory_size_bytes":
+                bsdTotal = Self.bytes(sample.value)
+            case "node_memory_free_bytes", "node_memory_inactive_bytes", "node_memory_purgeable_bytes":
+                sawBSDMemory = true
+                bsdAvailable += Self.bytes(sample.value)
             case "node_filesystem_size_bytes", "node_filesystem_avail_bytes":
                 guard sample.labels["mountpoint"] == "/", sample.labels["fstype"] != "rootfs" else { continue }
                 if sample.name == "node_filesystem_size_bytes" { rootSize = Self.bytes(sample.value) } else { rootAvail = Self.bytes(sample.value) }
@@ -195,6 +204,10 @@ public struct NodeExporterReading: Sendable, Equatable {
         if sawNetwork {
             networkReceived = received
             networkTransmitted = transmitted
+        }
+        if memoryTotal == nil, let bsdTotal {
+            memoryTotal = bsdTotal
+            if sawBSDMemory { memoryAvailable = min(bsdAvailable, bsdTotal) }
         }
         diskSize = rootSize
         diskAvailable = rootAvail

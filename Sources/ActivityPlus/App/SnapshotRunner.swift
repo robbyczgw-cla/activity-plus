@@ -73,7 +73,7 @@ enum SnapshotRunner {
             UserDefaults.standard.set(previousTab ?? MenuBarPanel.Tab.overview.rawValue, forKey: "menuBarPanelTab")
             for dark in [false, true] { snapshotWidgetGallery(dark: dark, to: "\(dir)/widgets-\(dark ? "dark" : "light").png") }
             let previousSettingsTab = UserDefaults.standard.string(forKey: "settingsTab")
-            for tab in ["general", "menuBar", "panel", "window", "units", "performance", "updates"] {
+            for tab in ["general", "menuBar", "panel", "window", "units", "performance", "sharing", "updates"] {
                 UserDefaults.standard.set(tab, forKey: "settingsTab")
                 snapshotHosted(SettingsView(), size: NSSize(width: 640, height: 620), to: "\(dir)/settings-\(tab).png")
             }
@@ -84,6 +84,7 @@ enum SnapshotRunner {
                 }
             }
             NotchController.renderSnapshots(to: dir)
+            OtherMacsView.renderSnapshots(to: dir)
             NSApp.terminate(nil)
         }
     }
@@ -158,7 +159,7 @@ enum SnapshotRunner {
         snapshotHosted(gallery, size: nil, to: path)
     }
 
-    private static func snapshotHosted<V: View>(_ view: V, size: NSSize?, to path: String) {
+    static func snapshotHosted<V: View>(_ view: V, size: NSSize?, to path: String) {
         let host = NSHostingView(rootView: view.environment(Monitor.shared).environment(AppServices.shared))
         host.frame = NSRect(origin: .zero, size: size ?? host.fittingSize)
         let window = NSWindow(contentRect: host.frame, styleMask: [.borderless], backing: .buffered, defer: false)

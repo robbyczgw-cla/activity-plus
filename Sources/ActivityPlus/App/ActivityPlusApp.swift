@@ -36,6 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             AppServices.shared.attach(to: Monitor.shared)
             HelperClient.shared.attach(to: Monitor.shared)
             Monitor.shared.start()
+            ShareServer.shared.start(); RemoteMachinesModel.shared.start()
             StatusItemsController.shared.start()
             if !SnapshotRunner.isActive || ProcessInfo.processInfo.environment["ACTIVITYPLUS_NOTCH_DEMO"] != nil { NotchController.shared.start() }
             SnapshotRunner.runIfRequested()

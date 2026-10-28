@@ -15,6 +15,7 @@ struct SettingsView: View {
             WindowSettings().tabItem { Label("Window", systemImage: "macwindow") }.tag("window")
             UnitsSettings().tabItem { Label("Units", systemImage: "ruler") }.tag("units")
             PerformanceSettings().tabItem { Label("Performance", systemImage: "gauge.with.dots.needle.33percent") }.tag("performance")
+            SharingSettings().tabItem { Label("Sharing", systemImage: "desktopcomputer.and.macbook") }.tag("sharing")
             UpdatesSettings().tabItem { Label("Updates", systemImage: "arrow.down.circle") }.tag("updates")
         }
         // Resizable: the Menu Bar tab in particular has more in it than fits a small window.

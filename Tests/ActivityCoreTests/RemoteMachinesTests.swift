@@ -108,6 +108,26 @@ struct PrometheusTests {
         #expect(status.cpu == nil)
     }
 
+    @Test func macOSAndBSDMemoryAndTunnels() {
+        let text = """
+        node_memory_total_bytes 3.4359738368e+10
+        node_memory_free_bytes 7.0e+08
+        node_memory_inactive_bytes 8.3e+09
+        node_memory_purgeable_bytes 2.0e+08
+        node_memory_active_bytes 8.4e+09
+        node_network_receive_bytes_total{device="en0"} 500
+        node_network_receive_bytes_total{device="lo0"} 900
+        node_network_receive_bytes_total{device="utun3"} 400
+        node_filesystem_size_bytes{device="/dev/disk3s3s1",fstype="apfs",mountpoint="/"} 4.9e+11
+        """
+        let reading = NodeExporterReading(text: text)
+        #expect(reading.memoryTotal == 34_359_738_368)
+        #expect(reading.memoryAvailable == 9_200_000_000)
+        #expect(reading.networkReceived == 500)
+        #expect(reading.networkTransmitted == 0)
+        #expect(reading.diskSize == 490_000_000_000)
+    }
+
     @Test func ratesFromTwoReadings() {
         var first = NodeExporterReading()
         first.cpuBusySeconds = 100

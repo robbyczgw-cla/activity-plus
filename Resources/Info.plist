@@ -39,6 +39,12 @@
 	<string>Activity+ asks System Events to restart your Mac when you choose Restart in the diagnosis.</string>
 	<key>NSAudioCaptureUsageDescription</key>
 	<string>Activity+ changes the volume of individual apps. Audio is adjusted live and never recorded or stored.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_activityplus._tcp</string>
+	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Activity+ finds your other Macs with Activity+ and reads the servers you add, and lets Macs you paired read this Mac when sharing is on.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>

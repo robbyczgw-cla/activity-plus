@@ -133,14 +133,35 @@ public final class MiniHTTPServer: @unchecked Sendable {
 public enum MiniHTTPClient {
     public enum Failure: LocalizedError, Equatable {
         case unreachable(String)
+        case refused
+        case noRoute
+        case nameNotFound
         case timedOut
         case badResponse
 
         public var errorDescription: String? {
             switch self {
             case .unreachable(let reason): reason
+            case .refused: String(localized: "Nothing answers on this port")
+            case .noRoute: String(localized: "Not reachable from this network")
+            case .nameNotFound: String(localized: "Name not found")
             case .timedOut: String(localized: "No answer")
             case .badResponse: String(localized: "Unexpected answer")
+            }
+        }
+
+        /// Network.framework's messages are generic ("The operation couldn't be completed"); these say what happened.
+        static func from(_ error: NWError) -> Failure {
+            switch error {
+            case .posix(let code):
+                switch code {
+                case .ECONNREFUSED: return .refused
+                case .EHOSTUNREACH, .ENETUNREACH, .EHOSTDOWN, .ENETDOWN: return .noRoute
+                case .ETIMEDOUT: return .timedOut
+                default: return .unreachable(error.localizedDescription)
+                }
+            case .dns: return .nameNotFound
+            default: return .unreachable(error.localizedDescription)
             }
         }
     }
@@ -163,7 +184,7 @@ public enum MiniHTTPClient {
                         })
                         receive(connection, buffer: Data(), once: once)
                     case .waiting(let error), .failed(let error):
-                        once.fire(.failure(Failure.unreachable(error.localizedDescription)))
+                        once.fire(.failure(Failure.from(error)))
                     case .cancelled:
                         once.fire(.failure(CancellationError()))
                     default:

@@ -7,6 +7,7 @@ enum SidebarItem: Hashable {
     case battery, sensors
     case projects, history, alerts, sound, weekly, automations, sleep, connections, sessions
     case diagnosis, startup, storage
+    case otherMacs
 
     struct Page {
         let item: SidebarItem
@@ -27,6 +28,7 @@ enum SidebarItem: Hashable {
         Page(item: .sensors, key: "sensors", title: "Temperatures", icon: "thermometer.medium", section: String(localized: "Resources")),
         Page(item: .projects, key: "projects", title: "Projects", icon: "hammer", section: String(localized: "Tools")),
         Page(item: .connections, key: "connections", title: "Connections", icon: "point.3.connected.trianglepath.dotted", section: String(localized: "Tools")),
+        Page(item: .otherMacs, key: "otherMacs", title: "Other Macs", icon: "desktopcomputer", section: String(localized: "Tools")),
         Page(item: .history, key: "history", title: "History", icon: "clock.arrow.circlepath", section: String(localized: "Tools")),
         Page(item: .sessions, key: "sessions", title: "Sessions", icon: "record.circle", section: String(localized: "Tools")),
         Page(item: .weekly, key: "weekly", title: "Weekly Report", icon: "calendar", section: String(localized: "Tools")),
@@ -166,6 +168,7 @@ struct ContentView: View {
         case .sessions: SessionsView()
         case .sleep: SleepView()
         case .connections: ConnectionsView()
+        case .otherMacs: OtherMacsView()
         }
     }
 
