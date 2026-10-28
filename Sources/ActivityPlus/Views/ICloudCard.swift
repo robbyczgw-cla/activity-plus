@@ -4,7 +4,16 @@ import SwiftUI
 
 /// Shows iCloud Drive while it uploads, downloads or is stuck. When everything is in step it is not shown at all.
 struct ICloudCard: View {
+    @Environment(Monitor.self) private var monitor
     @State private var status: ICloudStatus?
+
+    /// `brctl status` takes several seconds with many containers, so look again quickly only while iCloud's own
+    /// processes are busy or a sync is under way; otherwise every 15 minutes is plenty.
+    private var syncProcessesBusy: Bool {
+        monitor.snapshot.apps.flatMap(\.processes)
+            .filter { ["bird", "cloudd", "fileproviderd"].contains($0.name) }
+            .reduce(0) { $0 + $1.cpuPercent } > 10
+    }
 
     var body: some View {
         Group {
@@ -15,7 +24,8 @@ struct ICloudCard: View {
         .task {
             while !Task.isCancelled {
                 status = await Task.detached(priority: .utility) { ICloudStatus.read() }.value
-                try? await Task.sleep(for: .seconds(60))
+                let soon = syncProcessesBusy || status?.needsAttention == true
+                try? await Task.sleep(for: .seconds(soon ? 60 : 900))
             }
         }
     }
