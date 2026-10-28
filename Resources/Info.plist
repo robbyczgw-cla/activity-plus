@@ -43,6 +43,10 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 Robert, hifiteam</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Activity+ asks for Location access only so macOS shows the names of nearby Wi-Fi networks in the Wi-Fi scan. It does not read where you are.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Activity+ asks for Location access only so macOS shows the names of nearby Wi-Fi networks in the Wi-Fi scan. It does not read where you are.</string>
 	<key>NSSupportsAutomaticTermination</key>
 	<false/>
 	<key>SUEnableAutomaticChecks</key>

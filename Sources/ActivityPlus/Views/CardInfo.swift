@@ -35,6 +35,7 @@ enum CardInfo {
         "Neural Engine": String(localized: "The part of the chip for machine learning, used for things like dictation, photo analysis and on-device AI. Not every Mac reports its power."),
         "Health": String(localized: "Battery health is the capacity the battery holds now compared with when it was new. Below about 80 percent Apple considers the battery worn."),
         "Power flow": String(localized: "Where the power goes right now: from the adapter to the Mac and into the battery, or from the battery to the Mac."),
+        "Wi-Fi around you": String(localized: "Listens once for nearby Wi-Fi networks when you click Scan and counts how many use each channel. Networks on the same or a neighbouring channel share the airtime with yours. macOS shows other networks' names only with Location access; without it the counts and signal strengths still work."),
         "Connection quality": String(localized: "Regular pings to your router and an internet address show delay and lost packets over time; a problem only with the router points to Wi‑Fi, one only with the internet address points to your provider."),
         "Busiest right now": String(localized: "Processes grouped into the apps they belong to, so 40 helper processes of a browser show as one line. Click the arrow to see the processes inside."),
         "Recorded sessions": String(localized: "A recording measures the whole Mac every second while you run something heavy, like a build or an export. It does not film the screen. Compare two recordings or export them as CSV or JSON."),
