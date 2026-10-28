@@ -117,13 +117,13 @@ Alles, was einen Prozess beendet, einen Server stoppt, ein Startobjekt ändert o
 
 ## Für KI-Agenten
 
-`aplus mcp` ist ein [Model Context Protocol](https://modelcontextprotocol.io)-Server, der nur liest, mit sieben Tools: Übersicht, Top-Apps, Prozesse einer App, Diagnose, Dev-Server, Verlauf und Startobjekte. Mit Claude Code:
+`aplus mcp` ist ein [Model Context Protocol](https://modelcontextprotocol.io)-Server, der nur liest, mit 19 Tools: Übersicht, Top-Apps, Prozesse einer App, Diagnose, Dev-Server, Verlauf und Startobjekte; die Speicherkarte, was gewachsen ist, Systemdaten, Kandidaten zum Aufräumen und Duplikate (aus der Karte, die Activity+ gespeichert hat – gescannt oder verschoben wird nichts); Abstürze, Spotlight-Indizierung, hochgedrehte Lüfter und Reste gelöschter Apps; Sicherheit, Time-Machine-Backup und welche App Mikrofon oder Kamera nutzt. Mit Claude Code:
 
 ```bash
 claude mcp add activity-plus -- "/Applications/Activity+.app/Contents/Resources/aplus" mcp
 ```
 
-Danach etwa fragen: „Warum ist mein Mac langsam?“ oder „Welcher Dev-Server ruht?“. Dasselbe Programm zeigt eine Terminal-Ansicht (`aplus`, `aplus --memory`) und JSON (`aplus --json`).
+Danach etwa fragen: „Warum ist mein Mac langsam?“, „Was füllt meine Festplatte?“ oder „Welche App stürzt ständig ab?“. Dasselbe Programm zeigt eine Terminal-Ansicht (`aplus`, `aplus --memory`) und JSON (`aplus --json`).
 
 ## Datenschutz
 
