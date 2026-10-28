@@ -21,6 +21,13 @@ cp "$BIN/ActivityPlusHelper" "$APP/Contents/MacOS/"
 mkdir -p "$APP/Contents/Library/LaunchDaemons"
 cp Resources/LaunchDaemons/at.hifiteam.activityplus.helper.plist "$APP/Contents/Library/LaunchDaemons/"
 cp Resources/Info.plist "$APP/Contents/"
+# Test builds get their own identity, so they never collide with the installed app: no shared settings, privacy
+# answers, notifications or helper registration. release.sh sets RELEASE_BUILD=1 and keeps the real one.
+if [[ "${RELEASE_BUILD:-}" != "1" ]]; then
+  /usr/libexec/PlistBuddy -c "Set CFBundleIdentifier at.hifiteam.activityplus.dev" "$APP/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Add CFBundleDisplayName string Activity+ Dev" "$APP/Contents/Info.plist" 2>/dev/null \
+    || /usr/libexec/PlistBuddy -c "Set CFBundleDisplayName Activity+ Dev" "$APP/Contents/Info.plist"
+fi
 [[ -f Resources/AppIcon.icns ]] && cp Resources/AppIcon.icns "$APP/Contents/Resources/"
 # Translations: the string catalog compiles to <lang>.lproj/Localizable.strings(dict) next to the app's resources.
 [[ -f Resources/Localizable.xcstrings ]] && xcrun xcstringstool compile Resources/Localizable.xcstrings --output-directory "$APP/Contents/Resources" >/dev/null
@@ -32,7 +39,8 @@ codesign --force --sign - --timestamp=none "$APP"
 echo "Built $APP"
 
 if [[ "${1:-}" == "--run" ]]; then
-  pkill -x ActivityPlus 2>/dev/null || true
+  # Only the copy in dist/, never the installed app.
+  pkill -f "^$PWD/dist/Activity\+\.app/Contents/MacOS/ActivityPlus" 2>/dev/null || true
   sleep 0.5
   open "$APP"
 fi

@@ -22,7 +22,7 @@ VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Resource
 # Every language in the string catalog must be complete before a release.
 scripts/l10n-extract.sh --check || { echo "✗ Untranslated strings (see above). Translate them, then release."; exit 1; }
 
-scripts/build-app.sh
+RELEASE_BUILD=1 scripts/build-app.sh
 # Build number = commit count, so every release is newer than the last one.
 /usr/libexec/PlistBuddy -c "Set CFBundleVersion $(git rev-list --count HEAD)" "$APP/Contents/Info.plist"
 

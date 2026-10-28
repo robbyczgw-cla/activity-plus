@@ -488,6 +488,10 @@ private struct HelperSection: View {
                     Label("Helper installed", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
                     Spacer()
                     Button("Remove") { helper.uninstall() }
+                case .notResponding:
+                    Label("The helper is installed but doesn't answer", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    Spacer()
+                    Button("Reinstall") { helper.reinstall() }
                 case .needsApproval:
                     Label("Allow “Activity+” in Login Items", systemImage: "exclamationmark.circle.fill").foregroundStyle(.orange)
                     Spacer()

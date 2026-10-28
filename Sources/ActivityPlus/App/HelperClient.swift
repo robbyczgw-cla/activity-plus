@@ -11,7 +11,9 @@ final class HelperClient {
     static let shared = HelperClient()
 
     enum State: Equatable {
-        case notInstalled, needsApproval, running, unavailable(String)
+        /// `notResponding`: macOS lists the helper as enabled, but it does not answer (for example when macOS tied it
+        /// to a copy of the app that no longer exists). Reinstalling registers it again for this copy.
+        case notInstalled, needsApproval, running, notResponding, unavailable(String)
     }
 
     private(set) var state: State = .notInstalled
@@ -22,12 +24,33 @@ final class HelperClient {
 
     func refresh() {
         switch service.status {
-        case .enabled: state = .running
+        case .enabled: state = connectionBox.gaveUp ? .notResponding : .running
         case .requiresApproval: state = .needsApproval
         case .notRegistered, .notFound: state = .notInstalled
         @unknown default: state = .unavailable("Unknown status")
         }
         connectionBox.enabled = state == .running
+        if state == .running { probe() }
+    }
+
+    /// Asks the helper for this app's own counters: "enabled" alone does not mean it runs.
+    private func probe() {
+        let box = connectionBox
+        let pid = ProcessInfo.processInfo.processIdentifier
+        Task.detached(priority: .utility) {
+            let answered = !box.usage(for: [pid]).isEmpty
+            await MainActor.run {
+                guard HelperClient.shared.service.status == .enabled else { return }
+                HelperClient.shared.state = answered ? .running : .notResponding
+            }
+        }
+    }
+
+    func reinstall() {
+        try? service.unregister()
+        connectionBox.invalidate()
+        connectionBox.enabled = false
+        install()
     }
 
     func install() {
@@ -66,6 +89,9 @@ final class ConnectionBox: @unchecked Sendable {
         get { lock.withLock { _enabled } }
         set { lock.withLock { _enabled = newValue; failures = 0 } }
     }
+
+    /// Too many calls in a row failed, so sampling stopped asking.
+    var gaveUp: Bool { lock.withLock { failures >= 5 } }
 
     func invalidate() {
         lock.withLock {
