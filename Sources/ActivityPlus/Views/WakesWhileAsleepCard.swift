@@ -39,7 +39,7 @@ struct WakesWhileAsleepCard: View {
                     BigNumber(text: "\(last.wakes.count)", size: 28)
                     if last.asleep > 600 {
                         let perHour = Double(last.wakes.count) / (last.asleep / 3600)
-                        Text("wakes in \(Format.duration(last.asleep)) asleep, \(String(format: "%.1f", perHour)) per hour")
+                        Text("wakes in \(Format.duration(last.asleep)) asleep, \(String(format: "%.1f", locale: Format.locale, perHour)) per hour")
                             .appFont(.caption).foregroundStyle(.secondary).monospacedDigit()
                     } else {
                         Text("wakes").appFont(.caption).foregroundStyle(.secondary)

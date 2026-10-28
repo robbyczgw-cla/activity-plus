@@ -78,7 +78,7 @@ struct SleepView: View {
                 WakesWhileAsleepCard()
 
                 Card {
-                    CardHeader(title: "Sleep and wake", systemImage: "moon.stars", tint: .indigo, trailing: loading ? "reading…" : "\(events.count) events")
+                    CardHeader(title: "Sleep and wake", systemImage: "moon.stars", tint: .indigo, trailing: loading ? "reading…" : String(localized: "\(events.count) events"))
                     if !loading && events.isEmpty { Text("No sleep or wake in this period.").foregroundStyle(.secondary) }
                     let wakes = events.filter { $0.kind != .sleep }
                     if !wakes.isEmpty {

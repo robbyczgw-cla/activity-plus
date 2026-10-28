@@ -44,7 +44,7 @@ struct ProcessInspectorView: View {
                                 if let share = p.pCoreShare {
                                     row("Cores", "\(Int((share * 100).rounded())) % on performance cores, \(Int(((1 - share) * 100).rounded())) % on efficiency cores")
                                 }
-                                if let ipc = p.ipc { row(String(localized: "Instructions per cycle"), String(format: "%.2f", ipc)) }
+                                if let ipc = p.ipc { row(String(localized: "Instructions per cycle"), String(format: "%.2f", locale: Format.locale, ipc)) }
                                 if p.neuralMemory > 0 { row(String(localized: "Neural Engine memory"), Format.memory(p.neuralMemory)) }
                             }
                         }

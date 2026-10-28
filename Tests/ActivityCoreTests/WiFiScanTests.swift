@@ -80,7 +80,7 @@ struct WiFiScanTests {
         #expect(advice.suggestsFiveGHz)
         #expect(advice.lines.first?.contains("channel 6") == true)
         #expect(advice.lines.first?.contains("9 networks") == true)
-        #expect(advice.lines.contains { $0.contains("Channel 1 has 2") })
+        #expect(advice.lines.contains { $0.contains("Channel 1 is quieter: only 2 networks use it.") })
         #expect(advice.lines.contains { $0.contains("prefer 5 GHz") })
     }
 

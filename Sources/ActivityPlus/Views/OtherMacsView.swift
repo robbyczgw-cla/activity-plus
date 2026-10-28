@@ -403,7 +403,7 @@ private struct PairSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(name.map { "Pair with \($0)" } ?? String(localized: "Add a Mac by address"))
+            Text(name.map { String(localized: "Pair with \($0)") } ?? String(localized: "Add a Mac by address"))
                 .appFont(.title3, weight: .semibold)
             if name == nil {
                 VStack(alignment: .leading, spacing: 4) {

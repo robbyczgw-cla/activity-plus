@@ -202,11 +202,11 @@ final class RemoteMachinesModel {
 
         var errorDescription: String? {
             switch self {
-            case .notPaired: String(localized: "This Mac no longer accepts this Mac. Pair again.")
+            case .notPaired: String(localized: "That Mac no longer accepts this one. Pair again.")
             case .status(let code): String(localized: "The server answered with error \(code).")
             case .notAMetricsPage: String(localized: "This address does not serve node_exporter metrics.")
             case .notActivityPlus: String(localized: "This is not an Activity+ Mac that shares.")
-            case .newerVersion: String(localized: "This Mac runs a newer Activity+. Update Activity+ here to read it.")
+            case .newerVersion: String(localized: "That Mac runs a newer Activity+. Update Activity+ here to read it.")
             }
         }
     }

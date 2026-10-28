@@ -211,9 +211,9 @@ public enum WiFiChannelAnalysis {
                clearlyBetter(best.shared) {
                 better = best.channel
                 let n = best.shared.count
-                lines.append(n == 0 ? String(localized: "Channel \(best.channel) has none.")
-                             : n == 1 ? String(localized: "Channel \(best.channel) has 1.")
-                             : String(localized: "Channel \(best.channel) has \(n)."))
+                lines.append(n == 0 ? String(localized: "Channel \(best.channel) is free: no network nearby uses it.")
+                             : n == 1 ? String(localized: "Channel \(best.channel) is quieter: only 1 network uses it.")
+                             : String(localized: "Channel \(best.channel) is quieter: only \(n) networks use it."))
             }
             // The simplest improvement on 2.4 GHz is another band altogether.
             if own.band == .ghz24,
