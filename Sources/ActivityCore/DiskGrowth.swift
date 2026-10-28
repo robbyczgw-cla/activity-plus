@@ -90,6 +90,16 @@ public enum DiskGrowth {
         return Array(selected.prefix(limit))
     }
 
+    /// The two scans to compare: the newest, and the one before it (`comparedTo` nil) or, when a date is given, the
+    /// latest earlier scan at or before that date (the oldest one if none is that old). nil with fewer than two scans.
+    public static func pair(in summaries: [Summary], comparedTo date: Date? = nil) -> (old: Summary, new: Summary)? {
+        let sorted = summaries.sorted { $0.date < $1.date }
+        guard sorted.count >= 2, let new = sorted.last else { return nil }
+        let earlier = Array(sorted.dropLast())
+        guard let date else { return (earlier[earlier.count - 1], new) }
+        return (earlier.last { $0.date <= date } ?? earlier[0], new)
+    }
+
     static func isAncestor(_ ancestor: String, of path: String) -> Bool {
         path.count > ancestor.count && path.hasPrefix(ancestor) && path[path.index(path.startIndex, offsetBy: ancestor.count)] == "/"
     }

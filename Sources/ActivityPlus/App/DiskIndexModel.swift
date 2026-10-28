@@ -56,8 +56,7 @@ final class DiskIndexModel {
     let customHome: URL?
 
     private static let selectionKey = "diskIndexRoot"
-    private static let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-        .appendingPathComponent("at.hifiteam.activityplus", isDirectory: true)
+    private static let caches = DiskIndexCache.folder
     static let homePath = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
 
     /// The map is not of the user's home folder (Clean up then walks the folders itself).
@@ -360,12 +359,7 @@ final class DiskIndexModel {
         return volume
     }
 
-    /// FNV-1a; `hashValue` changes on every launch.
-    private static func stableHash(_ text: String) -> String {
-        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
-        for byte in text.utf8 { hash = (hash ^ UInt64(byte)) &* 0x100_0000_01b3 }
-        return String(hash, radix: 16)
-    }
+    private static func stableHash(_ text: String) -> String { DiskIndexCache.stableHash(text) }
 }
 
 /// Thread-safe stop flag for a background scan.
