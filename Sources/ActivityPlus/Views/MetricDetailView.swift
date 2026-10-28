@@ -54,7 +54,7 @@ struct MetricDetailView: View {
                         .init(name: "System", values: h.cpuSystem.history, color: .red),
                     ], format: { Format.percent($0) }, maxValue: 100, interval: interval)
                     .frame(height: 150)
-                    CoreGrid(cores: s.cpu.perCore, efficiencyCores: s.cpu.efficiencyCores)
+                    CoreGrid(cores: s.cpu.perCore, clusters: s.cpu.clusters)
                 }
             }
             CoreTypeCard(apps: s.apps)
@@ -300,7 +300,21 @@ struct SystemToggle: View {
 
 struct CoreGrid: View {
     let cores: [Double]
-    let efficiencyCores: Int
+    let clusters: [CoreCluster]
+
+    private func cluster(_ index: Int) -> CoreCluster? { clusters.first { $0.cpus.contains(index) } }
+
+    static func color(_ kind: CoreKind) -> Color {
+        switch kind {
+        case .super: .purple
+        case .performance: .blue
+        case .efficiency: .teal
+        case .unknown: .gray
+        }
+    }
+
+    /// The legend is only needed when the plain P/E letters do not say enough.
+    private var showsLegend: Bool { clusters.count > 2 || clusters.contains { $0.kind == .super || $0.kind == .unknown } }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -312,17 +326,25 @@ struct CoreGrid: View {
                             ZStack(alignment: .bottom) {
                                 RoundedRectangle(cornerRadius: 3).fill(.quaternary)
                                 RoundedRectangle(cornerRadius: 3)
-                                    .fill((index < efficiencyCores ? Color.teal : Color.blue).gradient)
+                                    .fill(Self.color(cluster(index)?.kind ?? .performance).gradient)
                                     .frame(height: proxy.size.height * value / 100)
                             }
                         }
                         .frame(height: 40)
-                        Text(index < efficiencyCores ? "E" : "P").appFont(size: 9).foregroundStyle(.tertiary)
+                        Text(cluster(index)?.letter ?? "P").appFont(size: 9).foregroundStyle(.tertiary)
                     }
                     .help(String(localized: "Core \(index + 1): \(Format.percent(value))"))
                 }
             }
             .animation(.smooth, value: cores)
+            if showsLegend {
+                HStack(spacing: 12) {
+                    ForEach(Array(clusters.reversed().enumerated()), id: \.offset) { _, c in
+                        Label("\(c.label) (\(c.count))", systemImage: "square.fill").foregroundStyle(Self.color(c.kind))
+                    }
+                }
+                .appFont(.caption2)
+            }
         }
     }
 }

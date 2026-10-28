@@ -25,6 +25,8 @@ if arguments.contains("--speedtest") {
 if arguments.contains("--hardware") {
     // Probe of the newer hardware readers (IOReport power/frequency, network details).
     let chip = IOReportSampler()
+    let topology = CoreTopology.current
+    print("cores: " + topology.clusters.map { "\($0.name) (\($0.kind.rawValue)) CPUs \($0.cpus.lowerBound)-\($0.cpus.upperBound - 1)" }.joined(separator: ", ") + (topology.isClassic ? "" : "  [clocks and P-core share hidden]"))
     if arguments.contains("--verbose") { chip.channelDump().forEach { print($0) }; exit(0) }
     _ = chip.sample()
     for _ in 0..<3 {

@@ -11,6 +11,8 @@ struct ModuleReading {
     var up: String = ""
     var down: String = ""
     var cores: [Double] = []
+    /// Where a new CPU cluster starts in `cores`; only set for chips with more than two core kinds.
+    var coreBreaks: Set<Int> = []
     /// Battery only: charging (bolt) or on the adapter without charging (plug), like the macOS battery icon.
     enum Power { case none, charging, pluggedIn }
     var power: Power = .none
@@ -32,6 +34,7 @@ struct ModuleReading {
             r.series = h.cpu.values
             r.seriesMax = 100
             r.cores = s.cpu.perCore.map { $0 / 100 }
+            if !CoreTopology.current.isClassic { r.coreBreaks = Set(s.cpu.clusters.dropFirst().map(\.cpus.lowerBound)) }
         case .memory:
             let fraction = Double(s.memory.used) / Double(max(1, s.memory.total))
             r.level = fraction
@@ -196,7 +199,7 @@ struct MenuBarWidget: View {
                 if config.showLabel { value(reading.text, size: 10) }
             }
         case .coreBars:
-            CoreBarsGlyph(levels: reading.cores, color: accent).frame(height: 15)
+            CoreBarsGlyph(levels: reading.cores, breaks: reading.coreBreaks, color: accent).frame(height: 15)
         case .ring:
             HStack(spacing: 3) {
                 ZStack {
@@ -293,11 +296,13 @@ private struct BarsGlyph: View {
 
 private struct CoreBarsGlyph: View {
     let levels: [Double]
+    var breaks: Set<Int> = []
     let color: Color
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 1) {
-            ForEach(Array(levels.enumerated()), id: \.offset) { _, level in
+            ForEach(Array(levels.enumerated()), id: \.offset) { index, level in
+                if breaks.contains(index) { Color.clear.frame(width: 2, height: 15) }
                 ZStack(alignment: .bottom) {
                     Rectangle().fill(color.opacity(0.2))
                     Rectangle().fill(color).frame(height: max(1, 15 * CGFloat(min(level, 1))))
