@@ -56,7 +56,10 @@ final class DiskIndexModel {
     let customHome: URL?
 
     private static let selectionKey = "diskIndexRoot"
-    private static let caches = DiskIndexCache.folder
+    nonisolated private static let caches = DiskIndexCache.folder
+    /// The home folder's map and scan summaries, for readers off the main thread (the scheduled check-up).
+    nonisolated static var homeCacheURL: URL { DiskIndexCache.home().cacheURL }
+    nonisolated static var homeGrowthURL: URL { DiskIndexCache.home().growthURL }
     static let homePath = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
 
     /// The map is not of the user's home folder (Clean up then walks the folders itself).

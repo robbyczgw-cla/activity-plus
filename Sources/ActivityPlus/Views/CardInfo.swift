@@ -17,6 +17,7 @@ enum CardInfo {
         "What wears your SSD": String(localized: "SSDs can only be written a certain amount over their life. The drive reports how much of that it has used; from your recent daily writes Activity+ estimates how many years are left, and which apps wrote the most."),
         "Drives": String(localized: "Every drive that is connected, with its connection and speed. A USB drive that could do USB 3 but runs at USB 2 speed is marked; the cable is the usual cause."),
         "Speed test": String(localized: "Writes and reads a test file large enough to get past the cache, so the result is the drive's real speed. The file is removed afterwards."),
+        "Mac check-up": String(localized: "A calm look at the Mac on a schedule you choose (Settings, General): space that could go to the Trash, apps that keep crashing, the age of your last backup, security switches that are off, leftover startup items, SSD wear and a very long uptime. It only reports. Each finding has a button to the page where you decide what to do."),
         // Why is it slow, sleep, energy
         "Slower than it could be": String(localized: "Things that make the Mac slower right now, each with the evidence and what helps. Nothing changes until you click a button, and anything that quits an app asks first."),
         "Unusual activity": String(localized: "Apps that use clearly more than usual for them, compared with their own history, for example a helper stuck at full CPU."),
