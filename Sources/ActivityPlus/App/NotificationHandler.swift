@@ -31,8 +31,11 @@ final class NotificationHandler: NSObject, UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
         let matchID = response.notification.request.content.userInfo["match"] as? String
         let action = response.actionIdentifier
+        let isCheckUp = response.notification.request.content.userInfo["checkup"] != nil
         await MainActor.run {
-            if let matchID {
+            if isCheckUp {
+                WindowOpener.openMain(page: "weekly")
+            } else if let matchID {
                 switch action {
                 case "run": AppServices.shared.approve(matchID)
                 case "skip": AppServices.shared.dismiss(matchID)

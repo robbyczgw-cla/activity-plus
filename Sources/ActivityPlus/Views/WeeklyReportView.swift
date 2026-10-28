@@ -11,6 +11,7 @@ struct WeeklyReportView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: density.stack) {
+                CheckUpCard()
                 HStack {
                     Picker("", selection: $current) {
                         Text("Last week").tag(false)

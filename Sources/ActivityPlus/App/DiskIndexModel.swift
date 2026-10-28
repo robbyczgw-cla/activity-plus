@@ -56,8 +56,11 @@ final class DiskIndexModel {
     let customHome: URL?
 
     private static let selectionKey = "diskIndexRoot"
-    private static let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+    nonisolated private static let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         .appendingPathComponent("at.hifiteam.activityplus", isDirectory: true)
+    /// The home folder's map and scan summaries, for readers off the main thread (the scheduled check-up).
+    nonisolated static var homeCacheURL: URL { caches.appendingPathComponent("diskindex.bin") }
+    nonisolated static var homeGrowthURL: URL { caches.appendingPathComponent("growth.json") }
     static let homePath = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
 
     /// The map is not of the user's home folder (Clean up then walks the folders itself).
