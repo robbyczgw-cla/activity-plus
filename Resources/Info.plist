@@ -28,7 +28,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.4.1</string>
+	<string>0.5.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>LSApplicationCategoryType</key>
@@ -43,12 +43,12 @@
 	<array>
 		<string>_activityplus._tcp</string>
 	</array>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>Activity+ finds your other Macs with Activity+ and reads the servers you add, and lets Macs you paired read this Mac when sharing is on.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 Robert, hifiteam</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Activity+ finds your other Macs with Activity+ and reads the servers you add, and lets Macs you paired read this Mac when sharing is on.</string>
 	<key>NSLocationUsageDescription</key>
 	<string>Activity+ asks for Location access only so macOS shows the names of nearby Wi-Fi networks in the Wi-Fi scan. It does not read where you are.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

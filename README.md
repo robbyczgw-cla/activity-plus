@@ -54,7 +54,7 @@ Requires a Mac with Apple silicon and macOS 15 Sequoia or later. Developed and t
 - Memory pressure, swap, compression.
 - GPU load, clock (against the maximum) and power. **Find the app behind WindowServer**: most apps draw through WindowServer, so their GPU use shows up under its name. Activity+ hides your apps one at a time for a few seconds, measures how far WindowServer's GPU time drops, and shows them again.
 - **Every drive** with free space, throughput, SMART status and NVMe wear, temperature, hours and data written. Which apps write the most to the SSD, and how many years it lasts at that pace, from the drive's own wear counter. A warning when a USB drive that can do USB 3 runs at USB 2 speed (usually the cable).
-- Network throughput, interfaces, addresses, Wi-Fi signal, noise, channel and link speed. Your public IP is fetched only when you click for it. A network quality test with Apple's own `networkQuality` runs when you click.
+- Network throughput, interfaces, addresses, Wi-Fi signal, noise, channel and link speed. Your public IP is fetched only when you click for it. A network quality test with Apple's own `networkQuality` runs when you click, and a Wi-Fi scan shows how crowded your channel is (it asks for Location access only then).
 - **Backup and security**: when Time Machine last backed up (with an alert after seven days), FileVault, System Integrity Protection, Gatekeeper and the firewall, and which app uses the microphone or camera right now.
 - **Connection quality** (off until you turn it on): latency, jitter and packet loss to your router every 30 seconds, kept in the history, so a flaky connection is told apart from a slow one.
 - **Displays**: refresh rate, resolution, HDR and ProMotion per screen, with a warning when a cable or dock holds a monitor below the rate it can do.
@@ -80,7 +80,7 @@ Everything that costs noticeable CPU has its own switch in **Settings → Perfor
 The rest is adjustable too: text size and density of the window, the page it opens with, how many minutes the charts show, which pages the sidebar shows, which Overview cards appear and in which order, the accent color, °C or °F, bytes or bits for network speeds, the refresh interval, and which tabs the menu bar panel has.
 
 ### Why is my Mac slow?
-One click gives a plain-language verdict: not enough memory, an app running flat out, heat throttling, a nearly full disk, Spotlight indexing, idle dev servers, a long uptime with heavy swap, a worn battery, a USB drive running at USB 2 speed, an app that keeps crashing. Each finding shows its evidence and offers the fix. The page also counts crashes per app (with the reason in plain words), shows Spotlight indexing while it runs, and names the apps that were busiest before the fans spun up.
+One click gives a plain-language verdict: not enough memory, an app running flat out, heat throttling, a nearly full disk, Spotlight indexing, idle dev servers, a long uptime with heavy swap, a worn battery, a USB drive running at USB 2 speed, an app that keeps crashing. Each finding shows its evidence and offers the fix. The page also counts crashes per app (with the reason in plain words), shows Spotlight indexing while it runs, and names the apps that were busiest before the fans spun up. **Slow moments** are kept in the background: every stretch of 20 seconds or more with tight memory, heavy swapping, a busy CPU or GPU, heat or a frozen app, with its three biggest causes. iCloud Drive syncing or stuck is named too.
 
 ![Diagnosis](docs/screenshots/diagnosis.jpg)
 
@@ -102,7 +102,12 @@ Everything goes to the Trash after you confirm; nothing is deleted.
 - **Unusual for this app.** Activity+ learns what is normal for each app and tells you when it is far off ("Slack uses 3.2× its usual memory"). Steady growth with a stable set of processes is reported as a likely memory leak, with a forecast.
 - **Recording sessions.** Start a recording before a build, a render or whatever makes your Mac slow; Activity+ measures every second, keeps the top apps, compares two sessions and exports CSV or JSON.
 - **Weekly report** every Monday: the apps that used the most energy, memory, CPU and network, compared with the week before.
-- **Sleep & battery drain.** What is keeping your Mac awake right now, what woke it up, and which apps drained the battery while it was unplugged.
+- **Sleep & battery drain.** What is keeping your Mac awake right now, how often it woke up at night and why (Power Nap, network upkeep, a scheduled task) with the processes behind it, and which apps drained the battery while it was unplugged.
+- **Apps macOS stopped**, for example for using too much memory, read from the system log and marked in the history.
+- **Mac check-up** once a week (or every two weeks, or monthly): a short notification with what deserves a look. It only reports.
+
+### Your other Macs and servers
+Share a Mac with your other Macs (Settings → Sharing, off by default) and pair them with a six-digit code. Paired Macs read CPU, memory, disk, network, temperatures and the busiest apps; nothing can be changed from outside. Linux machines and servers appear through their [Prometheus node_exporter](https://github.com/prometheus/node_exporter) address. Meant for your local network or a VPN like Tailscale.
 
 ### Let it take care of things
 - **Automations**: "stop dev servers that have been idle for a day", "quit an app when it uses more than 4 GB". Each rule asks first with a notification button, unless you explicitly allow it to act on its own.
@@ -110,7 +115,7 @@ Everything goes to the Trash after you confirm; nothing is deleted.
 - **Startup items** grouped by app, with switches for the ones in your account. Leftovers of apps you deleted are marked.
 - **Disk speed test**: sequential write and read speed of your SSD.
 - **Panel editor**: choose and order the tiles of the menu bar panel, how many busy apps it lists, and its theme.
-- **Menu bar, Dock or both**, and **settings export and import** for another Mac.
+- **Menu bar, Dock or both**, desktop widgets, and **settings export and import** for another Mac.
 - **Per-app volume** (beta), quit, force quit, pause and resume from any list, and a 1200 × 630 share card of your Mac's state.
 
 Anything that quits a process, stops a server, changes a startup item or moves files asks first.

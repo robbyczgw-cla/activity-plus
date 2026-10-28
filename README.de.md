@@ -54,7 +54,7 @@ Voraussetzung ist ein Mac mit Apple silicon und macOS 15 Sequoia oder neuer. Ent
 - Speicherdruck, Swap, Komprimierung.
 - GPU-Auslastung, Takt (im Verhältnis zum Höchsttakt) und Leistung. **Die App hinter WindowServer finden**: Die meisten Apps zeichnen über WindowServer, ihre GPU-Last erscheint deshalb unter dessen Namen. Activity+ blendet Ihre Apps nacheinander für ein paar Sekunden aus, misst, wie stark die GPU-Zeit von WindowServer sinkt, und blendet sie wieder ein.
 - **Alle Laufwerke** mit freiem Platz, Durchsatz, SMART-Status sowie NVMe-Verschleiß, -Temperatur, Betriebsstunden und geschriebenen Daten. Welche Apps am meisten auf die SSD schreiben und wie viele Jahre sie bei diesem Tempo hält, nach dem Verschleißzähler des Laufwerks selbst. Eine Warnung, wenn ein USB-Laufwerk USB 3 kann, aber nur mit USB-2-Tempo läuft (meist liegt es am Kabel).
-- Netzwerk-Durchsatz, Schnittstellen, Adressen, WLAN-Signal, Rauschen, Kanal und Verbindungsgeschwindigkeit. Die öffentliche IP wird nur auf Klick abgefragt. Ein Netzwerk-Qualitätstest mit Apples eigenem `networkQuality` läuft auf Klick.
+- Netzwerk-Durchsatz, Schnittstellen, Adressen, WLAN-Signal, Rauschen, Kanal und Verbindungsgeschwindigkeit. Die öffentliche IP wird nur auf Klick abgefragt. Ein Netzwerk-Qualitätstest mit Apples eigenem `networkQuality` läuft auf Klick, und ein WLAN-Scan zeigt, wie voll Ihr Kanal ist (nur dafür fragt er nach dem Ortungsdienst).
 - **Backup und Sicherheit**: wann Time Machine zuletzt gesichert hat (mit Warnung nach sieben Tagen), FileVault, Systemintegritätsschutz, Gatekeeper und Firewall, und welche App gerade Mikrofon oder Kamera nutzt.
 - **Verbindungsqualität** (aus, bis Sie sie einschalten): Latenz, Jitter und Paketverlust zum Router alle 30 Sekunden, im Verlauf gespeichert – so lässt sich eine wackelige von einer langsamen Verbindung unterscheiden.
 - **Bildschirme**: Bildrate, Auflösung, HDR und ProMotion pro Bildschirm, mit Warnung, wenn ein Kabel oder Dock einen Monitor unter seiner möglichen Bildrate hält.
@@ -80,7 +80,7 @@ Alles, was spürbar CPU kostet, hat einen eigenen Schalter unter **Einstellungen
 Auch der Rest lässt sich einstellen: Textgröße und Dichte des Fensters, die Seite beim Öffnen, wie viele Minuten die Diagramme zeigen, welche Seiten die Seitenleiste zeigt, welche Übersichtskarten in welcher Reihenfolge erscheinen, die Akzentfarbe, °C oder °F, Bytes oder Bits für Netzwerk-Geschwindigkeiten, das Aktualisierungsintervall und die Reiter des Menüleisten-Panels.
 
 ### Warum ist mein Mac langsam?
-Ein Klick liefert eine Antwort in klaren Worten: zu wenig Speicher, eine App unter Volllast, Drosselung wegen Hitze, fast volle Festplatte, Spotlight-Indizierung, untätige Dev-Server, lange Laufzeit mit viel Swap, verschlissener Akku, ein USB-Laufwerk mit USB-2-Tempo, eine App, die immer wieder abstürzt. Jeder Befund zeigt seine Belege und bietet die passende Abhilfe an. Die Seite zählt außerdem Abstürze pro App (mit dem Grund in klaren Worten), zeigt die Spotlight-Indizierung, solange sie läuft, und nennt die Apps, die vor dem Hochdrehen der Lüfter am meisten zu tun hatten.
+Ein Klick liefert eine Antwort in klaren Worten: zu wenig Speicher, eine App unter Volllast, Drosselung wegen Hitze, fast volle Festplatte, Spotlight-Indizierung, untätige Dev-Server, lange Laufzeit mit viel Swap, verschlissener Akku, ein USB-Laufwerk mit USB-2-Tempo, eine App, die immer wieder abstürzt. Jeder Befund zeigt seine Belege und bietet die passende Abhilfe an. Die Seite zählt außerdem Abstürze pro App (mit dem Grund in klaren Worten), zeigt die Spotlight-Indizierung, solange sie läuft, und nennt die Apps, die vor dem Hochdrehen der Lüfter am meisten zu tun hatten. **Langsame Momente** werden im Hintergrund festgehalten: jede Phase ab 20 Sekunden mit knappem Speicher, starkem Auslagern, voller CPU oder GPU, Hitze oder einer hängenden App, mit den drei größten Ursachen. Auch ein iCloud Drive, das noch synchronisiert oder hängt, wird genannt.
 
 ![Diagnose](docs/screenshots/diagnosis.jpg)
 
@@ -102,7 +102,12 @@ Alles wandert nach Ihrer Bestätigung in den Papierkorb; gelöscht wird nichts.
 - **Ungewöhnlich für diese App.** Activity+ lernt, was für jede App normal ist, und meldet deutliche Abweichungen („Slack braucht 3,2 × so viel Speicher wie sonst“). Gleichmäßiges Wachstum bei gleichbleibenden Prozessen wird als wahrscheinliches Speicherleck gemeldet, mit Prognose.
 - **Mess-Sessions.** Vor einem Build, einem Rendering oder allem, was den Mac langsam macht, eine Aufnahme starten: Activity+ misst jede Sekunde, merkt sich die aktivsten Apps, vergleicht zwei Sessions und exportiert CSV oder JSON.
 - **Wochenbericht** jeden Montag: die Apps mit dem meisten Energie-, Speicher-, CPU- und Netzwerkverbrauch, im Vergleich zur Vorwoche.
-- **Schlaf und Akkuverbrauch.** Was den Mac gerade wach hält, was ihn geweckt hat und welche Apps den Akku ohne Netzteil geleert haben.
+- **Schlaf und Akkuverbrauch.** Was den Mac gerade wach hält, wie oft er nachts aufgewacht ist und warum (Power Nap, Netzwerk-Pflege, eine geplante Aufgabe) samt den Prozessen dahinter, und welche Apps den Akku ohne Netzteil geleert haben.
+- **Von macOS beendete Apps**, etwa wegen zu viel Speicher, aus dem Systemprotokoll gelesen und im Verlauf markiert.
+- **Mac-Check-up** einmal pro Woche (oder alle zwei Wochen oder monatlich): eine kurze Mitteilung, was einen Blick wert ist. Er meldet nur.
+
+### Ihre anderen Macs und Server
+Einen Mac für Ihre anderen Macs freigeben (Einstellungen → Freigabe, standardmäßig aus) und mit einem sechsstelligen Code koppeln. Gekoppelte Macs lesen CPU, Speicher, Festplatte, Netzwerk, Temperaturen und die aktivsten Apps; von außen lässt sich nichts verändern. Linux-Rechner und Server erscheinen über ihre [Prometheus-node_exporter](https://github.com/prometheus/node_exporter)-Adresse. Gedacht für das lokale Netz oder ein VPN wie Tailscale.
 
 ### Dinge erledigen lassen
 - **Automationen**: „Dev-Server stoppen, die seit einem Tag nichts tun“, „App beenden, wenn sie mehr als 4 GB braucht“. Jede Regel fragt zuerst per Mitteilung mit Knopf nach – außer Sie erlauben ausdrücklich, dass sie selbstständig handelt.
@@ -110,7 +115,7 @@ Alles wandert nach Ihrer Bestätigung in den Papierkorb; gelöscht wird nichts.
 - **Startobjekte** nach App gruppiert, mit Schaltern für die Einträge im eigenen Benutzerkonto. Reste gelöschter Apps sind markiert.
 - **Festplatten-Speedtest**: sequenzielle Schreib- und Leserate der SSD.
 - **Panel-Editor**: Kacheln des Menüleisten-Panels auswählen und sortieren, Anzahl der aktivsten Apps, Theme.
-- **Menüleiste, Dock oder beides** und **Einstellungen exportieren und importieren** für einen anderen Mac.
+- **Menüleiste, Dock oder beides**, Schreibtisch-Widgets und **Einstellungen exportieren und importieren** für einen anderen Mac.
 - **Lautstärke pro App** (Beta), Beenden, sofort Beenden, Anhalten und Fortsetzen aus jeder Liste sowie eine Share-Card (1200 × 630) mit dem Zustand des Macs.
 
 Alles, was einen Prozess beendet, einen Server stoppt, ein Startobjekt ändert oder Dateien verschiebt, fragt vorher nach.
