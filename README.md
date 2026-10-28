@@ -22,6 +22,15 @@ Activity Monitor lists about 900 processes. Activity+ folds them into the 80 or 
 
 <p align="center"><img src="docs/media/fold.gif" alt="Processes folding into the apps they belong to" width="720"></p>
 
+## New in 0.5
+
+- **Your other Macs and servers.** Pair a Mac with a six-digit code, or add a Linux server through its node_exporter address. Every machine shows up as a card with CPU, memory, disk and network. Read only.
+- **What happened while you were away.** Slow moments are kept with their causes, the sleep page shows how often the Mac woke up at night and why, and apps macOS stopped for using too much memory are listed.
+- **Mac check-up.** Once a week, a short list of what deserves a look. It only reports.
+- **Also new:** a Wi-Fi scan that shows how crowded your channel is, desktop widgets, iCloud Drive status, and 19 tools in the MCP server.
+
+All changes are in the [release notes](docs/release-notes/v0.5.0.md).
+
 ## Download
 
 Get the latest notarized build from **[activityplus.xyz](https://activityplus.xyz/#download)**. Unzip it, move **Activity+.app** to Applications and open it. Updates arrive automatically once a day; you can turn that off in Settings.

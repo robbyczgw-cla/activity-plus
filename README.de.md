@@ -22,6 +22,15 @@ Die Aktivitätsanzeige listet rund 900 Prozesse. Activity+ fasst sie zu den rund
 
 <p align="center"><img src="docs/media/fold.gif" alt="Prozesse falten sich zu den Apps, zu denen sie gehören" width="720"></p>
 
+## Neu in 0.5
+
+- **Ihre anderen Macs und Server.** Einen Mac koppeln Sie mit einem 6-stelligen Code, einen Linux-Server fügen Sie über seine node_exporter-Adresse hinzu. Jedes Gerät erscheint als Karte mit CPU, Speicher, Festplatte und Netzwerk. Nur lesend.
+- **Was passiert ist, während Sie weg waren.** Langsame Momente werden mit ihren Ursachen festgehalten, die Ruhezustand-Seite zeigt, wie oft der Mac nachts aufgewacht ist und warum, und Apps, die macOS wegen zu hohen Speicherverbrauchs beendet hat, werden aufgelistet.
+- **Mac-Check-up.** Einmal pro Woche eine kurze Liste, was einen Blick wert ist. Er berichtet nur.
+- **Außerdem:** ein WLAN-Scan, der zeigt, wie voll Ihr Kanal ist, Schreibtisch-Widgets, der Status von iCloud Drive und 19 Tools im MCP-Server.
+
+Alle Änderungen stehen in den [Release Notes](docs/release-notes/v0.5.0.md) (englisch).
+
 ## Download
 
 Die aktuelle notarisierte Version gibt es auf **[activityplus.xyz](https://activityplus.xyz/#download)**. Entpacken, **Activity+.app** in den Programme-Ordner ziehen und öffnen. Updates kommen einmal am Tag automatisch; das lässt sich in den Einstellungen abschalten.
