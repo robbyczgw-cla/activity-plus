@@ -8,5 +8,8 @@
 	<!-- "Restart…" in the diagnosis asks System Events to restart the Mac. -->
 	<key>com.apple.security.automation.apple-events</key>
 	<true/>
+	<!-- The Wi-Fi scan needs Location access for network names; the hardened runtime wants this entitlement. -->
+	<key>com.apple.security.personal-information.location</key>
+	<true/>
 </dict>
 </plist>

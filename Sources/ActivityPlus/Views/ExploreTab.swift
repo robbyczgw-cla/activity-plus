@@ -182,8 +182,15 @@ struct ExploreTab: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 6) {
-                    if case .scanning = model.state {} else {
-                        Button("Scan again") { model.scan() }
+                    HStack(spacing: 8) {
+                        let folderURL = index.url(of: folder.id)
+                        Button("Show in Finder") { ProcessActions.reveal(folderURL.path) }
+                        if folder.id != index.rootID, model.refusal(for: folderURL) == nil {
+                            Button("Move to Trash…", role: .destructive) { pendingTrash = folder }
+                        }
+                        if case .scanning = model.state {} else {
+                            Button("Scan again") { model.scan() }
+                        }
                     }
                     Text("Scanned \(index.builtAt, format: .relative(presentation: .named))")
                         .appFont(.caption).foregroundStyle(.secondary)
@@ -204,8 +211,11 @@ struct ExploreTab: View {
             let largest = max(children.first?.bytes ?? 1, 1)
             VStack(spacing: 0) {
                 ForEach(children) { child in
+                    let childURL = index.url(of: child.id)
                     ExploreRow(node: child, largest: largest, share: Double(child.bytes) / Double(max(folder.bytes, 1)),
-                               url: index.url(of: child.id), isSkipped: isSkipped(child, index: index), isUnread: child.isUnread)
+                               url: childURL, isSkipped: isSkipped(child, index: index), isUnread: child.isUnread,
+                               onReveal: { ProcessActions.reveal(childURL.path) },
+                               onTrash: model.refusal(for: childURL) == nil ? { pendingTrash = child } : nil)
                         .contentShape(Rectangle())
                         .onTapGesture { if child.isDirectory { open(child, index: index) } }
                         .contextMenu { menu(for: child, index: index, model: model) }
@@ -287,6 +297,11 @@ struct ExploreTab: View {
             result = String(localized: "“\(node.name)” could not be moved to the Trash: \(failure)")
         } else {
             result = String(localized: "Moved \(Format.storage(outcome.freed)) to the Trash. Empty the Trash to actually free the space.")
+            // The open folder itself went to the Trash: show the folder it was in.
+            if folderPath == url.path {
+                let parent = url.deletingLastPathComponent()
+                folderPath = index.id(of: parent).map { $0 == index.rootID ? nil : parent.path } ?? nil
+            }
         }
     }
 }
@@ -381,6 +396,9 @@ private struct ExploreRow: View {
     let url: URL
     let isSkipped: Bool
     var isUnread = false
+    var onReveal: () -> Void = {}
+    /// `nil` when this item may not go to the Trash (see `DiskIndexModel.refusal`).
+    var onTrash: (() -> Void)?
     @State private var hovering = false
 
     var body: some View {
@@ -404,6 +422,18 @@ private struct ExploreRow: View {
                 .appFont(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer(minLength: 8)
+            // Visible while the pointer is on the row; the space stays reserved so the sizes don't jump.
+            HStack(spacing: 2) {
+                Button(action: onReveal) { Image(systemName: "magnifyingglass") }
+                    .help("Show in Finder")
+                if let onTrash {
+                    Button(action: onTrash) { Image(systemName: "trash") }
+                        .help("Move to Trash…")
+                }
+            }
+            .buttonStyle(.borderless)
+            .opacity(hovering ? 1 : 0)
+            .accessibilityHidden(!hovering)
             UsageBar(fraction: Double(node.bytes) / Double(largest), tint: FileKindStyle.color(node.kind))
                 .frame(width: 70)
                 .help(String(localized: "\(Format.percent(share * 100)) of this folder"))

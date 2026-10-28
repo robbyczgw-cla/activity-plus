@@ -117,13 +117,13 @@ Anything that quits a process, stops a server, changes a startup item or moves f
 
 ## For AI agents
 
-`aplus mcp` is a read-only [Model Context Protocol](https://modelcontextprotocol.io) server with seven tools: overview, top apps, an app's processes, diagnosis, dev servers, history and startup items. With Claude Code:
+`aplus mcp` is a read-only [Model Context Protocol](https://modelcontextprotocol.io) server with 19 tools: overview, top apps, an app's processes, diagnosis, dev servers, history and startup items; the storage map, what grew, System Data, clean-up candidates and duplicates (from the map Activity+ keeps, nothing is scanned or moved); crashes, Spotlight indexing, fan spin-ups and leftover background items; security, Time Machine backup and which app uses the microphone or camera. With Claude Code:
 
 ```bash
 claude mcp add activity-plus -- "/Applications/Activity+.app/Contents/Resources/aplus" mcp
 ```
 
-Then ask "why is my Mac slow?" or "which dev server is idle?". The same binary prints a terminal view (`aplus`, `aplus --memory`) and JSON (`aplus --json`).
+Then ask "why is my Mac slow?", "what is filling my disk?" or "which app keeps crashing?". The same binary prints a terminal view (`aplus`, `aplus --memory`) and JSON (`aplus --json`).
 
 ## Privacy
 

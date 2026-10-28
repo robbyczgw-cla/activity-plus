@@ -17,6 +17,7 @@ enum CardInfo {
         "What wears your SSD": String(localized: "SSDs can only be written a certain amount over their life. The drive reports how much of that it has used; from your recent daily writes Activity+ estimates how many years are left, and which apps wrote the most."),
         "Drives": String(localized: "Every drive that is connected, with its connection and speed. A USB drive that could do USB 3 but runs at USB 2 speed is marked; the cable is the usual cause."),
         "Speed test": String(localized: "Writes and reads a test file large enough to get past the cache, so the result is the drive's real speed. The file is removed afterwards."),
+        "Mac check-up": String(localized: "A calm look at the Mac on a schedule you choose (Settings, General): space that could go to the Trash, apps that keep crashing, the age of your last backup, security switches that are off, leftover startup items, SSD wear and a very long uptime. It only reports. Each finding has a button to the page where you decide what to do."),
         // Why is it slow, sleep, energy
         "Slower than it could be": String(localized: "Things that make the Mac slower right now, each with the evidence and what helps. Nothing changes until you click a button, and anything that quits an app asks first."),
         "Unusual activity": String(localized: "Apps that use clearly more than usual for them, compared with their own history, for example a helper stuck at full CPU."),
@@ -35,6 +36,7 @@ enum CardInfo {
         "Neural Engine": String(localized: "The part of the chip for machine learning, used for things like dictation, photo analysis and on-device AI. Not every Mac reports its power."),
         "Health": String(localized: "Battery health is the capacity the battery holds now compared with when it was new. Below about 80 percent Apple considers the battery worn."),
         "Power flow": String(localized: "Where the power goes right now: from the adapter to the Mac and into the battery, or from the battery to the Mac."),
+        "Wi-Fi around you": String(localized: "Listens once for nearby Wi-Fi networks when you click Scan and counts how many use each channel. Networks on the same or a neighbouring channel share the airtime with yours. macOS shows other networks' names only with Location access; without it the counts and signal strengths still work."),
         "Connection quality": String(localized: "Regular pings to your router and an internet address show delay and lost packets over time; a problem only with the router points to Wi‑Fi, one only with the internet address points to your provider."),
         "Busiest right now": String(localized: "Processes grouped into the apps they belong to, so 40 helper processes of a browser show as one line. Click the arrow to see the processes inside."),
         "Recorded sessions": String(localized: "A recording measures the whole Mac every second while you run something heavy, like a build or an export. It does not film the screen. Compare two recordings or export them as CSV or JSON."),

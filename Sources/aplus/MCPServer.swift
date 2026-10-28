@@ -3,10 +3,10 @@ import ActivityCore
 import Darwin
 
 enum MCPServer {
-    private static let queue = DispatchQueue(label: "activity-plus.mcp.sampler")
-    private static let sampler = SystemSampler()
+    static let queue = DispatchQueue(label: "activity-plus.mcp.sampler")
+    static let sampler = SystemSampler()
     private static let projects = ProjectScanner()
-    private static var latest = SystemSnapshot()
+    static var latest = SystemSnapshot()
     private static var cpuSeries: [Double] = []
     private static var appSeries: [String: [Double]] = [:]
     private static var started = false
@@ -34,7 +34,7 @@ enum MCPServer {
         startSampling()
         switch method {
         case "initialize":
-            return result(id: id, value: ["protocolVersion": "2025-06-18", "serverInfo": ["name": "activity-plus", "version": "1.0.0"], "capabilities": ["tools": [String: Any]()]])
+            return result(id: id, value: ["protocolVersion": "2025-06-18", "serverInfo": ["name": "activity-plus", "version": "1.1.0"], "capabilities": ["tools": [String: Any]()]])
         case "ping": return result(id: id, value: [:])
         case "tools/list": return result(id: id, value: ["tools": toolDefinitions])
         case "tools/call":
@@ -80,7 +80,7 @@ enum MCPServer {
         tool("dev_servers", "Read-only inventory of development servers", [:]),
         tool("history", "Historical app totals, the child processes behind the top apps, and system totals. Pass `around` (ISO 8601 time) to see which processes were busy in the 5-minute window around a moment, e.g. a spike.", ["range": enumSchema(["12h", "24h", "7d", "30d"]), "metric": enumSchema(["cpu", "memory", "gpu", "disk", "network", "energy"]), "around": ["type": "string", "description": "ISO 8601 date-time, optional"]]),
         tool("startup_items", "Non-Apple startup items", [:])
-    ]
+    ] + MCPTools.definitions
 
     private static func callTool(_ name: String, _ args: [String: Any]) -> Any? {
         let state = queue.sync { (latest, cpuSeries, appSeries) }
@@ -88,7 +88,7 @@ enum MCPServer {
         switch name {
         case "get_overview":
             let memory = s.memory
-            return ["date": iso(s.date), "cpu": ["user": s.cpu.user, "system": s.cpu.system, "used": s.cpu.total, "formatted": Format.percent(s.cpu.total), "per_core": s.cpu.perCore], "memory": ["used": memory.used, "total": memory.total, "pressure": memory.pressure.label, "swap_used": memory.swapUsed, "swap_total": memory.swapTotal, "formatted_used": Format.memory(memory.used), "formatted_total": Format.memory(memory.total)], "disk": ["total": s.disk.total, "free": s.disk.free, "read_rate": s.disk.readRate, "write_rate": s.disk.writeRate, "formatted_free": Format.storage(s.disk.free), "formatted_read_rate": Format.rate(s.disk.readRate), "formatted_write_rate": Format.rate(s.disk.writeRate)], "network": ["in_rate": s.network.inRate, "out_rate": s.network.outRate, "received": s.network.receivedSinceLaunch, "sent": s.network.sentSinceLaunch, "formatted_in_rate": Format.rate(s.network.inRate), "formatted_out_rate": Format.rate(s.network.outRate)], "gpu": s.gpu.map { ["name": $0.name, "utilization": $0.utilization, "memory": $0.memoryInUse, "formatted_utilization": Format.percent($0.utilization), "formatted_memory": Format.memory($0.memoryInUse)] } as Any? ?? NSNull(), "battery": s.battery.map { $0.details as Any } ?? NSNull(), "temperatures": ["cpu": s.sensors.cpuTemperature as Any? ?? NSNull(), "gpu": s.sensors.gpuTemperature as Any? ?? NSNull(), "battery": s.sensors.batteryTemperature as Any? ?? NSNull()], "thermal": s.thermal.rawValue]
+            return ["date": iso(s.date), "cpu": ["user": s.cpu.user, "system": s.cpu.system, "used": s.cpu.total, "formatted": Format.percent(s.cpu.total), "per_core": s.cpu.perCore, "core_clusters": s.cpu.clusters.map { ["name": $0.name, "kind": $0.kind.rawValue, "first_cpu": $0.cpus.lowerBound, "count": $0.count] as [String: Any] }], "memory": ["used": memory.used, "total": memory.total, "pressure": memory.pressure.label, "swap_used": memory.swapUsed, "swap_total": memory.swapTotal, "formatted_used": Format.memory(memory.used), "formatted_total": Format.memory(memory.total)], "disk": ["total": s.disk.total, "free": s.disk.free, "read_rate": s.disk.readRate, "write_rate": s.disk.writeRate, "formatted_free": Format.storage(s.disk.free), "formatted_read_rate": Format.rate(s.disk.readRate), "formatted_write_rate": Format.rate(s.disk.writeRate)], "network": ["in_rate": s.network.inRate, "out_rate": s.network.outRate, "received": s.network.receivedSinceLaunch, "sent": s.network.sentSinceLaunch, "formatted_in_rate": Format.rate(s.network.inRate), "formatted_out_rate": Format.rate(s.network.outRate)], "gpu": s.gpu.map { ["name": $0.name, "utilization": $0.utilization, "memory": $0.memoryInUse, "formatted_utilization": Format.percent($0.utilization), "formatted_memory": Format.memory($0.memoryInUse)] } as Any? ?? NSNull(), "battery": s.battery.map { $0.details as Any } ?? NSNull(), "temperatures": ["cpu": s.sensors.cpuTemperature as Any? ?? NSNull(), "gpu": s.sensors.gpuTemperature as Any? ?? NSNull(), "battery": s.sensors.batteryTemperature as Any? ?? NSNull()], "thermal": s.thermal.rawValue]
         case "top_apps":
             let metric = args["metric"] as? String ?? "cpu", limit = max(1, min(100, args["limit"] as? Int ?? 10)), includeSystem = args["include_system"] as? Bool ?? false
             let apps = s.apps.filter { includeSystem || $0.kind != .system }.sorted { score($0, metric) > score($1, metric) }.prefix(limit)
@@ -122,7 +122,7 @@ enum MCPServer {
             }, "today_totals": ["disk_written": totals.diskWritten, "disk_read": totals.diskRead, "received": totals.received, "sent": totals.sent, "energy_wh": totals.energyWh, "average_cpu": totals.averageCPU]]
         case "startup_items":
             return StartupItemsScanner.scan().filter { !$0.isApple }.map { ["id": $0.id, "label": $0.label, "scope": $0.scope.rawValue, "owner": $0.ownerName, "program": $0.program as Any? ?? NSNull(), "enabled": !$0.isDisabled, "running": $0.isRunning] as [String: Any] }
-        default: return nil
+        default: return MCPTools.call(name, args)
         }
     }
 
@@ -131,9 +131,9 @@ enum MCPServer {
     private static func score(_ a: AppGroup, _ metric: String) -> Double { switch metric { case "memory": Double(a.memory); case "gpu": a.gpuPercent; case "disk": a.diskReadRate + a.diskWriteRate; case "network": a.netInRate + a.netOutRate; case "energy": a.powerWatts; default: a.cpuPercent } }
     private static func historyScore(_ a: HistoryStore.AppTotal, _ metric: String) -> Double { switch metric { case "memory": a.averageMemory; case "gpu": a.gpuAverage; case "disk": a.diskBytes; case "network": a.networkBytes; case "energy": a.energyWh; default: a.averageCPU } }
     private static func activityText(_ s: DevServer) -> String { switch s.activity() { case .working: "working"; case .idle(let t): "idle for \(Format.duration(t))"; case .barelyUsed(let t): "barely used, up \(Format.duration(t))" } }
-    private static func tool(_ name: String, _ description: String, _ props: [String: Any], _ required: [String] = []) -> [String: Any] { ["name": name, "description": description, "inputSchema": ["type": "object", "properties": props, "required": required]] }
-    private static func enumSchema(_ values: [String]) -> [String: Any] { ["type": "string", "enum": values] }
-    private static func iso(_ date: Date) -> String { ISO8601DateFormatter().string(from: date) }
+    static func tool(_ name: String, _ description: String, _ props: [String: Any], _ required: [String] = []) -> [String: Any] { ["name": name, "description": description, "inputSchema": ["type": "object", "properties": props, "required": required]] }
+    static func enumSchema(_ values: [String]) -> [String: Any] { ["type": "string", "enum": values] }
+    static func iso(_ date: Date) -> String { ISO8601DateFormatter().string(from: date) }
     private static func pretty(_ value: Any) -> String { guard let data = try? JSONSerialization.data(withJSONObject: value, options: [.prettyPrinted, .sortedKeys]), let string = String(data: data, encoding: .utf8) else { return "{}" }; return string }
     private static func result(id: Any?, value: Any) -> String { encode(["jsonrpc": "2.0", "id": id ?? NSNull(), "result": value]) }
     private static func error(id: Any?, code: Int, message: String) -> String { encode(["jsonrpc": "2.0", "id": id ?? NSNull(), "error": ["code": code, "message": message]]) }

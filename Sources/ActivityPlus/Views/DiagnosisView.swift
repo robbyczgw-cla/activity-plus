@@ -7,6 +7,7 @@ struct DiagnosisView: View {
     @Environment(AppServices.self) private var services
     @Binding var selection: SidebarItem?
     @State private var diagnosis: Diagnosis?
+    @State private var iCloud: ICloudStatus?
     @State private var pendingQuit: AppGroup?
     @State private var confirmRestart = false
 
@@ -19,6 +20,7 @@ struct DiagnosisView: View {
                         FindingCard(finding: finding) { perform($0) }
                     }
                     SpotlightCard()
+                    ICloudCard()
                     CrashesCard()
                 } else {
                     ProgressView("Looking at your Mac…").frame(maxWidth: .infinity, minHeight: 200)
@@ -73,6 +75,15 @@ struct DiagnosisView: View {
     }
 
     private func run() {
+        buildDiagnosis()
+        Task {
+            // brctl can take several seconds, so the verdict is shown first and the iCloud finding is added when it arrives.
+            iCloud = await Task.detached(priority: .utility) { ICloudStatus.read() }.value
+            buildDiagnosis()
+        }
+    }
+
+    private func buildDiagnosis() {
         var input = DiagnosisInput(
             snapshot: monitor.snapshot,
             recentCPU: monitor.history.cpu.values,
@@ -86,6 +97,7 @@ struct DiagnosisView: View {
         input.slowUSB = USBLinkCheck.slowStorage()
         input.crashSummaries = CrashStore.shared.summaries
         input.spotlightCardShown = true
+        input.iCloud = iCloud
         withAnimation(.snappy) { diagnosis = Diagnostician.diagnose(input) }
     }
 

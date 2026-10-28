@@ -66,6 +66,7 @@ private struct GeneralSettings: View {
                 Text(presenceHint).font(.caption).foregroundStyle(.secondary)
             }
             HelperSection()
+            CheckUpSettingsSection()
             Section("Backup") {
                 HStack {
                     Button("Export Settings…", action: exportSettings)

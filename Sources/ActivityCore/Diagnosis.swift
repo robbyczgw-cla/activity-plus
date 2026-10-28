@@ -49,6 +49,8 @@ public struct DiagnosisInput: Sendable {
     public var crashSummaries: [CrashSummary] = []
     /// True when the page shows its own Spotlight card, so the generic Spotlight finding is left out.
     public var spotlightCardShown = false
+    /// iCloud Drive sync state, when it was read.
+    public var iCloud: ICloudStatus?
 
     public init(snapshot: SystemSnapshot, recentCPU: [Double], recentAppCPU: [String: [Double]]) {
         self.snapshot = snapshot
@@ -180,6 +182,16 @@ public enum Diagnostician {
             findings.append(.init(id: "kernel-task", severity: .warning, title: String(localized: "macOS is holding the CPU back"),
                                   detail: String(localized: "kernel_task uses CPU time on purpose to keep the processor cool, which usually means the Mac is hot or charging with a weak adapter."),
                                   evidence: [String(localized: "kernel_task: \(Format.percent(kernel.cpuPercent))")], action: nil))
+        }
+
+        // iCloud daemons busy while changes are still moving
+        if let icloud = input.iCloud, icloud.isSyncing {
+            let daemons = processes.filter { $0.name == "bird" || $0.name == "cloudd" }
+            if daemons.reduce(0, { $0 + $1.cpuPercent }) > 25 {
+                findings.append(.init(id: "icloud-sync", severity: .info, title: String(localized: "iCloud is still syncing"),
+                                      detail: String(localized: "bird and cloudd, the iCloud sync services, use CPU and the disk while changes move. They finish on their own."),
+                                      evidence: daemons.map { String(localized: "\($0.name): \(Format.percent($0.cpuPercent))") }, action: nil))
+            }
         }
 
         // Apps that keep crashing
