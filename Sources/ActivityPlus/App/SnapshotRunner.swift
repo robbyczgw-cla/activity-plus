@@ -84,6 +84,7 @@ enum SnapshotRunner {
                 }
             }
             NotchController.renderSnapshots(to: dir)
+            WidgetSnapshots.render(to: dir)
             NSApp.terminate(nil)
         }
     }

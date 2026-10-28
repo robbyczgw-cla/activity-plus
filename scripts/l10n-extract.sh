@@ -14,7 +14,9 @@ OUT="$(mktemp -d)"
 trap 'rm -rf "$OUT"' EXIT
 
 [[ -f "$CATALOG" ]] || echo '{"sourceLanguage":"en","strings":{},"version":"1.0"}' > "$CATALOG"
-swift build --product ActivityPlus -Xswiftc -emit-localized-strings -Xswiftc -emit-localized-strings-path -Xswiftc "$OUT" >/dev/null
+for product in ActivityPlus ActivityPlusWidgets; do
+  swift build --product "$product" -Xswiftc -emit-localized-strings -Xswiftc -emit-localized-strings-path -Xswiftc "$OUT" >/dev/null
+done
 xcrun xcstringstool sync "$CATALOG" --stringsdata "$OUT"/*.stringsdata
 python3 scripts/l10n-manual.py "$CATALOG" Sources/ActivityPlus
 

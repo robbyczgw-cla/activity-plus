@@ -102,6 +102,7 @@ final class AppServices {
             MainActor.assumeIsolated { self?.handle(snapshot) }
         }
         NotificationHandler.shared.install()
+        WidgetPublisher.shared.attach(to: monitor)
         // WindowServer's "not responding" flag on its own 3-second clock: tied to sampling it ran only
         // every 10 s with the window closed, and a freeze needs two polls in a row, so only freezes
         // longer than 20 s were caught. One flag check per open app is cheap.

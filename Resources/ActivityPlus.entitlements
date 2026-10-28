@@ -8,5 +8,10 @@
 	<!-- "Restart…" in the diagnosis asks System Events to restart the Mac. -->
 	<key>com.apple.security.automation.apple-events</key>
 	<true/>
+	<!-- Shares the widget snapshot with the widget extension (Contents/PlugIns/ActivityPlusWidgets.appex). -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>P35939S43T.at.hifiteam.activityplus</string>
+	</array>
 </dict>
 </plist>

@@ -24,7 +24,10 @@ scripts/l10n-extract.sh --check || { echo "✗ Untranslated strings (see above).
 
 scripts/build-app.sh
 # Build number = commit count, so every release is newer than the last one.
-/usr/libexec/PlistBuddy -c "Set CFBundleVersion $(git rev-list --count HEAD)" "$APP/Contents/Info.plist"
+APPEX="$APP/Contents/PlugIns/ActivityPlusWidgets.appex"
+for plist in "$APP/Contents/Info.plist" "$APPEX/Contents/Info.plist"; do
+  /usr/libexec/PlistBuddy -c "Set CFBundleVersion $(git rev-list --count HEAD)" "$plist"
+done
 
 echo "→ Signing with $IDENTITY"
 sign() { codesign --force --options runtime --timestamp --sign "$IDENTITY" "$@"; }
@@ -38,6 +41,8 @@ if [[ -d "$SPARKLE" ]]; then
 fi
 sign "$APP/Contents/Resources/aplus"
 sign --identifier at.hifiteam.activityplus.helper "$APP/Contents/MacOS/ActivityPlusHelper"
+# The widget extension carries its own entitlements (sandbox + App Group) and is signed before the app.
+sign --entitlements Resources/Widgets/ActivityPlusWidgets.entitlements "$APPEX"
 codesign --force --options runtime --timestamp --entitlements Resources/ActivityPlus.entitlements --sign "$IDENTITY" "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 
