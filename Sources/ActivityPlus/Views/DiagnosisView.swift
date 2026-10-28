@@ -22,6 +22,8 @@ struct DiagnosisView: View {
                     SpotlightCard()
                     ICloudCard()
                     CrashesCard()
+                    SlowMomentsCard { HistoryFocus.pending = $0; selection = .history }
+                    AppStopsCard()
                 } else {
                     ProgressView("Looking at your Mac…").frame(maxWidth: .infinity, minHeight: 200)
                 }

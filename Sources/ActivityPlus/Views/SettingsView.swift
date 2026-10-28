@@ -522,6 +522,7 @@ private struct PerformanceSettings: View {
     @AppStorage("perf.hangs") private var hangs = true
     @AppStorage("perf.insights") private var insights = true
     @AppStorage("perf.connectionQuality") private var connectionQuality = false
+    @AppStorage("perf.systemLog") private var systemLog = true
     @AppStorage("perf.backgroundInterval") private var backgroundInterval = 5.0
 
     var body: some View {
@@ -549,10 +550,11 @@ private struct PerformanceSettings: View {
                 row(String(localized: "Freeze detection"), String(localized: "Asks WindowServer about every open app every few seconds."), "medium", $hangs)
                 row(String(localized: "Unusual activity and leaks"), String(localized: "Compares apps with their history once a minute."), "low", $insights)
                 row("Connection quality", String(localized: "Pings your router every 30 seconds (and a host you choose on the Network page). Off by default."), "low", $connectionQuality)
+                row(String(localized: "Apps macOS stopped"), String(localized: "Reads the system log: about a minute of CPU the first time, then a few seconds every 30 minutes. Takes effect at the next launch."), "medium", $systemLog)
             }
         }
         .formStyle(.grouped)
-        .onChange(of: [perAppNetwork, perAppGPU, sensors, chip, drives, networkDetails, devServers, hangs, insights, connectionQuality]) { _, _ in Performance.notify() }
+        .onChange(of: [perAppNetwork, perAppGPU, sensors, chip, drives, networkDetails, devServers, hangs, insights, connectionQuality, systemLog]) { _, _ in Performance.notify() }
         .onChange(of: backgroundInterval) { _, _ in Performance.notify() }
     }
 
