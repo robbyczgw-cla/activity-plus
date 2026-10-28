@@ -110,6 +110,7 @@ final class AppServices {
         }
         testFreezeIfRequested()
         BackupWatcher.shared.start(services: self)
+        BackgroundDiagnosis.shared.start(services: self)
         // VPNs: a local list, cheap to read; a drop is reported once it lasts a minute.
         vpnTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.checkVPN() }

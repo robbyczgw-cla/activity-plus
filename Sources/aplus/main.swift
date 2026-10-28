@@ -49,6 +49,28 @@ if arguments.contains("--bench") {
     for (name, ms) in sampler.benchmark() { print(name.padding(toLength: 20, withPad: " ", startingAt: 0), String(format: "%7.1f ms", ms)) }
     exit(0)
 }
+if arguments.contains("--wakes") || arguments.contains("--stops") {
+    // Sanity check of the background diagnosis readers: dark wakes per night (pmset log) and apps macOS stopped (unified log).
+    if arguments.contains("--wakes") {
+        let start = Date()
+        let lines = SleepWakes.readLog() ?? []
+        let parsed = SleepWakes.parse(lines: lines, since: Date().addingTimeInterval(-7 * 86_400))
+        print(String(format: "pmset log: %d relevant lines, %d dark wakes in 7 days, read in %.1f s", lines.count, parsed.wakes.count, Date().timeIntervalSince(start)))
+        for night in SleepWakes.nights(parsed.wakes, sleeps: parsed.sleeps).prefix(7) {
+            let causes = Dictionary(grouping: night.wakes, by: \.cause).map { "\($0.key.rawValue) \($0.value.count)" }.sorted().joined(separator: ", ")
+            print("\(night.evening.formatted(date: .abbreviated, time: .omitted)): \(night.wakes.count) wakes, \(Format.duration(night.asleep)) asleep — \(causes)")
+        }
+        let attributed = parsed.wakes.filter { $0.requester != nil }.count
+        print("scheduled wakes with a requester: \(attributed), with assertion holders: \(parsed.wakes.filter { !$0.holders.isEmpty }.count)")
+    }
+    if arguments.contains("--stops") {
+        let start = Date()
+        let stops = AppStops.read(since: Date().addingTimeInterval(-86_400)) ?? []
+        print(String(format: "unified log, 24 h: %d stops, read in %.1f s", stops.count, Date().timeIntervalSince(start)))
+        for (phrase, list) in Dictionary(grouping: stops, by: \.reasonPhrase) { print("  \(list.count)× \(phrase)") }
+    }
+    exit(0)
+}
 if arguments.contains("--diskmap") {
     // `aplus --diskmap <folder>`: builds the Explore size map of a folder, prints timing, the biggest folders and kinds.
     let all = CommandLine.arguments

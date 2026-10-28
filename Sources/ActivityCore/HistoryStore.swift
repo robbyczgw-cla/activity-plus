@@ -147,6 +147,7 @@ public final class HistoryStore: @unchecked Sendable {
             exec("DELETE FROM apps WHERE ts < \(cutoff)")
             exec("DELETE FROM pings WHERE ts < \(cutoff)")
             exec("DELETE FROM app_procs WHERE ts < \(cutoff)")
+            pruneDiagnosis(before: cutoff)
         }
     }
 
@@ -416,6 +417,7 @@ public final class HistoryStore: @unchecked Sendable {
         createSessionTables()
         createPingTable()
         createProcessTable()
+        createDiagnosisTables()
         exec("""
             CREATE TABLE IF NOT EXISTS apps (
                 ts INTEGER NOT NULL, app_id TEXT NOT NULL, name TEXT, bundle TEXT,

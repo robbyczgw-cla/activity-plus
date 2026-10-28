@@ -15,6 +15,7 @@ struct HistoryView: View {
     @State private var around: [ProcessTotal] = []
     @State private var expanded: Set<String> = []
     @State private var appProcesses: [String: [ProcessTotal]] = [:]
+    @State private var markers = HistoryMarkers()
 
     var body: some View {
         ScrollView {
@@ -48,6 +49,7 @@ struct HistoryView: View {
                     } else {
                         chart.frame(height: 220)
                         spikeDetail
+                        HistoryMarkerList(markers: markers) { selectedDate = $0 }
                     }
                 }
 
@@ -97,6 +99,12 @@ struct HistoryView: View {
         .task(id: "\(range.rawValue)") {
             expanded = []; appProcesses = [:]; selectedDate = nil
             await load()
+            // Opened from "Slow moments": switch to a range that contains the moment, then select it.
+            if let focus = HistoryFocus.pending {
+                if HistoryFocus.range(for: focus) != range { range = HistoryFocus.range(for: focus); return }
+                HistoryFocus.pending = nil
+                selectedDate = focus
+            }
             // Snapshots: ACTIVITYPLUS_HISTORY_SELECT=<minutes ago> preselects a moment and expands the top app.
             if let minutes = Double(ProcessInfo.processInfo.environment["ACTIVITYPLUS_HISTORY_SELECT"] ?? "") {
                 selectedDate = Date().addingTimeInterval(-minutes * 60)
@@ -125,6 +133,7 @@ struct HistoryView: View {
     private var chart: some View {
         Chart {
             ForEach(points) { point in marks(point) }
+            markers.content
             if let selectedDate {
                 RuleMark(x: .value("Selected", selectedDate)).foregroundStyle(.secondary.opacity(0.5))
             }
@@ -236,5 +245,6 @@ struct HistoryView: View {
         apps = result.1
         today = result.2
         week = result.3
+        markers = await HistoryMarkers.load(store, range: range)
     }
 }
